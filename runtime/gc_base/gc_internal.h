@@ -218,6 +218,8 @@ extern J9_CFUNC void J9WriteBarrierPre(J9VMThread *vmThread, J9Object *dstObject
 extern J9_CFUNC void J9WriteBarrierPreClass(J9VMThread *vmThread, J9Object *dstClassObject, J9Object **dstAddress, J9Object *srcObject);
 extern J9_CFUNC void J9ReadBarrier(J9VMThread *vmThread, fj9object_t *srcAddress);
 extern J9_CFUNC void J9ReadBarrierClass(J9VMThread *vmThread, j9object_t *srcAddress);
+extern J9_CFUNC void J9ReadBarrierVM(J9JavaVM *javaVM, fj9object_t *srcAddress);
+extern J9_CFUNC void J9ReadBarrierClassVM(J9JavaVM *javaVM, j9object_t *srcAddress);
 extern J9_CFUNC j9object_t j9gc_weakRoot_readObject(J9VMThread *vmThread, j9object_t *srcAddress);
 extern J9_CFUNC j9object_t j9gc_weakRoot_readObjectVM(J9JavaVM *vm, j9object_t *srcAddress);
 extern J9_CFUNC UDATA isStaticObjectAllocateFlags(J9JavaVM *javaVM);
