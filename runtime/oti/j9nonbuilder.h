@@ -5688,6 +5688,9 @@ typedef struct J9InternalVMFunctions {
 #endif /* JAVA_SPEC_VERSION >= 15 */
 	void ( *storeFlattenableArrayElement)(struct J9VMThread *currentThread, j9object_t receiverObject, U_32 index, j9object_t paramObject);
 	j9object_t ( *loadFlattenableArrayElement)(struct J9VMThread *currentThread, j9object_t receiverObject, U_32 index, BOOLEAN fast);
+#if defined(J9VM_OPT_VALHALLA_FLATTENABLE_VALUE_TYPES)
+	j9object_t (*getFlattenedInstanceFieldAtOffset)(struct J9VMThread *currentThread, J9Class *fieldClass, j9object_t srcObject, UDATA srcOffset, BOOLEAN fast);
+#endif /* defined(J9VM_OPT_VALHALLA_FLATTENABLE_VALUE_TYPES) */
 #if defined(J9VM_OPT_VALHALLA_VALUE_TYPES)
 	I_32 ( *copyFlattenableArray)(struct J9VMThread *currentThread, j9object_t srcObject, j9object_t destObject, U_32 srcIndex, U_32 destIndex, U_32 lengthInSlots);
 #endif /* defined(J9VM_OPT_VALHALLA_VALUE_TYPES) */
