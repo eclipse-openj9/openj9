@@ -92,6 +92,20 @@ might be different, in which case the AOT load fails. In the case of
 inlined methods however, the AOT load doesn't necessarily fail, rather, 
 the AOT infrastructure disables a particular inlined call site.
 
+## Flattening of ull-restricted value types
+
+If null-restricted value types support is enabled along with flattening
+of fields of those value types, the Class Chain of any `J9Class` that
+actually contains a flattened field is augmented with information about
+the position and size of each such field.
+
+When AOT code is loaded into a different instance, the portion of the
+Class Chain that's augmented with information about flattened fields
+is checked in addition to the checking that's performed for the portion
+of the Class Chain that contains ROMClasses.  Any mismatch in the
+number, position or size of flattened fields will similarly result in
+the AOT load's failing.
+
 ## Finding a candidate J9Class
 For classes that are directly referenced in a method's code, there is a 
 Constant Pool entry in the romclass. For example, in `C.foo()` there is a
