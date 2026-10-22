@@ -1122,6 +1122,10 @@ bool TR_J9SharedCache::writeInterfacesToChain(J9Class *clazz, UDATA *&chainPtr)
 bool TR_J9SharedCache::writeFlattenedFieldsToChain(J9ROMClass *currRomClass, J9Class *clazz, uint32_t numSuperclasses,
     UDATA *&chainPtr, uint32_t &numSlotsUsed, uint32_t &numFlattenedFields)
 {
+    TR_ASSERT_FATAL(TR::Compiler->om.areValueTypesEnabled(),
+        "TR_J9SharedCache::writeFlattenedFieldsToChain should only be called if value types support is enabled\n");
+
+#if defined(J9VM_OPT_VALHALLA_FLATTENABLE_VALUE_TYPES)
     LOG(3, "\t\twriteFlattenedFieldsToChain\n");
 
     TR_J9VMBase *fej9 = (TR_J9VMBase *)(fe());
@@ -1132,6 +1136,7 @@ bool TR_J9SharedCache::writeFlattenedFieldsToChain(J9ROMClass *currRomClass, J9C
     TR_OpaqueClassBlock *classOffset = fe()->convertClassPtrToClassOffset(clazz);
 
     J9Class **superClasses = TR::Compiler->cls.superClassesOf(classOffset);
+    J9Class *superClass = NULL;
 
     /* Walk through all ancestors of the current class looking for flattened fields */
     for (int32_t index = 0; index <= numSuperclasses; index++) {
@@ -1139,43 +1144,50 @@ bool TR_J9SharedCache::writeFlattenedFieldsToChain(J9ROMClass *currRomClass, J9C
         J9ROMClass *nextRomClass = TR::Compiler->cls.romClassOf(fe()->convertClassPtrToClassOffset(nextClass));
 
         /* Iterate through fields in the next ROMClass in the inheritance chain */
-        J9ROMFieldWalkState state;
+        J9ROMFieldOffsetWalkState state;
 
-        for (J9ROMFieldShape *currentField = romFieldsStartDo(nextRomClass, &state); currentField != NULL;
-             currentField = romFieldsNextDo(&state)) {
+        for (J9ROMFieldOffsetWalkResult *result
+             = _javaVM->internalVMFunctions->fieldOffsetsStartDo(_javaVM, nextRomClass, superClass, &state,
+                 J9VM_FIELD_OFFSET_WALK_INCLUDE_INSTANCE, nextClass->flattenedClassCache);
+             result->field != NULL; result = _javaVM->internalVMFunctions->fieldOffsetsNextDo(&state)) {
+            J9ROMFieldShape *currentField = result->field;
+
             /* Find flattened instance fields */
-            if ((currentField->modifiers & J9AccStatic) == 0) {
-                if (_javaVM->internalVMFunctions->isFieldNullRestricted(currentField)
-                    && _javaVM->internalVMFunctions->isFlattenableFieldFlattened(nextClass, currentField)) {
-                    LOG(3, "\t\tFlattened field index %d\n", nextInstanceFieldIndex);
+            if (_javaVM->internalVMFunctions->isFieldNullRestricted(currentField)
+                && _javaVM->internalVMFunctions->isFlattenableFieldFlattened(nextClass, currentField)) {
+                LOG(3, "\t\tFlattened field index %d\n", nextInstanceFieldIndex);
 
-                    /* We'll need two slots for each flattened field; make sure there's enough space for both.
-                     * For each field record the index of the flattened field amongst the instance fields and
-                     * the size of the field in bytes.
-                     */
-                    if ((numSlotsUsed + 2) >= maxClassChainLength) {
-                        LOG(1, "No more space available to write flattened fields to class chain.  Bailing!\n");
-                        return false;
-                    }
-
-                    numFlattenedFields++;
-                    numSlotsUsed++;
-
-                    *chainPtr++ = nextInstanceFieldIndex;
-
-                    UDATA fieldSize
-                        = _javaVM->internalVMFunctions->getFlattenableFieldSize(vmThread, nextClass, currentField);
-                    *chainPtr++ = fieldSize;
-
-                    numSlotsUsed++;
+                /* We'll need two slots for each flattened field; make sure there's enough space for both.
+                 * For each field record the index of the flattened field amongst the instance fields and
+                 * the class chain offset of the flattened field's class.
+                 */
+                if ((numSlotsUsed + 2) >= maxClassChainLength) {
+                    LOG(1, "No more space available to write flattened fields to class chain.  Bailing!\n");
+                    return false;
                 }
 
-                nextInstanceFieldIndex++;
+                numFlattenedFields++;
+                numSlotsUsed++;
+
+                *chainPtr++ = nextInstanceFieldIndex;
+
+                J9Class *fieldClass = result->flattenedClass;
+                UDATA fieldClassChainOffset = rememberClass(fieldClass);
+                *chainPtr++ = fieldClassChainOffset;
+
+                numSlotsUsed++;
             }
+
+            nextInstanceFieldIndex++;
         }
+
+        superClass = nextClass;
     }
 
     return true;
+#else /* defined(J9VM_OPT_VALHALLA_FLATTENABLE_VALUE_TYPES) */
+    return false;
+#endif /* defined(J9VM_OPT_VALHALLA_FLATTENABLE_VALUE_TYPES) */
 }
 
 bool TR_J9SharedCache::fillInClassChain(J9Class *clazz, UDATA *chainData, uint32_t chainLengthWithoutFlatteneds,
@@ -1306,6 +1318,10 @@ bool TR_J9SharedCache::validateInterfacesInClassChain(TR_OpaqueClassBlock *clazz
 bool TR_J9SharedCache::validateFlattenedFieldsInClassChain(J9ROMClass *currRomClass, J9Class *clazz, UDATA *&chainPtr,
     UDATA *chainEnd, uint32_t cachedFlattenedFieldCount)
 {
+    TR_ASSERT_FATAL(TR::Compiler->om.areValueTypesEnabled(),
+        "TR_J9SharedCache::validateFlattenedFieldsToChain should only be called if value types support is enabled\n");
+
+#if defined(J9VM_OPT_VALHALLA_FLATTENABLE_VALUE_TYPES)
     TR_J9VMBase *fej9 = (TR_J9VMBase *)(fe());
     J9VMThread *vmThread = fej9->getCurrentVMThread();
 
@@ -1315,6 +1331,7 @@ bool TR_J9SharedCache::validateFlattenedFieldsInClassChain(J9ROMClass *currRomCl
     uint32_t numSuperclasses = TR::Compiler->cls.classDepthOf(classOffset);
 
     J9Class **superClasses = TR::Compiler->cls.superClassesOf(classOffset);
+    J9Class *superClass = NULL;
 
     /* Walk through all ancestors of the current class looking for flattened fields */
     for (uint32_t index = 0; index <= numSuperclasses; index++) {
@@ -1322,52 +1339,54 @@ bool TR_J9SharedCache::validateFlattenedFieldsInClassChain(J9ROMClass *currRomCl
         J9ROMClass *nextRomClass = TR::Compiler->cls.romClassOf(fe()->convertClassPtrToClassOffset(nextClass));
 
         /* Iterate through fields in the next ROMClass in the inheritance chain */
-        J9ROMFieldWalkState state;
-        for (J9ROMFieldShape *currentField = romFieldsStartDo(nextRomClass, &state); currentField != NULL;
-             currentField = romFieldsNextDo(&state)) {
-            /* Find flattened instance fields */
-            if ((currentField->modifiers & J9AccStatic) == 0) {
-                if (_javaVM->internalVMFunctions->isFieldNullRestricted(currentField)
-                    && _javaVM->internalVMFunctions->isFlattenableFieldFlattened(nextClass, currentField)) {
-                    /* Two slots are needed for each flattened field - the index of the flattened field
-                     * among all instance fields and the size of the flattened field in bytes.  Validate
-                     * that the data recorded in the class chain matches the information associated with
-                     * the current class.
-                     */
-                    flattenedInstanceFieldCount++;
+        J9ROMFieldOffsetWalkState state;
+        for (J9ROMFieldOffsetWalkResult *result
+             = _javaVM->internalVMFunctions->fieldOffsetsStartDo(_javaVM, nextRomClass, superClass, &state,
+                 J9VM_FIELD_OFFSET_WALK_INCLUDE_INSTANCE, nextClass->flattenedClassCache);
+             result->field != NULL; result = _javaVM->internalVMFunctions->fieldOffsetsNextDo(&state)) {
+            J9ROMFieldShape *currentField = result->field;
 
-                    if (chainPtr == chainEnd) {
-                        LOG(1, "\tMore flattened fields found than were recorded in cache, returning false\n");
-                        return false;
-                    }
+            if (_javaVM->internalVMFunctions->isFieldNullRestricted(currentField)
+                && _javaVM->internalVMFunctions->isFlattenableFieldFlattened(nextClass, currentField)) {
+                /* Two slots are needed for each flattened field - the index of the flattened field
+                 * among all instance fields and the size of the flattened field in bytes.  Validate
+                 * that the data recorded in the class chain matches the information associated with
+                 * the current class.
+                 */
+                flattenedInstanceFieldCount++;
 
-                    UDATA cachedFlattenedInstanceFieldIndex = *chainPtr++;
-                    if (cachedFlattenedInstanceFieldIndex != nextInstanceFieldIndex) {
-                        LOG(1, "\tFlattened field found at unexpected position, returning false\n");
-                        return false;
-                    }
-
-                    /* As every flattened field requires two slots in the class chain, this condition should
-                     * never fail, but test it just in case.
-                     */
-                    if (chainPtr == chainEnd) {
-                        LOG(1, "\tReached end of flattened fields before cached size, returning false\n");
-                        return false;
-                    }
-
-                    UDATA cachedFieldSize = *chainPtr++;
-                    UDATA fieldSize
-                        = _javaVM->internalVMFunctions->getFlattenableFieldSize(vmThread, nextClass, currentField);
-
-                    if (cachedFieldSize != fieldSize) {
-                        LOG(1, "\tCached size of flattened field did not match current size, return false\n");
-                        return false;
-                    }
+                if (chainPtr == chainEnd) {
+                    LOG(1, "\tMore flattened fields found than were recorded in cache, returning false\n");
+                    return false;
                 }
 
-                nextInstanceFieldIndex++;
+                UDATA cachedFlattenedInstanceFieldIndex = *chainPtr++;
+                if (cachedFlattenedInstanceFieldIndex != nextInstanceFieldIndex) {
+                    LOG(1, "\tFlattened field found at unexpected position, returning false\n");
+                    return false;
+                }
+
+                /* As every flattened field requires two slots in the class chain, this condition should
+                 * never fail, but test it just in case.
+                 */
+                if (chainPtr == chainEnd) {
+                    LOG(1, "\tReached end of flattened fields before cached size, returning false\n");
+                    return false;
+                }
+
+                uintptr_t *cachedFieldClassChain = (uintptr_t *)pointerFromOffsetInSharedCache(*chainPtr++);
+                J9Class *fieldClass = result->flattenedClass;
+
+                if (!classMatchesCachedVersion(fieldClass, cachedFieldClassChain)) {
+                    LOG(1, "\tCached class of flattened field did not match current of field class, return false\n");
+                    return false;
+                }
             }
+
+            nextInstanceFieldIndex++;
         }
+
+        superClass = nextClass;
     }
 
     /* If we didn't reach the end of the cached list of flattened field information, it means that the
@@ -1379,6 +1398,9 @@ bool TR_J9SharedCache::validateFlattenedFieldsInClassChain(J9ROMClass *currRomCl
     }
 
     return true;
+#else /* defined(J9VM_OPT_VALHALLA_FLATTENABLE_VALUE_TYPES) */
+    return false;
+#endif /* defined(J9VM_OPT_VALHALLA_FLATTENABLE_VALUE_TYPES) */
 }
 
 bool TR_J9SharedCache::validateClassChain(J9ROMClass *romClass, TR_OpaqueClassBlock *clazz, UDATA *&chainPtr,
