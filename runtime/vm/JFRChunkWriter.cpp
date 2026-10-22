@@ -67,6 +67,7 @@ const VM_JFRChunkWriter::EventIds VM_JFRChunkWriter::v1Events = {
 	113,
 	114,
 	130,
+	131,
 	133,
 	134,
 	163,
@@ -128,6 +129,7 @@ const VM_JFRChunkWriter::EventIds VM_JFRChunkWriter::v2Events = {
 	JfrModuleRequireEvent,
 	JfrModuleExportEvent,
 	JfrGCConfigurationEvent,
+	JfrGCSurvivorConfigurationEvent,
 	JfrGCHeapConfigurationEvent,
 	JfrYoungGenerationConfigurationEvent,
 	TYPE_NETWORKINTERFACENAME,
@@ -1150,6 +1152,30 @@ VM_JFRChunkWriter::writeGCConfigurationEvent()
 
 	/* write GC time ratio */
 	_bufferWriter->writeLEB128(gcConfig->gcTimeRatio);
+
+	/* write event size */
+	writeEventSize(dataStart);
+}
+
+void
+VM_JFRChunkWriter::writeGCSurvivorConfigurationEvent()
+{
+	GCSurvivorConfigurationEntry *survivorConfig = &(VM_JFRConstantPoolTypes::getJFRConstantEvents(_vm)->GCSurvivorConfigEntry);
+
+	/* reserve size field */
+	U_8 *dataStart = reserveEventSize();
+
+	/* write event type */
+	_bufferWriter->writeLEB128(events->GCSurvivorConfigurationID);
+
+	/* write event start time */
+	_bufferWriter->writeLEB128(j9time_nano_time());
+
+	/* write maximum tenuring threshold */
+	_bufferWriter->writeLEB128(survivorConfig->maxTenuringThreshold);
+
+	/* write initial tenuring threshold */
+	_bufferWriter->writeLEB128(survivorConfig->initialTenuringThreshold);
 
 	/* write event size */
 	writeEventSize(dataStart);

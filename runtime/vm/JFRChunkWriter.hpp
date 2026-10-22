@@ -142,6 +142,7 @@ private:
 		int ModuleRequireID;
 		int ModuleExportID;
 		int GCConfigurationID;
+		int GCSurvivorConfigurationID;
 		int GCHeapConfigID;
 		int YoungGenerationConfigID;
 		int NetworkInterfaceNameID;
@@ -243,6 +244,7 @@ private:
 	static constexpr int THREAD_ALLOCATION_STATISTICS_EVENT_SIZE = sizeof(U_8) + LEB128_32_SIZE + (3 * LEB128_64_SIZE);
 	static constexpr int OBJECT_ALLOCATION_SAMPLE_EVENT_SIZE = (4 * LEB128_64_SIZE) + (3 * LEB128_32_SIZE);
 	static constexpr int GC_CONFIGURATION_EVENT_SIZE = (3 * LEB128_64_SIZE) + (6 * LEB128_32_SIZE) + (3 * sizeof(U_8));
+	static constexpr int GC_SURVIVOR_CONFIGURATION_EVENT_SIZE = (2 * LEB128_64_SIZE) + (3 * LEB128_32_SIZE);
 
 	static constexpr int METADATA_ID = 1;
 
@@ -414,6 +416,8 @@ private:
 				writeYoungGenerationConfigurationEvent();
 
 				writeGCConfigurationEvent();
+
+				writeGCSurvivorConfigurationEvent();
 			}
 
 			writePhysicalMemoryEvent();
@@ -452,6 +456,10 @@ private:
 
 			if (_constantPoolTypes.shouldWriteGCConfigurationEvent()) {
 				writeGCConfigurationEvent();
+			}
+
+			if (_constantPoolTypes.shouldWriteGCSurvivorConfigurationEvent()) {
+				writeGCSurvivorConfigurationEvent();
 			}
 		}
 	}
@@ -1025,6 +1033,8 @@ done:
 
 	void writeGCConfigurationEvent();
 
+	void writeGCSurvivorConfigurationEvent();
+
 	void writeInitialSystemPropertyEvents(J9JavaVM *vm);
 
 	void writeInitialEnvironmentVariableEvents();
@@ -1127,10 +1137,14 @@ done:
 			requiredBufferSize += (_constantPoolTypes.getPhysicalMemoryCount() * PHYSICAL_MEMORY_EVENT_SIZE);
 
 			requiredBufferSize += (_constantPoolTypes.shouldWriteGCConfigurationEvent() * GC_CONFIGURATION_EVENT_SIZE);
+
+			requiredBufferSize += (_constantPoolTypes.shouldWriteGCSurvivorConfigurationEvent() * GC_SURVIVOR_CONFIGURATION_EVENT_SIZE);
 		} else {
 			requiredBufferSize += PHYSICAL_MEMORY_EVENT_SIZE;
 
 			requiredBufferSize += GC_CONFIGURATION_EVENT_SIZE;
+
+			requiredBufferSize += GC_SURVIVOR_CONFIGURATION_EVENT_SIZE;
 		}
 
 		requiredBufferSize += VIRTUALIZATION_INFORMATION_EVENT_SIZE;

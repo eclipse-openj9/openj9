@@ -857,6 +857,37 @@ j9gc_get_maximum_heap_size(J9JavaVM *javaVM)
 }
 
 /**
+ * API to return the maximum tenuring threshold (OBJECT_HEADER_AGE_MAX).
+ */
+UDATA
+j9gc_get_max_tenuring_threshold(J9JavaVM *javaVM)
+{
+	return OBJECT_HEADER_AGE_MAX;
+}
+
+/**
+ * API to return the initial tenuring threshold for the scavenger.
+ */
+UDATA
+j9gc_get_initial_tenuring_threshold(J9JavaVM *javaVM)
+{
+	UDATA result = OMR_OBJECT_HEADER_AGE_DEFAULT;
+	MM_GCExtensions *extensions = MM_GCExtensions::getExtensions(javaVM);
+
+	if (extensions->scvTenureStrategyFixed && !extensions->scvTenureStrategyAdaptive) {
+		/* Fixed-only mode: use the explicitly configured fixed tenure age. */
+		result = extensions->scvTenureFixedTenureAge;
+	} else if (0 != extensions->scvTenureAdaptiveTenureAge) {
+		/* Adaptive strategy is on (default). scvTenureAdaptiveTenureAge starts at 0 and is
+		 * initialized to OMR_OBJECT_HEADER_AGE_DEFAULT on the first GC cycle. */
+		result = extensions->scvTenureAdaptiveTenureAge;
+	}
+	/* else: neither fixed-only nor initialized adaptive — default already set above. */
+
+	return result;
+}
+
+/**
  * API to return the heap base address
  */
 void *

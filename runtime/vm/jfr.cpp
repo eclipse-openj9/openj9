@@ -266,6 +266,7 @@ jfrEventSize(J9JFREvent *jfrEvent)
 	case J9JFR_EVENT_TYPE_MODULE_EXPORT:
 	case J9JFR_EVENT_TYPE_NATIVE_LIBRARY:
 	case J9JFR_EVENT_TYPE_GC_CONFIGURATION:
+	case J9JFR_EVENT_TYPE_GC_SURVIVOR_CONFIGURATION:
 		size = sizeof(J9JFREvent);
 		break;
 	case J9JFR_EVENT_TYPE_PHYSICAL_MEMORY:
@@ -3155,6 +3156,9 @@ JfrPeriodicEventSet::requestEvent(J9VMThread *currentThread, jlong id)
 	case JfrGCConfigurationEvent:
 		requestGCConfiguration(currentThread);
 		break;
+	case JfrGCSurvivorConfigurationEvent:
+		requestGCSurvivorConfiguration(currentThread);
+		break;
 	default:
 		return JNI_FALSE;
 	}
@@ -3508,6 +3512,18 @@ jfrThreadAllocationStatisticsCallback(J9VMThread *currentThread, IDATA handlerKe
 		jfrEvent->allocated = (U_64)allocated;
 	}
 
+}
+
+void
+JfrPeriodicEventSet::requestGCSurvivorConfiguration(J9VMThread *currentThread)
+{
+	if (!isJFREventEnabled(currentThread->javaVM, JfrGCSurvivorConfigurationEvent)) {
+		return;
+	}
+	J9JFREvent *jfrEvent = (J9JFREvent *)reserveBuffer(currentThread, currentThread, sizeof(J9JFREvent));
+	if (NULL != jfrEvent) {
+		initializeEventFields(currentThread, currentThread, jfrEvent, J9JFR_EVENT_TYPE_GC_SURVIVOR_CONFIGURATION);
+	}
 }
 #endif /* JAVA_SPEC_VERSION >= 17 */
 
