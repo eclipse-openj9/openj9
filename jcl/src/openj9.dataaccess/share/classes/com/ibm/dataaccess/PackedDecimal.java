@@ -42,26 +42,6 @@ public final class PackedDecimal {
 		super();
 	}
 
-	private static final ThreadLocal<PackedDecimalOperand> op1_threadLocal = new ThreadLocal<PackedDecimalOperand>() {
-		protected PackedDecimalOperand initialValue()
-		{
-		return new PackedDecimalOperand();
-		}
-	};
-
-	private static final ThreadLocal<PackedDecimalOperand> op2_threadLocal = new ThreadLocal<PackedDecimalOperand>() {
-		protected PackedDecimalOperand initialValue()
-		{
-		return new PackedDecimalOperand();
-		}
-	};
-
-	private static final ThreadLocal<PackedDecimalOperand> sum_threadLocal = new ThreadLocal<PackedDecimalOperand>() {
-		protected PackedDecimalOperand initialValue()
-		{
-		return new PackedDecimalOperand();
-		}
-	};
 
 	/**
 	 * Checks the validity of a Packed Decimal, return code indicating the status of the Packed Decimal.
@@ -197,10 +177,9 @@ public final class PackedDecimal {
 		return checkPackedDecimal(byteArray, offset, precision, false, false);
 	}
 
-	private static void copyRemainingDigits(PackedDecimalOperand op1,
-			PackedDecimalOperand op2, boolean checkOverflow)
+	private static void copyRemainingDigits(PackedDecimalOperand sum,
+			PackedDecimalOperand op1, boolean checkOverflow)
 			throws ArithmeticException {
-		PackedDecimalOperand sum = sum_threadLocal.get();
 
 		int bytes;
 		// copy any high order digits left in larger value to result
@@ -302,14 +281,16 @@ public final class PackedDecimal {
 			int resultPrecision, byte[] op1Decimal, int op1Offset,
 			int op1Precision, byte[] op2Decimal, int op2Offset,
 			int op2Precision, boolean checkOverflow) throws ArithmeticException {
+		PackedDecimalOperand sum = new PackedDecimalOperand();
+		PackedDecimalOperand op1 = new PackedDecimalOperand();
+		PackedDecimalOperand op2 = new PackedDecimalOperand();
 		// capture result type information
-		sum_threadLocal.get().setSumOperand(result, resultOffset,
-				resultPrecision);
+		sum.setSumOperand(result, resultOffset, resultPrecision);
 		// ignore leading zeros in operand values
-		op1_threadLocal.get().setOperand(op1Decimal, op1Offset, op1Precision);
-		op2_threadLocal.get().setOperand(op2Decimal, op2Offset, op2Precision);
+		op1.setOperand(op1Decimal, op1Offset, op1Precision);
+		op2.setOperand(op2Decimal, op2Offset, op2Precision);
 		// add values
-		computeValue(checkOverflow);
+		computeValue(sum, op1, op2, checkOverflow);
 	}
 
 	/**
@@ -372,11 +353,9 @@ public final class PackedDecimal {
 			int resultPrecision, byte[] op1Decimal, int op1Offset,
 			int op1Precision, byte[] op2Decimal, int op2Offset,
 			int op2Precision, boolean checkOverflow) throws ArithmeticException {
-
-		PackedDecimalOperand sum = sum_threadLocal.get();
-		PackedDecimalOperand op1 = op1_threadLocal.get();
-		PackedDecimalOperand op2 = op2_threadLocal.get();
-
+		PackedDecimalOperand sum = new PackedDecimalOperand();
+		PackedDecimalOperand op1 = new PackedDecimalOperand();
+		PackedDecimalOperand op2 = new PackedDecimalOperand();
 		// capture result type information
 		sum.setSumOperand(result, resultOffset, resultPrecision);
 		// ignore leading zeros in operand values
@@ -384,13 +363,11 @@ public final class PackedDecimal {
 		op2.setOperand(op2Decimal, op2Offset, op2Precision);
 		// change op2 sign for subtraction
 		if ((op2.sign & CommonData.LOWER_NIBBLE_MASK) == CommonData.PACKED_PLUS)
-			op2.sign = (op2.sign & CommonData.HIGHER_NIBBLE_MASK)
-					| CommonData.PACKED_MINUS;
+			op2.sign = (op2.sign & CommonData.HIGHER_NIBBLE_MASK) | CommonData.PACKED_MINUS;
 		else
-			op2.sign = (op2.sign & CommonData.HIGHER_NIBBLE_MASK)
-					| CommonData.PACKED_PLUS;
+			op2.sign = (op2.sign & CommonData.HIGHER_NIBBLE_MASK) | CommonData.PACKED_PLUS;
 		// add values
-		computeValue(checkOverflow);
+		computeValue(sum, op1, op2, checkOverflow);
 	}
 
 	/**
@@ -414,11 +391,10 @@ public final class PackedDecimal {
 		byteArray[offset + byteLen - 1] = CommonData.PACKED_PLUS;
 	}
 
-	private static void computeSum(PackedDecimalOperand op1,
-			PackedDecimalOperand op2, boolean checkOverflow)
+	private static void computeSum(PackedDecimalOperand sum,
+			PackedDecimalOperand op1, PackedDecimalOperand op2,
+			boolean checkOverflow)
 			throws ArithmeticException {
-
-		PackedDecimalOperand sum = sum_threadLocal.get();
 
 		boolean carry;// add op2 sign digit to op1 sign digit
 		sum.indexValue = ((op1.signDigit + op2.signDigit) << 1) & 0x3FF;
@@ -485,14 +461,13 @@ public final class PackedDecimal {
 			sum.currentOffset -= 1;
 		}
 		// copy any remaining digits
-		copyRemainingDigits(op1, op2, checkOverflow);
+		copyRemainingDigits(sum, op1, op2, checkOverflow);
 	}
 
-	private static void computeDifference(PackedDecimalOperand op1,
-			PackedDecimalOperand op2, boolean checkOverflow)
+	private static void computeDifference(PackedDecimalOperand sum,
+			PackedDecimalOperand op1, PackedDecimalOperand op2,
+			boolean checkOverflow)
 			throws ArithmeticException {
-
-		PackedDecimalOperand sum = sum_threadLocal.get();
 
 		boolean borrow;
 		// compute difference from sign byte
@@ -544,32 +519,30 @@ public final class PackedDecimal {
 				sum.byteArray[sum.currentOffset] = (byte) (sum.byteValue);
 		}
 
-		copyRemainingDigits(op1, op2, checkOverflow);
+		copyRemainingDigits(sum, op1, op2, checkOverflow);
 	}
 
-	private static void computeValue(boolean checkOverflow)
+	private static void computeValue(PackedDecimalOperand sum,
+			PackedDecimalOperand op1, PackedDecimalOperand op2,
+			boolean checkOverflow)
 			throws ArithmeticException {
-
-		PackedDecimalOperand sum = sum_threadLocal.get();
-		PackedDecimalOperand op1 = op1_threadLocal.get();
-		PackedDecimalOperand op2 = op2_threadLocal.get();
 
 		if ((op1.sign & CommonData.LOWER_NIBBLE_MASK) == (op2.sign & CommonData.LOWER_NIBBLE_MASK)) {
 			// signs are same, compute sum of values
 			// add less bytes to more bytes
 			if (op1.bytes < op2.bytes)
-				computeSum(op2, op1, checkOverflow);
+				computeSum(sum, op2, op1, checkOverflow);
 			else
-				computeSum(op1, op2, checkOverflow);
+				computeSum(sum, op1, op2, checkOverflow);
 		} else { // signs are different, compute difference of values
 				 // subtract smaller value from larger value so we will always
 				 // have one to borrow
 			if (op1.bytes < op2.bytes)
-				computeDifference(op2, op1, checkOverflow); // op2 has more
-															// non-zero bytes
+				computeDifference(sum, op2, op1, checkOverflow); // op2 has more
+																 // non-zero bytes
 			else if (op1.bytes > op2.bytes)
-				computeDifference(op1, op2, checkOverflow); // op2 has more
-															// non-zero bytes
+				computeDifference(sum, op1, op2, checkOverflow); // op1 has more
+																 // non-zero bytes
 			else {
 				// compare values to find which is larger.
 				// adjust offsets at same time - difference between equal bytes
@@ -592,9 +565,9 @@ public final class PackedDecimal {
 					}
 				}
 				if ((op1.byteValue & CommonData.INTEGER_MASK) > (op2.byteValue & CommonData.INTEGER_MASK))
-					computeDifference(op1, op2, checkOverflow);
+					computeDifference(sum, op1, op2, checkOverflow);
 				else
-					computeDifference(op2, op1, checkOverflow);
+					computeDifference(sum, op2, op1, checkOverflow);
 			}
 		}
 	}
