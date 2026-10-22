@@ -24,6 +24,7 @@
 
 #include <stddef.h>
 #include "codegen/CodeGenerator.hpp"
+#include "codegen/RecognizedMethods.hpp"
 #include "compile/Compilation.hpp"
 #include "compile/OSRData.hpp"
 #include "control/Options.hpp"
@@ -33,7 +34,11 @@
 #include "il/AutomaticSymbol.hpp"
 #include "il/Block.hpp"
 #include "il/ILOpCodes.hpp"
+#include "il/MethodSymbol.hpp"
 #include "il/Node.hpp"
+#include "il/Node_inlines.hpp"
+#include "il/ParameterSymbol.hpp"
+#include "il/RegisterMappedSymbol.hpp"
 #include "il/ResolvedMethodSymbol.hpp"
 #include "il/Symbol.hpp"
 #include "il/SymbolReference.hpp"
@@ -46,6 +51,7 @@
 #include "infra/TRCfgNode.hpp"
 #include "optimizer/Optimization.hpp"
 #include "optimizer/DataFlowAnalysis.hpp"
+#include "ras/Logger.hpp"
 
 // Local live variables for GC
 //
@@ -53,6 +59,82 @@
 // during the method prologue.
 
 #define OPT_DETAILS "O^O LIVE VARIABLES FOR GC: "
+
+namespace {
+
+/**
+ * Live variable information that also treats the operand of a
+ * Reference.reachabilityFence / Bits.keepAlive call as a use when that operand
+ * is a register load.
+ *
+ * Global register allocation replaces loads of a local with register loads
+ * (e.g. aRegLoad), and the standard analysis only recognizes direct loads of a
+ * local as uses. A fence operand that GRA put into a register would therefore
+ * look dead, and the local would be missing from the GC maps in the code
+ * leading up to the fence. Only the two fence methods are affected, so
+ * liveness for all other calls is unchanged.
+ *
+ * Assisted-by: IBM BOB
+ */
+class TR_FenceAwareLiveVariableInformation : public TR_LiveVariableInformation {
+public:
+    TR_FenceAwareLiveVariableInformation(TR::Compilation *comp, TR::Optimizer *optimizer, TR_Structure *rootStructure,
+        bool splitLongs, bool includeParms, bool ignoreOSRUses)
+        : TR_LiveVariableInformation(comp, optimizer, rootStructure, splitLongs, includeParms, ignoreOSRUses)
+    {}
+
+protected:
+    virtual void findUseOfLocal(TR::Node *node, int32_t blockNum, TR_BitVector **genSetInfo, TR_BitVector **killSetInfo,
+        TR_BitVector *commonedLoads, bool movingForwardThroughTrees, vcount_t visitCount)
+    {
+        TR_LiveVariableInformation::findUseOfLocal(node, blockNum, genSetInfo, killSetInfo, commonedLoads,
+            movingForwardThroughTrees, visitCount);
+
+        TR::Node *call = (node->getOpCodeValue() == TR::treetop) ? node->getFirstChild() : node;
+        if (!call->getOpCode().isCall() || call->getNumChildren() != 1)
+            return;
+
+        TR::MethodSymbol *methodSym = call->getSymbol()->getMethodSymbol();
+        if (!methodSym)
+            return;
+
+        TR::RecognizedMethod rm = methodSym->getRecognizedMethod();
+        if (rm != TR::java_lang_ref_Reference_reachabilityFence && rm != TR::java_nio_Bits_keepAlive)
+            return;
+
+        // A direct load of the local is already handled by the standard analysis.
+        TR::Node *operand = call->getFirstChild();
+        if (!operand->getOpCode().isLoadReg())
+            return;
+
+        TR::SymbolReference *symRef = operand->getRegLoadStoreSymbolReference();
+        if (!symRef)
+            return;
+
+        TR::RegisterMappedSymbol *local = symRef->getSymbol()->getAutoSymbol();
+        if (!local && includeParms())
+            local = symRef->getSymbol()->getParmSymbol();
+        if (!local)
+            return;
+
+        uint16_t localIndex = local->getLiveLocalIndex();
+        if (localIndex == INVALID_LIVENESS_INDEX)
+            return;
+
+        // Same rule as the standard analysis: not a use if the local was already killed in this block.
+        if (killSetInfo[blockNum] && killSetInfo[blockNum]->get(localIndex))
+            return;
+
+        if (genSetInfo[blockNum] == NULL)
+            genSetInfo[blockNum] = new (trStackMemory()) TR_BitVector(numLocals(), trMemory(), stackAlloc);
+        genSetInfo[blockNum]->set(localIndex);
+
+        logprintf(traceLiveVarInfo(), comp()->log(), "            Fence operand [%p] local idx %d used in block_%d\n",
+            operand, localIndex, blockNum);
+    }
+};
+
+} // anonymous namespace
 
 TR_LocalLiveVariablesForGC::TR_LocalLiveVariablesForGC(TR::OptimizationManager *manager)
     : TR::Optimization(manager)
@@ -226,9 +308,13 @@ int32_t TR_GlobalLiveVariablesForGC::perform()
         if (comp()->getOption(TR_MimicInterpreterFrameShape))
             ignoreOSRuses = true;
 
-        TR_Liveness *liveLocals
-            = new (stackMemoryRegion) TR_Liveness(comp(), optimizer(), comp()->getFlowGraph()->getStructure(),
-                ignoreOSRuses, NULL, false, comp()->getOption(TR_EnableAggressiveLiveness));
+        bool includeParms = comp()->getOption(TR_EnableAggressiveLiveness);
+        TR_LiveVariableInformation *liveVariableInfo = new (stackMemoryRegion) TR_FenceAwareLiveVariableInformation(
+            comp(), optimizer(), comp()->getFlowGraph()->getStructure(), false, includeParms, ignoreOSRuses);
+        liveVariableInfo->collectLiveVariableInformation();
+
+        TR_Liveness *liveLocals = new (stackMemoryRegion) TR_Liveness(comp(), optimizer(),
+            comp()->getFlowGraph()->getStructure(), ignoreOSRuses, liveVariableInfo, false, includeParms);
         liveLocals->perform(comp()->getFlowGraph()->getStructure());
 
         for (TR::CFGNode *cfgNode = comp()->getFlowGraph()->getFirstNode(); cfgNode; cfgNode = cfgNode->getNext()) {
