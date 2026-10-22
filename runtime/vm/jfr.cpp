@@ -74,11 +74,14 @@ J9_DECLARE_CONSTANT_NAS(onRetransformNAS, onRetransformUTF8, onRetransformSigUTF
 #define J9JFR_SAMPLING_RATE 10
 #define J9JFR_CLASSNAME_BUFFER_SIZE 128
 #define J9TIME_MICROSECONDS_PER_SECOND	(1000000ULL)
+#define J9JFR_SECONDS_PER_DAY 86400
+#define J9JFR_MILLISECONDS_PER_DAY (J9JFR_SECONDS_PER_DAY * 1000ULL)
 #define J9JFR_OBJECT_ALLOCATION_SAMPLE_INTERVAL_GRANULARITY (1024)
 #define J9JFR_OBJECT_ALLOCATION_SAMPLE_MIN_INTERVAL	J9JFR_OBJECT_ALLOCATION_SAMPLE_INTERVAL_GRANULARITY
 #define J9JFR_OBJECT_ALLOCATION_SAMPLE_MAX_INTERVAL	(256 * 1024 * 1024)
 #define J9JFR_OBJECT_ALLOCATION_SAMPLE_DEFAULT_INTERVAL (512 * 1024) /* bytes; same as JVMTI default per JEP 331 */
-#define J9JFR_OBJECT_ALLOCATION_SAMPLE_DEFAULT_THROTTLE_RATE 150 /* events per second */
+/* The throttle rate is stored in events per day so that rates from 1/d up to 1/ms and beyond can be represented. */
+#define J9JFR_OBJECT_ALLOCATION_SAMPLE_DEFAULT_THROTTLE_RATE (150ULL * J9JFR_SECONDS_PER_DAY) /* 150 events per second */
 /* Threshold percentage for triggering a recalibration of the sampling interval.
  * Only update the interval if it has drifted by more than this percentage
  * relative to the old value, to avoid constant micro-adjustments.
@@ -773,13 +776,12 @@ enableJFRObjectAllocationSample(J9VMThread *currentThread, BOOLEAN enable)
 
 	if (enable) {
 		if (UDATA_MAX == vm->jfrState.objectAllocationSampleInterval) {
-			if (0 == vm->jfrState.objectAllocationSampleThrottleRate) {
-				vm->jfrState.objectAllocationSampleThrottleRate = J9JFR_OBJECT_ALLOCATION_SAMPLE_DEFAULT_THROTTLE_RATE;
+			if (0 != vm->jfrState.objectAllocationSampleThrottleRate) {
+				UDATA newSampleInterval = (UDATA)((U_64)J9JFR_OBJECT_ALLOCATION_SAMPLE_DEFAULT_INTERVAL * (U_64)J9JFR_OBJECT_ALLOCATION_SAMPLE_DEFAULT_THROTTLE_RATE / vm->jfrState.objectAllocationSampleThrottleRate);
+				newSampleInterval = clampAndAlignAllocationSampleInterval(newSampleInterval);
+				vm->jfrState.objectAllocationSampleInterval = newSampleInterval;
+				vm->memoryManagerFunctions->j9gc_set_internal_allocation_sampling_interval(vm, newSampleInterval);
 			}
-			UDATA newSampleInterval = J9JFR_OBJECT_ALLOCATION_SAMPLE_DEFAULT_INTERVAL * J9JFR_OBJECT_ALLOCATION_SAMPLE_DEFAULT_THROTTLE_RATE / vm->jfrState.objectAllocationSampleThrottleRate;
-			newSampleInterval = clampAndAlignAllocationSampleInterval(newSampleInterval);
-			vm->jfrState.objectAllocationSampleInterval = newSampleInterval;
-			vm->memoryManagerFunctions->j9gc_set_internal_allocation_sampling_interval(vm, newSampleInterval);
 		}
 	} else {
 		vm->jfrState.objectAllocationSampleInterval = UDATA_MAX;
@@ -790,11 +792,41 @@ enableJFRObjectAllocationSample(J9VMThread *currentThread, BOOLEAN enable)
 	internalAcquireVMAccess(currentThread);
 }
 
+/**
+ * Convert a rate of eventSampleSize events per periodMs milliseconds to events per day.
+ *
+ * Rates below 1/d are raised to 1/d so that they do not disable sampling.
+ * The result saturates at U_64_MAX if the rate is too large to represent.
+ *
+ * @param[in] eventSampleSize the number of events allowed per period
+ * @param[in] periodMs the length of the period in milliseconds
+ * @return the rate in events per day, or 0 if eventSampleSize or periodMs is 0
+ */
+static U_64
+convertThrottleToEventsPerDay(U_64 eventSampleSize, U_64 periodMs)
+{
+	U_64 throttle = 0;
+	if ((0 != eventSampleSize) && (0 != periodMs)) {
+		if (eventSampleSize <= (U_64_MAX / J9JFR_MILLISECONDS_PER_DAY)) {
+			throttle = eventSampleSize * J9JFR_MILLISECONDS_PER_DAY / periodMs;
+		} else {
+			/* Divide first to avoid overflow. */
+			U_64 eventsPerMs = eventSampleSize / periodMs;
+			throttle = (eventsPerMs <= (U_64_MAX / J9JFR_MILLISECONDS_PER_DAY)) ? (eventsPerMs * J9JFR_MILLISECONDS_PER_DAY) : U_64_MAX;
+		}
+		if (0 == throttle) {
+			throttle = 1;
+		}
+	}
+	return throttle;
+}
+
 void
-setJFRObjectAllocationSampleThrottle(J9VMThread *currentThread, UDATA throttle)
+setJFRObjectAllocationSampleThrottle(J9VMThread *currentThread, U_64 eventSampleSize, U_64 periodMs)
 {
 #if JAVA_SPEC_VERSION >= 17
 	J9JavaVM *vm = currentThread->javaVM;
+	U_64 throttle = convertThrottleToEventsPerDay(eventSampleSize, periodMs);
 	if (vm->jfrState.objectAllocationSampleThrottleRate != throttle) {
 		vm->jfrState.objectAllocationSampleThrottleRate = throttle;
 
@@ -806,7 +838,7 @@ setJFRObjectAllocationSampleThrottle(J9VMThread *currentThread, UDATA throttle)
 			UDATA newSampleInterval = UDATA_MAX;
 			/* if vm->jfrState.objectAllocationSampleThrottleRate == 0, disable sampling. */
 			if (0 != vm->jfrState.objectAllocationSampleThrottleRate) {
-				newSampleInterval = J9JFR_OBJECT_ALLOCATION_SAMPLE_DEFAULT_INTERVAL * J9JFR_OBJECT_ALLOCATION_SAMPLE_DEFAULT_THROTTLE_RATE / vm->jfrState.objectAllocationSampleThrottleRate;
+				newSampleInterval = (UDATA)((U_64)J9JFR_OBJECT_ALLOCATION_SAMPLE_DEFAULT_INTERVAL * (U_64)J9JFR_OBJECT_ALLOCATION_SAMPLE_DEFAULT_THROTTLE_RATE / vm->jfrState.objectAllocationSampleThrottleRate);
 				newSampleInterval = clampAndAlignAllocationSampleInterval(newSampleInterval);
 			}
 			if (oldSampleInterval != newSampleInterval) {
@@ -1202,7 +1234,7 @@ jfrGarbageCollection(OMR_VMThread *omrVMThread)
 }
 
 /**
- * Recalibrate the JFR ObjectAllocationSample byte interval.
+ * Recalibrate the JFR ObjectAllocationSample byte interval to maintain throttleRate events/day.
  * Called at GC cycle start, after flushCachesForGC() has already merged all per-thread
  * allocation stats into extensions->allocationStats.  Computes the allocation rate over
  * the interval since the previous GC cycle ended and adjusts the per-thread sampling interval
@@ -1214,15 +1246,15 @@ void
 jfrRecalibrateObjectAllocationSampleInterval(J9VMThread *currentThread)
 {
 	J9JavaVM *vm = currentThread->javaVM;
-	UDATA throttleRate = vm->jfrState.objectAllocationSampleThrottleRate;
+	U_64 throttleRate = vm->jfrState.objectAllocationSampleThrottleRate; /* events per day */
 	UDATA oldInterval = vm->jfrState.objectAllocationSampleInterval;
 	MM_GCExtensions *extensions = MM_GCExtensions::getExtensions(vm);
 
 	if ( (0 == throttleRate) || (UDATA_MAX == oldInterval)) {
 		return;
 	}
-	uint64_t currentGCStart = vm->memoryManagerFunctions->j9gc_get_cycle_start_time(currentThread);
-	uint64_t lastGCEnd = vm->jfrState.lastGCCycleEndTicks;
+	U_64 currentGCStart = vm->memoryManagerFunctions->j9gc_get_cycle_start_time(currentThread);
+	U_64 lastGCEnd = vm->jfrState.lastGCCycleEndTicks;
 
 	PORT_ACCESS_FROM_JAVAVM(vm);
 	OMRPORT_ACCESS_FROM_J9PORT(PORTLIB);
@@ -1231,7 +1263,7 @@ jfrRecalibrateObjectAllocationSampleInterval(J9VMThread *currentThread)
 	if ((0 == lastGCEnd) || (currentGCStart < lastGCEnd)) {
 		return;
 	}
-	uint64_t elapsedMicros = omrtime_hires_delta(lastGCEnd, currentGCStart, OMRPORT_TIME_DELTA_IN_MICROSECONDS);
+	U_64 elapsedMicros = omrtime_hires_delta(lastGCEnd, currentGCStart, OMRPORT_TIME_DELTA_IN_MICROSECONDS);
 	if (0 == elapsedMicros) {
 		elapsedMicros = 1;
 	}
@@ -1245,7 +1277,7 @@ jfrRecalibrateObjectAllocationSampleInterval(J9VMThread *currentThread)
 		return;
 	}
 
-	UDATA newInterval = (UDATA)((uint64_t)totalBytes * (uint64_t)J9TIME_MICROSECONDS_PER_SECOND / ((uint64_t)elapsedMicros * (uint64_t)throttleRate));
+	UDATA newInterval = (UDATA)((U_64)totalBytes * (U_64)J9TIME_MICROSECONDS_PER_SECOND * (U_64)J9JFR_SECONDS_PER_DAY / ((U_64)elapsedMicros * (U_64)throttleRate));
 	newInterval = clampAndAlignAllocationSampleInterval(newInterval);
 
 	int64_t diff = (int64_t)newInterval - (int64_t)oldInterval;

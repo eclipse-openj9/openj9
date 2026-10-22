@@ -66,7 +66,7 @@ Java_jdk_jfr_internal_JVM_setThrottle(JNIEnv *env, jobject obj, jlong eventTypeI
 		J9JavaVM *vm = currentThread->javaVM;
 		J9InternalVMFunctions *vmFuncs = vm->internalVMFunctions;
 		vmFuncs->internalEnterVMFromJNI(currentThread);
-		vmFuncs->setJFRObjectAllocationSampleThrottle(currentThread, eventSampleSize * 1000 / period_ms);
+		vmFuncs->setJFRObjectAllocationSampleThrottle(currentThread, (U_64)eventSampleSize, (U_64)period_ms);
 		vmFuncs->internalExitVMToJNI(currentThread);
 		result = JNI_TRUE;
 	}
