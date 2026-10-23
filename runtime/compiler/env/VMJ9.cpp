@@ -6531,12 +6531,17 @@ bool TR_J9VMBase::javaLangClassGetModifiersImpl(TR_OpaqueClassBlock *clazzPointe
         result |= (J9AccAbstract | J9AccFinal);
 #if defined(J9VM_OPT_VALHALLA_VALUE_TYPES)
         if (J9_IS_CLASSFILE_OR_ROMCLASS_VALUETYPE_VERSION(romClass)) {
-            if (J9_ARE_ANY_BITS_SET(vmThread()->javaVM->extendedRuntimeFlags2, J9_EXTENDED_RUNTIME2_ENABLE_PREVIEW)) {
+            if (TR::Compiler->om.areValueTypesEnabled()) {
                 result |= J9AccClassHasIdentity;
             }
         }
 #endif /* defined(J9VM_OPT_VALHALLA_VALUE_TYPES) */
     }
+#if defined(J9VM_OPT_VALHALLA_VALUE_TYPES)
+    if (!TR::Compiler->om.areValueTypesEnabled()) {
+        result &= ~J9AccClassHasIdentity;
+    }
+#endif /* defined(J9VM_OPT_VALHALLA_VALUE_TYPES) */
     return true;
 }
 

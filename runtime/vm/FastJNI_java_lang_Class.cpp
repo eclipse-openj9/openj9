@@ -191,6 +191,8 @@ Fast_java_lang_Class_getModifiersImpl(J9VMThread *currentThread, j9object_t rece
 		) {
 			modifiers |= J9AccClassHasIdentity;
 		}
+	} else {
+		modifiers &= ~J9AccClassHasIdentity;
 	}
 #endif /* defined(J9VM_OPT_VALHALLA_VALUE_TYPES) */
 	return (jint)modifiers;
