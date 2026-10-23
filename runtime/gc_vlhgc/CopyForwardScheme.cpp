@@ -177,6 +177,7 @@ MM_CopyForwardScheme::MM_CopyForwardScheme(MM_EnvironmentVLHGC *env, MM_HeapRegi
 	, _markMap(NULL)
 	, _heapBase(NULL)
 	, _heapTop(NULL)
+	, _singleAllocationContext(false)
 	, _regionShift((uint8_t)_regionManager->getRegionShift())
 	, _abortFlag(false)
 	, _abortInProgress(false)
@@ -258,11 +259,10 @@ MM_CopyForwardScheme::initialize(MM_EnvironmentVLHGC *env)
 	 * caches for all working threads (threadCount * cachesPerThread)
 	 */
 	uintptr_t threadCount = _extensions->dispatcher->threadCountMaximum();
-	uintptr_t compactGroupCount = MM_CompactGroupManager::getCompactGroupMaxCount(env);
 
 	/* Each thread can have a scan cache and compactGroupCount copy caches. In hierarchical, there could also be a deferred cache. */
 	uintptr_t cachesPerThread = SCAN_CACHES_PER_THREAD;
-	cachesPerThread += compactGroupCount; /* copy caches */
+	cachesPerThread += _compactGroupMaxCount; /* copy caches */
 	switch (_extensions->scavengerScanOrdering) {
 	case MM_GCExtensions::OMR_GC_SCAVENGER_SCANORDERING_BREADTH_FIRST:
 	case MM_GCExtensions::OMR_GC_SCAVENGER_SCANORDERING_DYNAMIC_BREADTH_FIRST:
@@ -344,6 +344,9 @@ MM_CopyForwardScheme::initialize(MM_EnvironmentVLHGC *env)
 		return false;
 	}
 	memset(_regionShouldMark, 0, _regionManager->getTableRegionCount() * sizeof(bool));
+
+	/* Unfortunatelly, MM_GlobalAllocationManagerTarok has not be instantiated yet, so managedContextCount is calculated from scratch. */
+	_singleAllocationContext = (1 == MM_GlobalAllocationManagerTarok::calculateIdealManagedContextCount(_extensions));
 
 	return true;
 }
@@ -1131,17 +1134,25 @@ MM_CopyForwardScheme::getDesiredCopyCacheSize(MM_EnvironmentVLHGC *env, uintptr_
 }
 
 MM_CopyScanCacheVLHGC *
-MM_CopyForwardScheme::reserveMemoryForCopy(MM_EnvironmentVLHGC *env, J9Object *objectToEvacuate, MM_AllocationContextTarok *reservingContext, uintptr_t objectReserveSizeInBytes)
+MM_CopyForwardScheme::reserveMemoryForCopy(MM_EnvironmentVLHGC *env, J9Object *objectToEvacuate, MM_AllocationContextTarok **reservingContext, uintptr_t objectReserveSizeInBytes)
 {
 	void *addrBase = NULL;
 	void *addrTop = NULL;
 	uintptr_t minimumRequiredCacheSize = objectReserveSizeInBytes;
 	uintptr_t minimumSingleObjectAllocateSize = _extensions->tlhSurvivorDiscardThreshold;
 
-	Assert_MM_objectAligned(env, objectReserveSizeInBytes);
-
 	MM_HeapRegionDescriptorVLHGC *region = (MM_HeapRegionDescriptorVLHGC *)_regionManager->tableDescriptorForAddress(objectToEvacuate);
-	uintptr_t compactGroup = MM_CompactGroupManager::getCompactGroupNumberInContext(env, region, reservingContext);
+
+	uintptr_t compactGroup = 0;
+
+	if (_singleAllocationContext) {
+		compactGroup = MM_CompactGroupManager::getCompactGroupNumberForSingleContext(region);
+	} else {
+		*reservingContext = getPreferredAllocationContext(*reservingContext, objectToEvacuate);
+
+		compactGroup = MM_CompactGroupManager::getCompactGroupNumberInContext(env, region, *reservingContext);
+	}
+
 	MM_CopyForwardCompactGroup *copyForwardCompactGroup = &env->_copyForwardCompactGroups[compactGroup];
 	
 	Assert_MM_true(compactGroup < _compactGroupMaxCount);
@@ -1971,9 +1982,7 @@ MM_CopyForwardScheme::copy(MM_EnvironmentVLHGC *env, MM_AllocationContextTarok *
 		}
 #endif /* J9VM_INTERP_NATIVE_SUPPORT */
 
-		reservingContext = getPreferredAllocationContext(reservingContext, object);
-
-		copyCache = reserveMemoryForCopy(env, object, reservingContext, objectReserveSizeInBytes);
+		copyCache = reserveMemoryForCopy(env, object, &reservingContext, objectReserveSizeInBytes);
 
 		/* Check if memory was reserved successfully */
 		if (NULL == copyCache) {

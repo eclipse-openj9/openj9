@@ -49,11 +49,11 @@ private:
 	/* Methods */
 public:
 	/**
-	 * Computes the 0-indexed compact group index for the receiver
+	 * Computes the compact group index, given the age and the explicit migration context.
 	 * @param env[in] The thread
 	 * @param age region age to compute compact group number for
 	 * @param migrationDestination The context to consider for compact group number
-	 * @return A 0-indexed value which can be used to look up the compact group if it were owned by migrationDestination
+	 * @return A value which can be used to look up the compact group if it were owned by migrationDestination
 	 */
 	MMINLINE static UDATA getCompactGroupNumberForAge(MM_EnvironmentVLHGC *env, UDATA age, MM_AllocationContextTarok *migrationDestination)
 	{
@@ -63,23 +63,41 @@ public:
 		return (contextNumber * (maxAge + 1)) + age;
 	}
 	
+	/** Computes the compact group index for signle context case (valid for common context, too), given the age.
+	 * @param age region age to compute compact group number for
+	 * @return A value which can be used to look up the compact group
+	 */
+	MMINLINE static UDATA getCompactGroupNumberForAge(UDATA age)
+	{
+		return age;
+	}
+
 	/**
-	 * Computes the 0-indexed compact group index for the receiver
+	 * Computes the compact group index for the receiver.
 	 * @param env[in] The thread
-	 * @param region Region to compute the compact group number for.
+	 * @param region Region to compute the compact group number for
 	 * @param migrationDestination The context to consider for compact group number instead of the owning context of the given region
-	 * @return A 0-indexed value which can be used to look up the region's compact group if it were owned by migrationDestination
+	 * @return A value which can be used to look up the region's compact group if it were owned by migrationDestination
 	 */
 	MMINLINE static UDATA getCompactGroupNumberInContext(MM_EnvironmentVLHGC *env, MM_HeapRegionDescriptorVLHGC *region, MM_AllocationContextTarok *migrationDestination)
 	{
 		return getCompactGroupNumberForAge(env, region->getAge(), migrationDestination);
 	}
 
+	/** Computes the compact group index for the receiver.
+	 * @param region Region to compute the compact group number for
+	 */
+
+	MMINLINE static UDATA getCompactGroupNumberForSingleContext(MM_HeapRegionDescriptorVLHGC *region)
+	{
+		return getCompactGroupNumberForAge(region->getAge());
+	}
+
 	/**
-	 * Computes the 0-indexed compact group index for the receiver
+	 * Computes the compact group index for the receiver.
 	 * @param env[in] The thread
-	 * @param region Region to compute the compact group number for.
-	 * @return A 0-indexed value which can be used to look up the regions compact group
+	 * @param region Region to compute the compact group number for
+	 * @return A value which can be used to look up the regions compact group
 	 */
 	MMINLINE static UDATA getCompactGroupNumber(MM_EnvironmentVLHGC *env, MM_HeapRegionDescriptorVLHGC *region)
 	{
@@ -88,8 +106,8 @@ public:
 
 	/**
 	 * Calculate the maximum index that can be returned for a compact group.
-	 * @param env GC thread.
-	 * @return a 0-indexed value which represents the maximum that can be returned as a compact group (duration of the system).
+	 * @param env GC thread
+	 * @return a value which represents the maximum that can be returned as a compact group (duration of the system)
 	 */
 	MMINLINE static UDATA getCompactGroupMaxCount(MM_EnvironmentVLHGC *env)
 	{
