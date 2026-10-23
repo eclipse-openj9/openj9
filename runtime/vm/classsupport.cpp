@@ -1016,13 +1016,15 @@ loadWarmClassFromSnapshotInternal(J9VMThread *vmThread, J9Class *clazz)
 	BOOLEAN rc = FALSE;
 	BOOLEAN failed = FALSE;
 
-	if (J9_ARE_NO_BITS_SET(clazz->classFlags, J9ClassIsLoadedFromSnapshot)) {
+
+	// if (J9_ARE_NO_BITS_SET(clazz->classFlags, J9ClassIsLoadedFromSnapshot))
+	{
 		J9JavaVM *vm = vmThread->javaVM;
 		J9Class *superClazz = clazz->superclasses[J9CLASS_DEPTH(clazz) - 1];
 		J9ITable *itable = (J9ITable *)clazz->iTable;
 		const char *className = (const char *)J9UTF8_DATA(J9ROMCLASS_CLASSNAME(clazz->romClass));
 
-		clazz->classFlags |= J9ClassIsLoadedFromSnapshot;
+		// clazz->classFlags |= J9ClassIsLoadedFromSnapshot;
 
 		/* Load superclasses and interfaces first. */
 		if (NULL != superClazz) {
@@ -1098,14 +1100,17 @@ BOOLEAN
 loadWarmClassFromSnapshot(J9VMThread *currentThread, J9Class *clazz)
 {
 	BOOLEAN rc = TRUE;
-	J9JavaVM *vm = currentThread->javaVM;
 
 	if (J9_ARE_ANY_BITS_SET(clazz->classFlags, J9ClassIsFrozen)) {
-		omrthread_monitor_enter(vm->rcpCacheMutex);
-		if (J9_ARE_ANY_BITS_SET(clazz->classFlags, J9ClassIsFrozen)) {
+		U_32 oldValue = clazz->classFlags & (~J9ClassIsLoadedFromSnapshot);
+		U_32 newValue = clazz->classFlags | J9ClassIsLoadedFromSnapshot;
+		if (oldValue == compareAndSwapU32(&clazz->classFlags, oldValue, newValue)) {
 			rc = loadWarmClassFromSnapshotInternal(currentThread, clazz);
+			if (J9_ARE_ANY_BITS_SET(clazz->classFlags, J9ClassIsFrozen)) {
+				/* Retry this class */
+				clazz->classFlags &= ~J9ClassIsLoadedFromSnapshot;
+			}
 		}
-		omrthread_monitor_exit(vm->rcpCacheMutex);
 	}
 
 	return rc;

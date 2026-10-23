@@ -74,8 +74,13 @@ void TR_PersistentClassInfo::setInitialized(TR_PersistentMemory *persistentMemor
 
 TR_SubClass *TR_PersistentClassInfo::addSubClass(TR_PersistentClassInfo *subClass)
 {
+#if defined(J9VM_OPT_SNAPSHOTS)
+    // It's needed for class warm loading from RCP cache memory
+    OMR::CriticalSection classGotExtended(assumptionTableMutex);
+#else /* defined(J9VM_OPT_SNAPSHOTS) */
     // No need to lock the ClassTable here; the class loader already holds the lock
     //
+#endif /* defined(J9VM_OPT_SNAPSHOTS) */
     TR_SubClass *sc = new (PERSISTENT_NEW) TR_SubClass(subClass);
     if (sc)
         _subClasses.add(sc);

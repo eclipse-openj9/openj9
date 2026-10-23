@@ -360,6 +360,15 @@ classInitStateMachine(J9VMThread *currentThread, J9Class *clazz, J9ClassInitStat
 	J9JavaVM *vm = currentThread->javaVM;
 	Assert_VM_true(clazz == VM_VMHelpers::currentClass(clazz));
 	j9object_t classObject = J9VM_J9CLASS_TO_HEAPCLASS(clazz);
+#if defined(J9VM_OPT_SNAPSHOTS)
+	while ((NULL == classObject)
+		&& IS_RESTORE_RUN(currentThread->javaVM)
+		&& J9_ARE_ANY_BITS_SET(clazz->classFlags, J9ClassIsFrozen)
+	) {
+		omrthread_yield();
+		classObject = J9VM_J9CLASS_TO_HEAPCLASS(clazz);
+	}
+#endif /* defined(J9VM_OPT_SNAPSHOTS) */
 	j9object_t initializationLock = J9VMJAVALANGCLASS_INITIALIZATIONLOCK(currentThread, classObject);
 	Trc_VM_classInitStateMachine_Entry(
 			currentThread,
