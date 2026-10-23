@@ -338,19 +338,25 @@ areJFRBuffersReadyForWrite(J9VMThread *currentThread)
  * The current thread must hold the jfrBufferMutex or have exclusive VM access.
  *
  * @param currentThread[in] the current J9VMThread
+ * @param finalWrite[in] if true then a full checkpoint write is being performed, if
+ * 						false a partial write is done keeping the checkpoint open for
+ * 						more writes (only available in JFRv2).
  *
  * @returns true on success, false on failure
  */
 static bool
-writeOutGlobalBuffer(J9VMThread *currentThread, bool finalWrite, bool dumpCalled)
+writeOutGlobalBuffer(J9VMThread *currentThread, bool finalWrite)
 {
 	J9JavaVM *vm = currentThread->javaVM;
 	Assert_VM_mustHaveVMAccess(currentThread);
 	Assert_VM_true((J9_XACCESS_EXCLUSIVE == vm->exclusiveAccessState) || (J9_XACCESS_EXCLUSIVE == vm->safePointState) || omrthread_monitor_owned_by_self(vm->jfrBufferMutex));
 	Trc_VM_jfr_writeOutGlobalBuffer(currentThread, vm->jfrBuffer.bufferSize - vm->jfrBuffer.bufferRemaining);
 
+	/* If its JFRv1 final write must be true. */
+	Assert_VM_true((!finalWrite && isJFRV2SupportEnabled(vm)) || finalWrite);
+
 	if (vm->jfrState.isCreated && (NULL != vm->jfrBuffer.bufferCurrent)) {
-		VM_JFRWriter::flushJFRDataToFile(currentThread, finalWrite, dumpCalled);
+		VM_JFRWriter::flushJFRDataToFile(currentThread, finalWrite);
 
 		/* Reset the buffer */
 		vm->jfrBuffer.bufferRemaining = vm->jfrBuffer.bufferSize;
@@ -389,7 +395,7 @@ allocateMemFromGlobalBuffer(J9VMThread *currentThread, UDATA size, bool *hasExcl
 			if (!*hasExclusive) {
 				internalAcquireVMAccess(currentThread);
 			}
-			bool result = writeOutGlobalBuffer(currentThread, false, false);
+			bool result = writeOutGlobalBuffer(currentThread, true);
 			if (!*hasExclusive) {
 				internalReleaseVMAccess(currentThread);
 			}
@@ -682,7 +688,7 @@ jfrClassesUnload(J9HookInterface **hook, UDATA eventNum, void *eventData, void *
 		/* Some class pointers in the thread and global buffers are about the become
 		 * invalid, so write out all of the available data now.
 		 */
-		writeOutGlobalBuffer(currentThread, false, false);
+		writeOutGlobalBuffer(currentThread, true);
 	}
 }
 
@@ -715,7 +721,7 @@ jfrVMShutdown(J9HookInterface **hook, UDATA eventNum, void *eventData, void *use
 
 	/* Flush and free all the thread buffers and write out the global buffer */
 	flushAllThreadBuffers(currentThread, true, false);
-	writeOutGlobalBuffer(currentThread, true, true);
+	writeOutGlobalBuffer(currentThread, true);
 
 	if (acquiredExclusive) {
 		releaseExclusiveVMAccess(currentThread);
@@ -2088,8 +2094,8 @@ void
 jfrDump(J9VMThread *currentThread, BOOLEAN finalWrite)
 {
 	/* Flush all the thread buffers and write out the global buffer. */
-	flushAllThreadBuffers(currentThread, finalWrite, false);
-	writeOutGlobalBuffer(currentThread, finalWrite, true);
+	flushAllThreadBuffers(currentThread, false, false);
+	writeOutGlobalBuffer(currentThread, finalWrite);
 }
 
 void

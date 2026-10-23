@@ -97,6 +97,7 @@ enum CheckpointTypeMask {
 	Generic = 0,
 	Flush = 1,
 	ChunkHeader = 2,
+	FlushHeader = 3,
 	Statics = 4,
 	Thread = 8,
 };
@@ -161,6 +162,7 @@ private:
 		int PackageID;
 		int StackTraceID;
 		int FrameTypeID;
+		int ChunkHeaderID;
 	};
 
 	J9VMThread *_currentThread;
@@ -179,11 +181,12 @@ private:
 	StackTraceEntry *_firstStackTraceEntry;
 	U_32 _currentFrameCount;
 	void **_globalStringTable;
-	U_8 *_jfrHeaderCursor;
 	VM_BufferWriter *_bufferWriter;
 	U_8 *_metadataOffset;
 	U_8 *_checkPointEventOffset;
 	U_8 *_lastDataStart;
+	U_8 *_checkpointHeaderStart;
+	bool _isJFRv2;
 
 	static constexpr int STRING_BUFFER_LENGTH = 128;
 	/* JFR CHUNK Header size */
@@ -296,22 +299,23 @@ private:
 				bufferWriter->getCursor() - eventStart);
 	}
 
-	void writeCheckpointEvents()
+	void writeStaticCheckpointEvents()
 	{
 		writeThreadStateCheckpointEvent();
 
 		writeFrameTypeCheckpointEvent();
 
-		if (0 == _vm->jfrState.jfrChunkCount) {
-			writeNarrowOOPModeTypesEvent();
-		}
+		writeNarrowOOPModeTypesEvent();
 
 		writeGCNameTypesEvent();
 
 		writeGCCauseTypesEvent();
 
 		writeGCWhenTypesEvent();
+	}
 
+	void writeDynamicCheckpointEvents()
+	{
 		writeThreadCheckpointEvent();
 
 		writeThreadGroupCheckpointEvent();
@@ -331,6 +335,13 @@ private:
 		writeStacktraceCheckpointEvent();
 
 		writeNetworkInterfaceNameCheckpointEvent();
+	}
+
+	void writeCheckpointEvents()
+	{
+		writeStaticCheckpointEvents();
+
+		writeDynamicCheckpointEvents();
 
 		/* The chunk header points to the last checkpoint event written, which is the head of the reverse linked list. */
 		_checkPointEventOffset = _lastDataStart;
@@ -474,19 +485,20 @@ public:
 		, _debug(false)
 		, privatePortLibrary(_vm->portLibrary)
 		, _finalWrite(finalWrite)
-		, _constantPoolTypes(currentThread)
+		, _constantPoolTypes(currentThread, finalWrite)
 		, _currentStackFrameBuffer(NULL)
 		, _previousStackTraceEntry(NULL)
 		, _firstStackTraceEntry(NULL)
 		, _currentFrameCount(0)
 		, _globalStringTable(NULL)
-		, _jfrHeaderCursor(NULL)
 		, _bufferWriter(NULL)
 		, _metadataOffset(NULL)
 		, _checkPointEventOffset(NULL)
-		, _lastDataStart(NULL)
+		, _lastDataStart(_vm->jfrState.lastCheckpointEvent)
+		, _checkpointHeaderStart(NULL)
+		, _isJFRv2(isJFRV2SupportEnabled(_vm))
 #if JAVA_SPEC_VERSION >= 17
-		, events(isJFRV2SupportEnabled(_vm) ? &v2Events : &v1Events)
+		, events(_isJFRv2 ? &v2Events : &v1Events)
 #else /* JAVA_SPEC_VERSION >= 17 */
 		, events(&v1Events)
 #endif /* JAVA_SPEC_VERSION >= 17 */
@@ -494,9 +506,9 @@ public:
 	}
 
 	void
-	loadEvents(bool dumpCalled)
+	loadEvents()
 	{
-		_constantPoolTypes.loadEvents(dumpCalled);
+		_constantPoolTypes.loadEvents();
 		_buildResult = _constantPoolTypes.getBuildResult();
 	}
 
@@ -539,7 +551,7 @@ done:
 
 	}
 
-	void writeJFRChunk(bool dumpCalled)
+	void writeJFRChunk()
 	{
 		U_8 *buffer = NULL;
 		UDATA requiredBufferSize = 0;
@@ -551,22 +563,6 @@ done:
 
 		if (_debug) {
 			_constantPoolTypes.printTables();
-		}
-
-		if (FALSE == _vm->jfrState.isConstantEventsInitialized) {
-			omrthread_monitor_enter(_vm->jfrState.isConstantEventsInitializedMutex);
-			if (FALSE == _vm->jfrState.isConstantEventsInitialized) {
-				VM_JFRConstantPoolTypes::initializeJFRConstantEvents(_vm, _currentThread, &_buildResult);
-				if (isResultNotOKay()) {
-					VM_JFRConstantPoolTypes::freeJFRConstantEvents(_vm);
-					omrthread_monitor_exit(_vm->jfrState.isConstantEventsInitializedMutex);
-					goto done;
-				}
-				/* Ensure that initialization is complete when the initialized variable is set to true */
-				VM_AtomicSupport::writeBarrier();
-				_vm->jfrState.isConstantEventsInitialized = TRUE;
-			}
-			omrthread_monitor_exit(_vm->jfrState.isConstantEventsInitializedMutex);
 		}
 
 		requiredBufferSize = calculateRequiredBufferSize();
@@ -582,17 +578,50 @@ done:
 
 			_bufferWriter = &writer;
 
-			/* write the header last */
-			_jfrHeaderCursor = _bufferWriter->getAndIncCursor(JFR_CHUNK_HEADER_SIZE);
+			if (_isJFRv2) {
+				if (0 == _vm->jfrState.chunkGeneration) {
+					Assert_VM_true(0 == _vm->jfrState.lastGenerationFileCursor);
 
-			/* Metadata is always written first, checkpoint events can be in any order */
-			_metadataOffset = writeJFRMetadata();
+					/* write the header last */
+					_bufferWriter->getAndIncCursor(JFR_CHUNK_HEADER_SIZE);
+				}
+				/* Metadata is always written first, checkpoint events can be in any order */
+				_metadataOffset = writeJFRMetadata();
 
-			writeEvents();
+				writeEvents();
 
-			writeCheckpointEvents();
+				if (0 == _vm->jfrState.chunkGeneration) {
+					writeCheckpointEvents();
+				} else {
+					writeDynamicCheckpointEvents();
+				}
 
-			writeJFRHeader();
+				_vm->jfrState.chunkGeneration++;
+
+				writeCheckpointHeader();
+
+				if (_finalWrite) {
+					/* The chunk is complete, the next chunk starts from scratch. */
+					_vm->jfrState.chunkGeneration = 0;
+					_vm->jfrState.lastGenerationFileCursor = 0;
+					_vm->jfrState.lastCheckpointEvent = NULL;
+				} else {
+					_vm->jfrState.lastGenerationFileCursor += _bufferWriter->getSize();
+					_vm->jfrState.lastCheckpointEvent = _checkPointEventOffset;
+				}
+			} else {
+				/* write the header last */
+				_bufferWriter->getAndIncCursor(JFR_CHUNK_HEADER_SIZE);
+
+				/* Metadata is always written first, checkpoint events can be in any order */
+				_metadataOffset = writeJFRMetadata();
+
+				writeEvents();
+
+				writeCheckpointEvents();
+
+				writeJFRHeader(_bufferWriter->getBufferStart());
+			}
 
 			if (_bufferWriter->overflowOccurred()) {
 				_buildResult = OutOfMemory;
@@ -605,9 +634,11 @@ done:
 
 			writeJFRChunkToFile();
 
-			_vm->jfrState.jfrChunkCount += 1;
-			_vm->jfrState.chunkStartTime = VM_JFRUtils::getCurrentTimeNanos(privatePortLibrary, _buildResult);
-			_vm->jfrState.chunkStartTicks = j9time_nano_time();
+			if (_finalWrite) {
+				_vm->jfrState.jfrChunkCount += 1;
+				_vm->jfrState.chunkStartTime = VM_JFRUtils::getCurrentTimeNanos(privatePortLibrary, _buildResult);
+				_vm->jfrState.chunkStartTicks = j9time_nano_time();
+			}
 
 freeBuffer:
 			_bufferWriter = NULL;
@@ -964,6 +995,10 @@ done:
 			_buildResult = FileIOError;
 		}
 
+		if (_isJFRv2) {
+			updateFileHeader();
+		}
+
 		if (_debug) {
 			writeIntermediateJFRChunkToFile();
 		}
@@ -971,7 +1006,20 @@ done:
 		return;
 	}
 
-	void writeJFRHeader();
+	void
+	updateFileHeader()
+	{
+		U_8 headerBuf[JFR_CHUNK_HEADER_SIZE] = {0};
+		memcpy(headerBuf, _checkpointHeaderStart, JFR_CHUNK_HEADER_SIZE);
+
+		j9file_seek(_vm->jfrState.blobFileDescriptor, 0, EsSeekSet);
+		j9file_write(_vm->jfrState.blobFileDescriptor, headerBuf, JFR_CHUNK_HEADER_SIZE);
+		j9file_seek(_vm->jfrState.blobFileDescriptor, 0, EsSeekEnd);
+	}
+
+	void writeJFRHeader(U_8 *headerStart);
+
+	U_8 *writeCheckpointHeader();
 
 	U_8 *writeJFRMetadata();
 
@@ -1133,7 +1181,7 @@ done:
 
 		requiredBufferSize += OS_INFORMATION_EVENT_SIZE;
 
-		if (isJFRV2SupportEnabled(_vm)) {
+		if (_isJFRv2) {
 			requiredBufferSize += (_constantPoolTypes.getPhysicalMemoryCount() * PHYSICAL_MEMORY_EVENT_SIZE);
 
 			requiredBufferSize += (_constantPoolTypes.shouldWriteGCConfigurationEvent() * GC_CONFIGURATION_EVENT_SIZE);

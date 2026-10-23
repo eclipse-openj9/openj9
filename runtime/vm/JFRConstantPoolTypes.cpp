@@ -29,6 +29,21 @@
 
 #include "JFRConstantPoolTypes.hpp"
 
+static void *
+findInPersistentTableFirst(J9HashTable *persistentTable, J9HashTable *transientTable, void *entry)
+{
+	void *result = NULL;
+	if (NULL != persistentTable) {
+		result = hashTableFind(persistentTable, entry);
+		if (NULL != result) {
+			return result;
+		}
+	}
+	result = hashTableFind(transientTable, entry);
+	return result;
+}
+
+
 UDATA
 VM_JFRConstantPoolTypes::jfrClassHashFn(void *key, void *userData)
 {
@@ -117,26 +132,20 @@ VM_JFRConstantPoolTypes::stackTraceHashEqualFn(void *tableNode, void *queryNode,
 UDATA
 VM_JFRConstantPoolTypes::threadGroupHashFn(void *key, void *userData)
 {
-	J9JavaVM *vm = (J9JavaVM*) userData;
 	ThreadGroupEntry *entry = (ThreadGroupEntry *) key;
 
-	void *name = entry->threadGroupName;
+	J9UTF8 *name = entry->name;
 
-	return vm->memoryManagerFunctions->j9gc_stringHashFn(&name, vm);
+	return (UDATA)VM_VMHelpers::computeHashForUTF8(J9UTF8_DATA(name), J9UTF8_LENGTH(name));
 }
 
 UDATA
 VM_JFRConstantPoolTypes::threadGroupHashEqualFn(void *tableNode, void *queryNode, void *userData)
 {
-	J9JavaVM *vm = (J9JavaVM*) userData;
 	ThreadGroupEntry *tableEntry = (ThreadGroupEntry *) tableNode;
 	ThreadGroupEntry *queryEntry = (ThreadGroupEntry *) queryNode;
 
-	j9object_t tableName = tableEntry->threadGroupName;
-
-	j9object_t queryName = queryEntry->threadGroupName;
-
-	return vm->memoryManagerFunctions->j9gc_stringHashEqualFn(&tableName, &queryName, vm);
+	return J9UTF8_EQUALS(tableEntry->name, queryEntry->name);
 }
 
 
@@ -339,7 +348,6 @@ VM_JFRConstantPoolTypes::mergeStringUTF8EntriesToGlobalTable(void *entry, void *
 {
 	StringUTF8Entry *tableEntry = (StringUTF8Entry *) entry;
 	VM_JFRConstantPoolTypes *cp = (VM_JFRConstantPoolTypes*) userData;
-
 	cp->_globalStringTable[tableEntry->index] = tableEntry;
 	cp->_requiredBufferSize += J9UTF8_LENGTH(tableEntry->string);
 	return FALSE;
@@ -350,8 +358,16 @@ VM_JFRConstantPoolTypes::mergePackageEntriesToGlobalTable(void *entry, void *use
 {
 	PackageEntry *tableEntry = (PackageEntry *) entry;
 	VM_JFRConstantPoolTypes *cp = (VM_JFRConstantPoolTypes*) userData;
+	UDATA globalStringTableCount = cp->_vm->jfrState.checkpointEventTables.globalStringTableCount;
+	U_32 index = tableEntry->index - (cp->_packageCount - cp->_newPackageCount);
+	tableEntry->symbolTableEntry = globalStringTableCount + index + cp->_newStringUTF8Count;
 
-	cp->_globalStringTable[tableEntry->index + cp->_stringUTF8Count] = tableEntry;
+	if (0 == globalStringTableCount) {
+		/* Exclude the default package. */
+		tableEntry->symbolTableEntry--;
+	}
+
+	cp->_globalStringTable[tableEntry->symbolTableEntry] = tableEntry;
 	cp->_requiredBufferSize += tableEntry->packageNameLength;
 	return FALSE;
 }
@@ -366,7 +382,7 @@ VM_JFRConstantPoolTypes::getMethodEntry(J9ROMMethod *romMethod, J9Class *ramClas
 	entry = &entryBuffer;
 	entry->romMethod = romMethod;
 
-	entry = (MethodEntry *) hashTableFind(_methodTable, entry);
+	entry = (MethodEntry *) findInPersistentTableFirst(_vm->jfrState.checkpointEventTables.methodTable, _methodTable, entry);
 	if (NULL != entry) {
 		index = entry->index;
 		goto done;
@@ -419,7 +435,7 @@ VM_JFRConstantPoolTypes::getClassEntry(J9Class *clazz, bool shallow)
 	entry = &entryBuffer;
 	entry->clazz = clazz;
 
-	entry = (ClassEntry *) hashTableFind(_classTable, entry);
+	entry = (ClassEntry *) findInPersistentTableFirst(_vm->jfrState.checkpointEventTables.classTable, _classTable, entry);
 	if (NULL != entry) {
 		index = entry->index;
 		if (!entry->shallow) {
@@ -512,7 +528,7 @@ VM_JFRConstantPoolTypes::addPackageEntry(J9Class *clazz)
 		goto done;
 	}
 
-	entry = (PackageEntry *) hashTableFind(_packageTable, entry);
+	entry = (PackageEntry *) findInPersistentTableFirst(_vm->jfrState.checkpointEventTables.packageTable, _packageTable, entry);
 	if (NULL != entry) {
 		index = entry->index;
 		goto done;
@@ -602,7 +618,7 @@ VM_JFRConstantPoolTypes::addPackageEntry(J9Module *fromModule, J9Package *packag
 
 	entry->romClass = (J9ROMClass *)(pkgID->taggedROMClass & ~(UDATA)(J9PACKAGE_ID_TAG | J9PACKAGE_ID_GENERATED));
 
-	entry = (PackageEntry *)hashTableFind(_packageTable, entry);
+	entry = (PackageEntry *)findInPersistentTableFirst(_vm->jfrState.checkpointEventTables.packageTable, _packageTable, entry);
 
 	if (NULL != entry) {
 		index = entry->index;
@@ -660,7 +676,7 @@ VM_JFRConstantPoolTypes::addModuleEntry(J9Module *module)
 		goto done;
 	}
 
-	entry = (ModuleEntry *) hashTableFind(_moduleTable, entry);
+	entry = (ModuleEntry *) findInPersistentTableFirst(_vm->jfrState.checkpointEventTables.moduleTable, _moduleTable, entry);
 	if (NULL != entry) {
 		index = entry->index;
 		goto done;
@@ -714,7 +730,7 @@ VM_JFRConstantPoolTypes::addClassLoaderEntry(J9ClassLoader *classLoader, bool sh
 	entry = &entryBuffer;
 	entry->classLoader = classLoader;
 
-	entry = (ClassloaderEntry *) hashTableFind(_classLoaderTable, entry);
+	entry = (ClassloaderEntry *) findInPersistentTableFirst(_vm->jfrState.checkpointEventTables.classLoaderTable, _classLoaderTable, entry);
 	if (NULL != entry) {
 		index = entry->index;
 		goto done;
@@ -775,7 +791,7 @@ VM_JFRConstantPoolTypes::getShallowClassEntry(J9Class *clazz)
 	entry = &entryBuffer;
 	entry->clazz = clazz;
 
-	entry = (ClassEntry *) hashTableFind(_classTable, entry);
+	entry = (ClassEntry *) findInPersistentTableFirst(_vm->jfrState.checkpointEventTables.classTable ,_classTable, entry);
 	if (NULL != entry) {
 		index = entry->index;
 		goto done;
@@ -829,7 +845,7 @@ VM_JFRConstantPoolTypes::addStringUTF8Entry(J9UTF8 *string, bool free)
 		goto done;
 	}
 
-	entry = (StringUTF8Entry *) hashTableFind(_stringUTF8Table, entry);
+	entry = (StringUTF8Entry *) findInPersistentTableFirst(_vm->jfrState.checkpointEventTables.stringUTF8Table, _stringUTF8Table, entry);
 	if (NULL != entry) {
 		index = entry->index;
 		if (free) {
@@ -1012,9 +1028,9 @@ VM_JFRConstantPoolTypes::addThreadGroupEntry(j9object_t threadGroup)
 		return 0;
 	}
 
-	entry->threadGroupName = J9VMJAVALANGTHREADGROUP_NAME(_currentThread, threadGroup);
+	entry->name = copyStringToJ9UTF8WithMemAlloc(_currentThread, J9VMJAVALANGTHREADGROUP_NAME(_currentThread, threadGroup), J9_STR_NONE, "", 0, NULL, 0);
 
-	entry = (ThreadGroupEntry *) hashTableFind(_threadGroupTable, entry);
+	entry = (ThreadGroupEntry *) findInPersistentTableFirst(_vm->jfrState.checkpointEventTables.threadGroupTable, _threadGroupTable, entry);
 	if (NULL != entry) {
 		index = entry->index;
 		goto done;
@@ -1026,15 +1042,13 @@ VM_JFRConstantPoolTypes::addThreadGroupEntry(j9object_t threadGroup)
 	if (isResultNotOKay()) goto done;
 
 	/* Check again to see if the Threadgroup was added recursively. */
-	entry = (ThreadGroupEntry *) hashTableFind(_threadGroupTable, entry);
+	entry = (ThreadGroupEntry *) findInPersistentTableFirst(_vm->jfrState.checkpointEventTables.threadGroupTable, _threadGroupTable, entry);
 	if (NULL != entry) {
 		index = entry->index;
 		goto done;
 	} else {
 		entry = &entryBuffer;
 	}
-
-	entry->name = copyStringToJ9UTF8WithMemAlloc(_currentThread, J9VMJAVALANGTHREADGROUP_NAME(_currentThread, threadGroup), J9_STR_NONE, "", 0, NULL, 0);
 
 	entry->index = _threadGroupCount;
 	_threadGroupCount++;
