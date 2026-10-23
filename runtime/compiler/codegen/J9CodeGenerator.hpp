@@ -568,6 +568,24 @@ public:
     void setSupportsInlineStringLatin1Inflate() { _j9Flags.set(SupportsInlineStringLatin1Inflate); }
 
     /** \brief
+     *    Determines whether the code generator supports inlining of java/lang/StringUTF16.compress
+     *
+     *    For JDK8, this does nothing since StringUTF16 does not exist.
+     *    For JDK9-26, this tests support for java/lang/StringUTF16.compress([CI[BII)I
+     *    For JDK27+, this tests support for java/lang/StringUTF16.compress0([CI[BII)I
+     */
+    bool getSupportsInlineStringUTF16Compress() { return _j9Flags.testAny(SupportsInlineStringUTF16Compress); }
+
+    /** \brief
+     *    The code generator supports inlining of java/lang/StringUTF16.compress
+     *
+     *    For JDK8, this does nothing since StringUTF16 does not exist.
+     *    For JDK9-26, this sets support for java/lang/StringUTF16.compress([CI[BII)I
+     *    For JDK27+, this sets support for java/lang/StringUTF16.compress0([CI[BII)I
+     */
+    void setSupportsInlineStringUTF16Compress() { _j9Flags.set(SupportsInlineStringUTF16Compress); }
+
+    /** \brief
      *    Determines whether the code generator supports inlining of java_util_concurrent_ConcurrentLinkedQueue_tm*
      *    methods
      */
@@ -868,29 +886,32 @@ private:
 
     enum // Flags
     {
-        HasFixedFrameC_CallingConvention = 0x00000001,
-        SupportsMaxPrecisionMilliTime = 0x00000002,
-        SupportsInlineStringCaseConversion = 0x00000004, /*! codegen inlining of Java string case conversion */
-        SupportsInlineStringIndexOf = 0x00000008, /*! codegen inlining of Java string index of */
-        SupportsInlineStringHashCode = 0x00000010, /*! codegen inlining of Java string hash code */
-        SupportsInlineConcurrentLinkedQueue = 0x00000020,
+        // clang-format off
+        HasFixedFrameC_CallingConvention          = 0x00000001,
+        SupportsMaxPrecisionMilliTime             = 0x00000002,
+        SupportsInlineStringCaseConversion        = 0x00000004, /*! codegen inlining of Java string case conversion */
+        SupportsInlineStringIndexOf               = 0x00000008, /*! codegen inlining of Java string index of */
+        SupportsInlineStringHashCode              = 0x00000010, /*! codegen inlining of Java string hash code */
+        SupportsInlineConcurrentLinkedQueue       = 0x00000020,
         SupportsBigDecimalLongLookasideVersioning = 0x00000040,
-        SupportsInlineStringLatin1Inflate = 0x00000080, /*! codegen inlining of Java StringLatin1.inflate */
-        SupportsIntegerStringSize = 0x00000100,
-        SupportsIntegerToChars = 0x00000200,
-        SupportsInlineEncodeASCII = 0x00000400,
-        SavesNonVolatileGPRsForGC = 0x00000800,
-        SupportsInlineVectorizedMismatch = 0x00001000,
-        SupportsInlineVectorizedHashCode = 0x00002000,
-        SupportsInlineStringCodingHasNegatives = 0x00004000,
-        SupportsInlineStringCodingCountPositives = 0x00008000,
-        SupportsInlineMath_MaxMin_FD = 0x00010000,
-        SupportsInlineUnsafeCompareAndSet = 0x00020000,
-        SupportsInlineUnsafeCompareAndExchange = 0x00040000,
-        SupportsInlineStringIndexOfString = 0x00080000, /*! codegen inlining of Java string index of string */
-        SupportsInlineDecodeToLatin1Impl = 0x00100000,
-        SupportsInlineIntegerCompareUnsigned = 0x00200000,
-        SupportsInlineLongCompareUnsigned = 0x00400000,
+        SupportsInlineStringLatin1Inflate         = 0x00000080, /*! codegen inlining of Java StringLatin1.inflate */
+        SupportsIntegerStringSize                 = 0x00000100,
+        SupportsIntegerToChars                    = 0x00000200,
+        SupportsInlineEncodeASCII                 = 0x00000400,
+        SavesNonVolatileGPRsForGC                 = 0x00000800,
+        SupportsInlineVectorizedMismatch          = 0x00001000,
+        SupportsInlineVectorizedHashCode          = 0x00002000,
+        SupportsInlineStringCodingHasNegatives    = 0x00004000,
+        SupportsInlineStringCodingCountPositives  = 0x00008000,
+        SupportsInlineMath_MaxMin_FD              = 0x00010000,
+        SupportsInlineUnsafeCompareAndSet         = 0x00020000,
+        SupportsInlineUnsafeCompareAndExchange    = 0x00040000,
+        SupportsInlineStringIndexOfString         = 0x00080000, /*! codegen inlining of Java string index of string */
+        SupportsInlineDecodeToLatin1Impl          = 0x00100000,
+        SupportsInlineIntegerCompareUnsigned      = 0x00200000,
+        SupportsInlineLongCompareUnsigned         = 0x00400000,
+        SupportsInlineStringUTF16Compress         = 0x00800000,
+        // clang-format on
     };
 
     flags32_t _j9Flags;
