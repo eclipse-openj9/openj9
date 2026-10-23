@@ -128,6 +128,8 @@ private:
 
 	volatile uintptr_t _doneIndex;	/**< Incremented when _cacheScanLists are empty and we want all threads to fall out of *_workQueueMonitorPtr */
 
+	volatile uintptr_t _preservedGcReadBarrierType; /**< RB value before we set it to ALWAYS for Clearable phase */
+
 	MM_MarkMap *_markMap;  /**< Cached reference to the previous mark map */
 
 	void *_heapBase;  /**< Cached base pointer of heap */
