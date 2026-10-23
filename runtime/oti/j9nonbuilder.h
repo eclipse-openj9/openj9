@@ -5126,6 +5126,8 @@ typedef struct J9MemoryManagerFunctions {
 	void  ( *J9WriteBarrierPreClass)(struct J9VMThread *vmThread, J9Object *dstClassObject, J9Object **dstAddress, J9Object *srcObject) ;
 	void  ( *J9ReadBarrier)(struct J9VMThread *vmThread, fj9object_t *srcAddress);
 	void  ( *J9ReadBarrierClass)(struct J9VMThread *vmThread, j9object_t *srcAddress);
+	void  ( *J9ReadBarrierVM)(struct J9JavaVM *javaVM, fj9object_t *srcAddress);
+	void  ( *J9ReadBarrierClassVM)(struct J9JavaVM *javaVM, j9object_t *srcAddress);
 	j9object_t  ( *j9gc_weakRoot_readObject)(struct J9VMThread *vmThread, j9object_t *srcAddress);
 	j9object_t  ( *j9gc_weakRoot_readObjectVM)(struct J9JavaVM *vm, j9object_t *srcAddress);
 	UDATA  ( *j9gc_ext_check_is_valid_heap_object)(struct J9JavaVM *javaVM, j9object_t ptr, UDATA flags) ;

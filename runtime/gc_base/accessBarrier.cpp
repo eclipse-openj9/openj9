@@ -735,6 +735,20 @@ J9ReadBarrierClass(J9VMThread *vmThread, j9object_t *srcAddress)
 	barrier->preObjectRead(vmThread, NULL, srcAddress);
 }
 
+void
+J9ReadBarrierVM(J9JavaVM *javaVM, fj9object_t *srcAddress)
+{
+	MM_ObjectAccessBarrier *barrier = MM_GCExtensions::getExtensions(javaVM)->accessBarrier;
+	barrier->preObjectRead(NULL, NULL, srcAddress);
+}
+
+void
+J9ReadBarrierClassVM(J9JavaVM *javaVM, j9object_t *srcAddress)
+{
+	MM_ObjectAccessBarrier *barrier = MM_GCExtensions::getExtensions(javaVM)->accessBarrier;
+	barrier->preObjectRead(NULL, NULL, srcAddress);
+}
+
 j9object_t
 j9gc_weakRoot_readObject(J9VMThread *vmThread, j9object_t *srcAddress)
 {
