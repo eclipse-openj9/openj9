@@ -1238,6 +1238,7 @@ nonpublic:
 				methodIndex <<= J9_ITABLE_INDEX_SHIFT;
 				methodIndex = methodIndex | tagBits | oldArgCount;
 				ramCPEntry->methodIndexAndArgCount = methodIndex;
+				VM_AtomicSupport::writeBarrier();
 				ramCPEntry->interfaceClass = (UDATA)interfaceClass;
 			}
 		}

@@ -8369,7 +8369,6 @@ done:
 	VMINLINE VM_BytecodeAction
 	invokeinterfaceOffset(REGISTER_ARGS_LIST, UDATA offset)
 	{
-retry:
 		VM_BytecodeAction rc = GOTO_RUN_METHOD;
 		U_16 index = *(U_16*)(_pc + 1 + offset);
 		J9ConstantPool *ramConstantPool = J9_CP_FROM_METHOD(_literals);
@@ -8393,7 +8392,8 @@ resolve:
 					rc = GOTO_THROW_CURRENT_EXCEPTION;
 					goto done;
 				}
-				goto retry;
+				rc = EXECUTE_BYTECODE;
+				goto done;
 			}
 			rc = THROW_NPE;
 		} else {
@@ -8431,7 +8431,8 @@ foundITableCache:
 							 * for interfaceClass, but the unresolved for methodIndexAndArgcCount.
 							 */
 							if (J9_UNEXPECTED(J9_ITABLE_INDEX_UNRESOLVED_VALUE == methodIndex)) {
-								goto retry;
+								rc = EXECUTE_BYTECODE;
+								goto done;
 							}
 							_sendMethod = *(J9Method**)((UDATA)receiverClass + methodIndex);
 						}
