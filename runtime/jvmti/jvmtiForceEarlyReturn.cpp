@@ -194,6 +194,16 @@ jvmtiForceEarlyReturn(jvmtiEnv* env,
 					J9ROMMethod *romMethod = J9_ROM_METHOD_FROM_RAM_METHOD(method);
 					if (J9_ARE_ANY_BITS_SET(romMethod->modifiers, J9AccNative)) {
 						rc = JVMTI_ERROR_OPAQUE_FRAME;
+#if defined(J9VM_OPT_VALHALLA_VALUE_TYPES)
+					} else if (vm->internalVMFunctions->areValueTypesEnabled(vm)
+						&& J9ROMCLASS_IS_VALUE(J9_CLASS_FROM_METHOD(method)->romClass)
+						&& J9UTF8_LITERAL_EQUALS_UTF8(J9ROMMETHOD_NAME(romMethod), "<init>")
+					) {
+						/* Early return from a value class constructor is not supported
+						 * since strict instance fields may not have been initialized.
+						 */
+						rc = JVMTI_ERROR_OPAQUE_FRAME;
+#endif /* defined(J9VM_OPT_VALHALLA_VALUE_TYPES) */
 					} else {
 						J9UTF8 *sig = J9ROMMETHOD_SIGNATURE(romMethod);
 						U_8 *data = J9UTF8_DATA(sig);
