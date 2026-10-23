@@ -2201,10 +2201,10 @@ getTypeIdImpl(J9VMThread *currentThread, J9ClassLoader *classLoader, J9UTF8 *cla
 	J9JFRTypeID *jfrTypeID = &entry;
 
 	if (NULL != clazz) {
-		if (NULL == vm->jfrState.jfrEventClassRef) {
+		if (NULL == vm->jfrState.jfrInternalEventClassRef) {
 			return -1;
 		}
-		J9Class *eventClass = J9VMJAVALANGCLASS_VMREF(currentThread, J9_JNI_UNWRAP_REFERENCE(vm->jfrState.jfrEventClassRef));
+		J9Class *eventClass = J9VMJAVALANGCLASS_VMREF(currentThread, J9_JNI_UNWRAP_REFERENCE(vm->jfrState.jfrInternalEventClassRef));
 		if (!isSameOrSuperClassOf(eventClass, clazz)
 			|| J9_ARE_ANY_BITS_SET(clazz->romClass->modifiers, J9AccAbstract)
 		) {
