@@ -89,21 +89,6 @@ struct TR_ResolvedMethodKey {
     }
 };
 
-struct TR_IsUnresolvedString {
-    TR_IsUnresolvedString()
-        : _optimizeForAOTTrueResult(false)
-        , _optimizeForAOTFalseResult(false)
-    {}
-
-    TR_IsUnresolvedString(bool optimizeForAOTTrueResult, bool optimizeForAOTFalseResult)
-        : _optimizeForAOTTrueResult(optimizeForAOTTrueResult)
-        , _optimizeForAOTFalseResult(optimizeForAOTFalseResult)
-    {}
-
-    bool _optimizeForAOTTrueResult;
-    bool _optimizeForAOTFalseResult;
-};
-
 // define a hash function for TR_ResolvedMethodKey
 namespace std {
 template<> struct hash<TR_ResolvedMethodKey> {
@@ -179,6 +164,7 @@ public:
     virtual void *dynamicConstant(int32_t cpIndex, uintptr_t *obj) override;
 
     virtual bool isUnresolvedString(int32_t cpIndex, bool optimizeForAOT = false) override;
+    virtual bool isUnresolvedString(int32_t cpIndex, void **stringAddress) override;
     virtual TR_ResolvedMethod *getResolvedVirtualMethod(TR::Compilation *, int32_t cpIndex, bool ignoreRtResolve,
         bool *unresolvedInCP) override;
     virtual TR_ResolvedMethod *getResolvedPossiblyPrivateVirtualMethod(TR::Compilation *, int32_t cpIndex,
@@ -357,7 +343,7 @@ public:
     virtual bool getUnresolvedStaticMethodInCP(int32_t cpIndex) override;
     virtual bool getUnresolvedSpecialMethodInCP(I_32 cpIndex) override;
     virtual bool getUnresolvedVirtualMethodInCP(int32_t cpIndex) override;
-    /* No need to override the stringConstant method as the parent method will be sufficient */
+    virtual bool isUnresolvedString(int32_t cpIndex, void **stringAddress) override;
     virtual bool fieldAttributes(TR::Compilation *comp, int32_t cpIndex, uint32_t *fieldOffset, TR::DataType *type,
         bool *volatileP, bool *isFinal, bool *isPrivate, bool isStore, bool *unresolvedInCP,
         bool needAOTValidation) override;

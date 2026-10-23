@@ -80,7 +80,6 @@ enum MessageType : uint16_t {
     ResolvedMethod_methodIsNotzAAPEligible,
     ResolvedMethod_setClassForNewInstance,
     ResolvedMethod_getResolvedImproperInterfaceMethodAndMirror,
-    ResolvedMethod_isUnresolvedString,
     ResolvedMethod_stringConstant,
     ResolvedMethod_getResolvedVirtualMethod,
     ResolvedMethod_getMultipleResolvedMethods,
