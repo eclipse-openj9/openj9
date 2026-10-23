@@ -1317,12 +1317,32 @@ typedef struct J9CudaGlobals {
 	jmethodID runnable_run;
 } J9CudaGlobals;
 
-#define J9_MAP_CACHE_SLOTS 2
+/* Cache slot sizes must all be multiples of 64 bits. */
+#define J9_STACKMAP_CACHE_BITS 64
+#define J9_LOCALMAP_CACHE_BITS 64
+#define J9_ARGBITS_CACHE_BITS 64
 
-typedef struct J9MapCacheEntry {
+/* Flag values for J9ROMMethodInfo. */
+#define J9MAPCACHE_STACKMAP_CACHED 0x01
+#define J9MAPCACHE_LOCALMAP_CACHED 0x02
+#define J9MAPCACHE_ARGBITS_CACHED 0x04
+#define J9MAPCACHE_METHOD_IS_CONSTRUCTOR 0x08
+#define J9MAPCACHE_VALID 0x80
+
+/* J9ROMMethodInfo must be a multiple of 8 bytes in size. */
+typedef struct J9ROMMethodInfo {
 	void *key;
-	U_32 bits[J9_MAP_CACHE_SLOTS];
-} J9MapCacheEntry;
+	U_32 stackMap[J9_STACKMAP_CACHE_BITS / 32];
+	U_32 localMap[J9_LOCALMAP_CACHE_BITS / 32];
+	U_32 argBits[J9_ARGBITS_CACHE_BITS / 32];
+	U_32 modifiers;
+	U_16 tempCount;
+	U_8 argCount;
+	U_8 flags;
+#if !defined(J9VM_ENV_DATA64)
+	U_32 padTo64;
+#endif /* !defined(J9VM_ENV_DATA64) */
+} J9ROMMethodInfo;
 
 #if defined(J9VM_OPT_SHARED_CLASSES)
 
@@ -3985,9 +4005,7 @@ typedef struct J9ClassLoader {
 	UDATA initClassPathEntryCount;
 	UDATA keepJNIIDs;
 	omrthread_monitor_t mapCacheMutex;
-	struct J9HashTable* localmapCache;
-	struct J9HashTable* argsbitsCache;
-	struct J9HashTable* stackmapCache;
+	struct J9HashTable *romMethodInfoCache;
 #if defined(J9VM_OPT_JFR)
 	J9HashTable *typeIDs;
 #endif /* defined(J9VM_OPT_JFR) */
@@ -5609,7 +5627,7 @@ typedef struct J9InternalVMFunctions {
 	void  ( *javaAndCStacksMustBeInSync)(struct J9VMThread * vmThread, BOOLEAN fromJIT) ;
 #endif /* defined(J9VM_PORT_ZOS_CEEHDLRSUPPORT) */
 	struct J9Class*  ( *findFieldSignatureClass)(struct J9VMThread *vmStruct, J9ConstantPool *ramCP, UDATA fieldRefCpIndex) ;
-	void  ( *walkBytecodeFrameSlots)(J9StackWalkState *walkState, struct J9Method *method, UDATA offsetPC, UDATA *pendingBase, UDATA pendingStackHeight, UDATA *localBase, UDATA numberOfLocals, UDATA alwaysLocalMap) ;
+	void  ( *walkBytecodeFrameSlots)(J9ROMMethodInfo *romMethodInfo, J9StackWalkState *walkState, struct J9Method *method, UDATA offsetPC, UDATA *pendingBase, UDATA pendingStackHeight, UDATA *localBase, UDATA numberOfLocals, UDATA alwaysLocalMap) ;
 	void*  ( *jniNativeMethodProperties)(struct J9VMThread *currentThread, struct J9Method *jniNativeMethod, UDATA *properties) ;
 	void  ( *invalidJITReturnAddress)(J9StackWalkState *walkState) ;
 	struct J9ClassLoader*  ( *internalAllocateClassLoader)(struct J9JavaVM *javaVM, j9object_t classLoaderObject) ;
@@ -6617,7 +6635,7 @@ typedef struct J9JavaVM {
 #endif /* defined(J9VM_OPT_METHOD_HANDLE) */
 	UDATA  ( *jitExceptionHandlerSearch)(struct J9VMThread *currentThread, struct J9StackWalkState *walkState) ;
 	UDATA  ( *walkStackFrames)(struct J9VMThread *currentThread, struct J9StackWalkState *walkState) ;
-	UDATA  ( *walkFrame)(struct J9StackWalkState *walkState) ;
+	UDATA  ( *walkFrame)(J9ROMMethodInfo *romMethodInfo, struct J9StackWalkState *walkState) ;
 	UDATA  ( *jitWalkStackFrames)(struct J9StackWalkState *walkState) ;
 	UDATA  ( *jitGetOwnedObjectMonitors)(struct J9StackWalkState *walkState) ;
 	UDATA jniArrayCacheMaxSize;
