@@ -292,13 +292,13 @@ static void
 virtualThreadMountBegin(JNIEnv *env, jobject thread)
 {
 	J9VMThread *currentThread = (J9VMThread *)env;
-	J9InternalVMFunctions const * const vmFuncs = currentThread->javaVM->internalVMFunctions;
+	J9JavaVM *vm = currentThread->javaVM;
+	J9InternalVMFunctions const * const vmFuncs = vm->internalVMFunctions;
 
 	j9object_t threadObj = J9_JNI_UNWRAP_REFERENCE(thread);
 	Assert_SC_true(IS_JAVA_LANG_VIRTUALTHREAD(currentThread, threadObj));
 
 	if (TrcEnabled_Trc_SC_VirtualThread_Info) {
-		J9JavaVM *vm = currentThread->javaVM;
 		j9object_t continuationObj = J9VMJAVALANGVIRTUALTHREAD_CONT(currentThread, threadObj);
 		J9VMContinuation *continuation = J9VMJDKINTERNALVMCONTINUATION_VMREF(currentThread, continuationObj);
 		Trc_SC_VirtualThread_Info(
@@ -310,6 +310,8 @@ virtualThreadMountBegin(JNIEnv *env, jobject thread)
 				continuationObj,
 				continuation);
 	}
+
+	VM_AtomicSupport::add(&vm->activeVirtualThreadCount, 1);
 
 	vmFuncs->enterVThreadTransitionCritical(currentThread, thread);
 
@@ -430,6 +432,8 @@ virtualThreadUnmountEnd(JNIEnv *env, jobject thread)
 
 	/* Allow thread to be inspected again. */
 	vmFuncs->exitVThreadTransitionCritical(currentThread, thread);
+
+	VM_AtomicSupport::subtract(&vm->activeVirtualThreadCount, 1);
 }
 #endif /* JAVA_SPEC_VERSION >= 19 */
 
@@ -595,6 +599,7 @@ JVM_VirtualThreadStart(JNIEnv *env, jobject vthread)
 	vmFuncs->internalEnterVMFromJNI(currentThread);
 
 	virtualThreadMountEnd(env, vthread);
+	VM_AtomicSupport::add(&vm->startedVirtualThreadCount, 1);
 	TRIGGER_J9HOOK_VM_VIRTUAL_THREAD_STARTED(vm->hookInterface, currentThread);
 
 	vmFuncs->internalExitVMToJNI(currentThread);
@@ -617,6 +622,7 @@ JVM_VirtualThreadEnd(JNIEnv *env, jobject vthread)
 
 	vmFuncs->internalEnterVMFromJNI(currentThread);
 
+	VM_AtomicSupport::add(&vm->finishedVirtualThreadCount, 1);
 	TRIGGER_J9HOOK_VM_VIRTUAL_THREAD_END(vm->hookInterface, currentThread);
 	setContinuationStateToLastUnmount((J9VMThread *)env, vthread);
 	virtualThreadUnmountBegin(env, vthread);
