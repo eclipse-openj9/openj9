@@ -1,0 +1,51 @@
+i28 i29 i30 = 5,-233273647,-51163
+i31 i32 i33 = 64,-6,2
+d3 i34 i35 = 4613358407631013801,-11,-11911
+s1 fArr = 24112,4730352129897990652
+Test.instanceCount Test.bFld fFld = -121400410,0,1239645056
+byFld Test.iFld Test.iArrFld = 126,-31022,-14356
+Test.lArrFld byArrFld sArrFld = 347602,0,0
+fMeth_check_sum: 5726680723764693908
+vMeth1_check_sum: -9140181847156498324
+vMeth_check_sum: -4615464494519004063
+i28 i29 i30 = 5,-588619055,-51163
+i31 i32 i33 = 64,-6,2
+d3 i34 i35 = 4613358407631013801,-11,-11911
+s1 fArr = 24112,4725560308720014328
+Test.instanceCount Test.bFld fFld = -364929818,0,1248033920
+byFld Test.iFld Test.iArrFld = 126,-31022,-14356
+Test.lArrFld byArrFld sArrFld = 347602,0,0
+fMeth_check_sum: -6993382624866825879
+vMeth1_check_sum: 166380379396554968
+vMeth_check_sum: 9215815085832891921
+i28 i29 i30 = 5,-943964463,-51163
+i31 i32 i33 = 64,-6,2
+d3 i34 i35 = 4613358407631013801,-11,-11911
+s1 fArr = 24112,4722193892609501164
+Test.instanceCount Test.bFld fFld = -608459226,0,1252695456
+byFld Test.iFld Test.iArrFld = 126,-31022,-14356
+Test.lArrFld byArrFld sArrFld = 347602,0,0
+fMeth_check_sum: -1266701901360624386
+vMeth1_check_sum: -8973801467759943356
+vMeth_check_sum: 4600350590394117121
+i28 i29 i30 = 5,-1299309871,-51163
+i31 i32 i33 = 64,-6,2
+d3 i34 i35 = 4613358407631013801,-11,-11911
+s1 fArr = 24112,-4495677995643638774
+Test.instanceCount Test.bFld fFld = -851988634,0,1256422656
+byFld Test.iFld Test.iArrFld = 126,-31022,-14356
+Test.lArrFld byArrFld sArrFld = 347602,0,0
+fMeth_check_sum: 4459978820573746771
+vMeth1_check_sum: 332760758793109936
+vMeth_check_sum: -15113902830776015
+i28 i29 i30 = 5,-1654655279,-51163
+i31 i32 i33 = 64,-6,2
+d3 i34 i35 = 4613358407631013801,-11,-11911
+s1 fArr = 24112,-4493112300436228603
+Test.instanceCount Test.bFld fFld = -1095518042,0,1259220528
+byFld Test.iFld Test.iArrFld = 126,-31022,-14356
+Test.lArrFld byArrFld sArrFld = 347602,0,0
+fMeth_check_sum: -8260084528478296728
+vMeth1_check_sum: -8807421088363388388
+vMeth_check_sum: -4630578398136788319
+java.lang.NullPointerException
