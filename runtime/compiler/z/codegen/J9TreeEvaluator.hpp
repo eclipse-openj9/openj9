@@ -73,6 +73,10 @@ public:
      * Inline Java's (Java 11 onwards) StringLatin1.inflate([BI[CII)V
      */
     static TR::Register *inlineStringLatin1Inflate(TR::Node *node, TR::CodeGenerator *cg);
+    /*
+     * Inline Java's StringLatin1.compareToUTF16Values([B[BII)I
+     */
+    static TR::Register *inlineStringLatin1CompareToUTF16Values(TR::Node *node, TR::CodeGenerator *cg);
     static TR::Register *inlineStringCodingHasNegativesOrCountPositives(TR::Node *node, TR::CodeGenerator *cg,
         bool isCountPositives);
     static TR::Register *VMinlineCompareAndSwap(TR::Node *node, TR::CodeGenerator *cg, TR::InstOpCode::Mnemonic casOp,

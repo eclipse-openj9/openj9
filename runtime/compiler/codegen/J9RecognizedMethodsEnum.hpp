@@ -142,6 +142,7 @@ FirstJ9Method = LastOMRMethod + 1,
 
     java_lang_StringLatin1_charAt,
     java_lang_StringLatin1_compareTo_BBII,
+    java_lang_StringLatin1_compareToUTF16Values,
     java_lang_StringLatin1_indexOf,
     java_lang_StringLatin1_indexOf_BB,
     java_lang_StringLatin1_indexOf_BIII,
