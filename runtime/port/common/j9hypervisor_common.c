@@ -37,11 +37,30 @@
 #elif defined(S390) || defined(J9ZOS390)
 #include "j9hypervisor_systemz.h"
 #endif
+
 #include "portnls.h"
 #include "portpriv.h"
 #include "ut_j9prt.h"
 #include "omrutil.h"
 #include "vmargs_core_api.h"
+
+/* Imports for microVM detection */
+#include <stdio.h>
+#include <stdlib.h>
+#include <fcntl.h>
+#include <errno.h>
+#include <unistd.h>
+#include <sys/stat.h>
+#include <stdint.h>
+#include <sys/types.h>
+#include <stdbool.h>
+
+/*MACROS FOR CONTAINER SIGNATURES*/
+#define MICRO_VM_LENGTH 15
+#define RUNTIME_ENV "CONTAINER_RUNTIME"
+#define VERSION_FILE_PATH "/proc/version"
+#define KATA_SIGNATURE ".container"
+#define MAX_READ 256
 
 /**
  * Save the error message provided into J9HypervisorData.vendorErrMsg ptr
@@ -115,11 +134,67 @@ check_and_save_hypervisor_startup_error(struct J9PortLibrary *portLibrary, intpt
  * 			environment variable is set wrongly or monitor initialization fails.
  * 			Return negative error code on failure.
  */
+bool detect_env()
+{
+	/*Detect Kata Runtime using Environment Variable*/
+	bool isEnvSetAsKata = false;
+	const char* env_var = getenv(RUNTIME_ENV);
+	if (env_var!=NULL) {
+		if (strcmp(env_var,"KATA_RUNTIME")==0 ) {
+			isEnvSetAsKata = true;
+		}
+	}
+	return isEnvSetAsKata;
+}
+bool detect_signature()
+{
+	/*Detect Kata Runtime using .container signature*/
+	extern int errno;
+	int code = open(VERSION_FILE_PATH, O_RDONLY);
+	bool isKataSignatureFound = false;
+	if (code < 0) {
+		perror("Program Status: ");
+	}
+	else {
+		/*Get File Data*/
+		struct stat file_statistics;
+		int stat_code = stat(VERSION_FILE_PATH,&file_statistics); /*storing all file related information*/
+		int size = file_statistics.st_size; /*Get the file Size from file stastics stat*/
+
+		if (size==0) { 
+			size=MAX_READ; }
+		char *p = malloc(size * sizeof(char));
+		int read_code = read(code,p,size);
+		if (read_code < 0) {
+			perror("Read");
+		}
+		else {
+			/*Find the kata signature in the file*/
+			char *signature_found = strstr(p, KATA_SIGNATURE);
+			if (signature_found) {
+				isKataSignatureFound = true;
+			}
+		}
+	}
+	return isKataSignatureFound;
+}
+
+bool isKataContainer()
+{
+	bool isEnvSetAsKata = false;
+	bool isKataSignatureFound = false;
+	isKataSignatureFound = detect_signature();
+	isEnvSetAsKata = detect_env();
+	return isEnvSetAsKata || isKataSignatureFound;
+}
+
 int32_t
 j9hypervisor_startup(struct J9PortLibrary *portLibrary)
 {
 	intptr_t ret = 0;
 	intptr_t hypervisorStatus = 0;
+	bool isKataContainerDetected = false;
+	char microVmName[MICRO_VM_LENGTH] = "\0";
 
 	PHD_hypFunc.get_guest_processor_usage = NULL;
 	PHD_hypFunc.get_guest_memory_usage = NULL;
@@ -127,6 +202,7 @@ j9hypervisor_startup(struct J9PortLibrary *portLibrary)
 	PHD_vendorPrivateData = NULL;
 	PHD_vendorStatus = J9HYPERVISOR_NOT_INITIALIZED;
 	PHD_vendorErrMsg = NULL;
+	PHD_isMicroVM = J9MICROVM_NOT_PRESENT;
 
 	/* Initialize the hypervisor monitor. Needed for synchronization
 	 * between multiple threads trying to call into the vendor specific
@@ -141,7 +217,26 @@ j9hypervisor_startup(struct J9PortLibrary *portLibrary)
 	detect_hypervisor(portLibrary);
 
 	hypervisorStatus = j9hypervisor_hypervisor_present(portLibrary);
+	/* 
+	 * TODO : based on result of `hypervisorStatus` check the omrsysinfo_is_running_in_container
+	 * If its running inside the container check for `env` and `signature` 
+	*/
 
+	if (J9HYPERVISOR_PRESENT == hypervisorStatus) {
+		OMRPORT_ACCESS_FROM_J9PORT(portLibrary);
+		if (TRUE == omrsysinfo_is_running_in_container()) {
+			/*Running inside a container*/
+			isKataContainerDetected = isKataContainer();
+			if (TRUE == isKataContainerDetected) {
+				PHD_isMicroVM = J9MICROVM_PRESENT;
+				/*Running inside Kata Container*/
+				strcpy(microVmName,"KATA CONTAINER");
+			}
+			else {
+				PHD_isMicroVM = J9MICROVM_NOT_PRESENT;
+			}
+		}
+	}
 	/*
 	 * Fall-back mechanism for Hypervisor detection.
 	 * i.e If the original detection detect_hypervisor() reported that there is
@@ -204,6 +299,20 @@ j9hypervisor_hypervisor_present(struct J9PortLibrary *portLibrary)
 	return PHD_isVirtual;
 }
 
+/**
+ * Return whether the application is running in a microVM or not
+ *
+ * @param [in] J9PortLibrary portLibrary the Port Library.
+ *
+ * @return J9MICROVM_PRESENT if running in a microVM
+ *         J9MICROVM_NOT_PRESENT if not running in a microVM
+ *         J9MICROVM_DETECTION_ERROR on failure
+*/
+intptr_t
+j9hypervisor_microvm_present(struct J9PortLibrary *portLibrary)
+{
+	return PHD_isMicroVM;
+}
 /**
  * Fills in the provided J9HypervisorVendorDetails structure.
  * Caller is responsible for storage of the structure,although the string hypervisorName in the
