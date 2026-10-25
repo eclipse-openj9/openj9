@@ -2597,10 +2597,10 @@ TR::Register *J9::X86::TreeEvaluator::evaluateNULLCHKWithPossibleResolve(TR::Nod
         // before the null check, so that exceptions are handled in the correct
         // order.
         //
-        ///// if (needResolution)
-        /////    {
-        /////    ...
-        /////    }
+        // if (needResolution)
+        //    {
+        //    ...
+        //    }
 
         // Avoid loading the grandchild into a register if it is not going to be used again.
         //
