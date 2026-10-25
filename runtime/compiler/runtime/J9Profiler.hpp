@@ -39,6 +39,7 @@
 #include "env/VMJ9.h"
 #include "infra/TRlist.hpp"
 #include "runtime/J9ValueProfiler.hpp"
+#include "runtime/J9RuntimeAssumptions.hpp"
 
 #define PROFILING_INVOCATION_COUNT (2)
 
@@ -520,9 +521,14 @@ public:
 
     void dumpInfo(OMR::Logger *log);
 
+    void addJProfValueSites(TR_JProfValueSites *patchSites) { _jProfValueProfSites = patchSites; }
+
+    TR_JProfValueSites *getJProfValueSites() { return _jProfValueProfSites; }
+
 private:
     TR_AbstractProfilerInfo *_values[LastProfiler];
     TR_CallSiteInfo *_callSiteInfo;
+    TR_JProfValueSites *_jProfValueProfSites;
 };
 
 TR_ValueProfileInfo *TR_ValueProfileInfo::get(TR_PersistentProfileInfo *profileInfo)
@@ -714,6 +720,20 @@ public:
         _counterDerivationInfo = counterDerivationInfo;
     }
 
+    void addJProfBlockFrequencyCounterPatchSites(TR_JProfBlockFrequencyCounterSites *patchSites)
+    {
+        _jProfilingBlockFrequencyCounterPatchSites = patchSites;
+    }
+
+    TR_JProfBlockFrequencyCounterSites *getJProfBlockFrequencyCounterPatchSites()
+    {
+        return _jProfilingBlockFrequencyCounterPatchSites;
+    }
+
+    void setTimestampDataCollectionStarted(uint64_t timeStamp) { _timeStampWhenDataCollectionStarted = timeStamp; }
+
+    uint64_t getTimestampDataCollectionStarted() { return _timeStampWhenDataCollectionStarted; }
+
     void setEntryBlockNumber(int32_t number) { _entryBlockNumber = number; }
 
     bool isJProfilingData() { return _counterDerivationInfo != NULL; }
@@ -729,6 +749,16 @@ public:
     TR::Node *generateBlockRawCountCalculationSubTree(TR::Compilation *comp, int32_t blockNumber, TR::Node *node);
     TR::Node *generateBlockRawCountCalculationSubTree(TR::Compilation *comp, TR::Node *node, bool trace);
     void dumpInfo(OMR::Logger *log);
+
+    void setJProfBlockFrequencyCounterSites(TR_JProfBlockFrequencyCounterSites *patchSites)
+    {
+        _jProfilingBlockFrequencyCounterPatchSites = patchSites;
+    }
+
+    TR_JProfBlockFrequencyCounterSites *getJProfBlockFrequencyCounterSites()
+    {
+        return _jProfilingBlockFrequencyCounterPatchSites;
+    }
 
     int32_t getCallCount();
     int32_t getMaxRawCount(int32_t callerIndex);
@@ -820,6 +850,9 @@ private:
     // Following flag is checked at runtime to know if we have queued this method for recompilation and skip the
     // profiling code
     int32_t _isQueuedForRecompilation;
+    void *_startPCOfBodyCollectingProfilingData;
+    uint64_t _timeStampWhenDataCollectionStarted;
+    TR_JProfBlockFrequencyCounterSites *_jProfilingBlockFrequencyCounterPatchSites;
 };
 
 TR_BlockFrequencyInfo *TR_BlockFrequencyInfo::get(TR_PersistentProfileInfo *profileInfo)
@@ -1091,4 +1124,414 @@ protected:
     static const uint32_t _waitMillis = 500;
 };
 
+/**
+ * @brief A work-unit class that contains the list of compiled methods that
+ * needs their profiling code patches and performs patching. Depending number of
+ * worker threads created for Patchable JProfiler, functionality provided by
+ * this task allows infrastructure to differentiate analaysis and code patching
+ * execution.
+ *
+ */
+class TR_JProfilerPatchingTask {
+public:
+    TR_PERSISTENT_ALLOC(TR_Memory::TR_JProfiler);
+
+    TR_JProfilerPatchingTask() {}
+
+    ~TR_JProfilerPatchingTask();
+
+    /**
+     * @brief Add the Persistent Method Info to the list of methods that will be
+     * patched by this work-unit when worker thread holing this work-unit will
+     * be scheduled.
+     *
+     * @param info TR_PersistentProfileInfo to add to the list
+     */
+    void addProfilingInfoToListOfMethodsToPatch(TR_PersistentProfileInfo *info) { _listOfMethodsToPatch.append(info); }
+
+    /**
+     * @brief Goes through the list of methods to patch and patch the methods.
+     * This function will patch all the methods in the list.
+     *
+     * @param vm TR_J9VMBase vm object
+     * @return uint32_t Returns number of methods patches by this work-unit in this pass.
+     */
+    uint32_t patchAllMethods(TR_J9VMBase *vm);
+
+    /**
+     * @brief Patch the method represented by info.
+     *
+     * @param vm TR_J9VMBase vm object
+     * @param info TR_PersistentProfileInfo of the method to patch
+     * @return true If the method was patches
+     * @return false If the method was not patched (When it is inactive)
+     */
+    static bool patchMethod(TR_J9VMBase *vm, TR_PersistentProfileInfo *info);
+
+    /**
+     * @brief Get the Size of the list
+     *
+     * @return uint32_t Size of the listOfMethodsToPatch
+     */
+    uint32_t getSize() { return _listOfMethodsToPatch.getSize(); }
+
+protected:
+    /**
+     * @brief List contains a method to patch by this work-unit
+     */
+    TR_LinkHeadAndTail<TR_PersistentProfileInfo> _listOfMethodsToPatch;
+    /**
+     * @brief List contains method patched by this work-unit
+     */
+    TR_LinkHeadAndTail<TR_PersistentProfileInfo> _listOfPatchedMethods;
+};
+
+/**
+ * @brief A work-unit that analyzes the frequency information of various methods and based on the information takes one
+ * of the following decision for the method.
+ *  1. If it is executed a lot (can be decided based on high max-raw count) by
+ *     the application, recompile it at warm
+ *  2. If it is not executed a lot and application has already spend good amount
+ *     of CPU Time since the method is compiled, patch the method to disable the
+ *     profiling data collection as at this point, recompilation is not needed.
+ *  3. If application has not executed enough since the method started profiling
+ *     data collection, let it profile and check other methods.
+ */
+class TR_JProfilerAnalysisTask {
+public:
+    TR_PERSISTENT_ALLOC(TR_Memory::TR_JProfiler);
+
+    TR_JProfilerAnalysisTask()
+        : _methodsAddedToPatchList(0)
+        , _methodsRecompiledToWarm(0)
+        , _infoInvalidatedAsInActive(0)
+        , _totalMethodsAddedForAnalysis(0)
+        , _activeProfilingListTail(NULL)
+    {
+        _recompilationCutOff = TR::Options::_patchableJProfilingRecompilationFreq;
+        _ageCutOffForPatching = TR::Options::_patchableJProfilingPatchingAgeCutOff;
+        _numOfMethodsToTriggerPatching = TR::Options::_numOfMethodsToTriggerPatching;
+        _listUpdateMonitor = TR::Monitor::create("JIT-JProfilerAnalysisTaskListMonitor");
+        _analysisCutOff = 256;
+    }
+
+    /**
+     * @brief Add the Persistent Profile Info of a method to list of active profiling methods.
+     *
+     * @param info TR_PersistentProfileInfo of the method
+     */
+    void addProfilingInfoToListOfActiveProfilingInfo(TR_PersistentProfileInfo *info);
+
+    /**
+     * @brief Remove the Persistent Profile Info of a method to list of active profiling methods.
+     *
+     * @param prev TR_PersistentProfileInfo of the previous method in the list
+     * @param info TR_PersistentProfileInfo of the method to remove from list
+     */
+    void removeProfilingInfoFromListOfActiveProfilingInfo(TR_PersistentProfileInfo *prev,
+        TR_PersistentProfileInfo *info);
+
+    /**
+     * @brief Creates a new optimization plan for the method and induces recompilation
+     *
+     * @param jitConfig J9JITConfig object
+     * @param info TR_PersistentProfileInfo of the method that will be recompiled
+     * @param vmThread J9VMThread of the threads that is performing analysis
+     * @param recompHotness TR_Hotness at which recompilation will be induced
+     * @return true If it was queued for recompilation successfully
+     * @return false If it failed to queue the method for recompilation
+     */
+    bool recompileMethod(J9JITConfig *jitConfig, TR_PersistentProfileInfo *info, J9VMThread *vmThread,
+        TR_Hotness recompHotness);
+
+    /**
+     * @brief Function works as a core-engine that does the analysis and decides
+     * if method will be patched or recompiled.
+     *
+     * @param jitConfig J9JITConfig object
+     * @param vmThread J9VMThread of the thread performing analysis
+     */
+    void performAnalysis(J9JITConfig *jitConfig, J9VMThread *vmThread);
+
+    /**
+     * @brief Inspect the list of methods to be patched an divides it between
+     * different JProfilerPatchingTask work-unit so that it can be passed to
+     * worker thread to perform patching.
+     *
+     * @param patchingTaskList TR_JProfilerPatchingTask array of the Patching Task
+     * @param numberOfThreadsToUse Number of threads amongst which the work will be divided
+     * @param jitConfig J9JITConfig object
+     * @return true If we have gathered significant amount of work to trigger
+     * patching function will distribute methods through multiple patching
+     * work-unit and returns true so that main thread can signal worker thread
+     * that there is a work available
+     * @return false If there is not many methods to patch - returns false
+     */
+    bool inspectListOfMethodsToBePatchedAndPreparePatchingTask(TR_JProfilerPatchingTask **patchingTaskList,
+        uint32_t numberOfThreadsToUse, J9JITConfig *jitConfig);
+
+    void printCounts();
+
+    /**
+     * @brief Get the Recompilation Cut Off count
+     *
+     * @return uint32_t recompilationCutOff count
+     */
+    uint32_t getRecompilationCutOff() { return _recompilationCutOff; }
+
+    /**
+     * @brief Get the Age Cut Off For Patching
+     *
+     * @return uint32_t Age at which method will be patched
+     */
+    uint32_t getAgeCutOffForPatching() { return _ageCutOffForPatching; }
+
+    /**
+     * @brief Set the Number Of Methods To Trigger Patching object
+     *
+     * @param numbersOfMethodsToTriggerPatching
+     */
+
+    void setNumberOfMethodsToTriggerPatching(uint32_t numbersOfMethodsToTriggerPatching)
+    {
+        _numOfMethodsToTriggerPatching = numbersOfMethodsToTriggerPatching;
+    }
+
+    /**
+     * @brief Set the Analysis Cut Off object
+     *
+     * @param val
+     */
+    void setAnalysisCutOff(uint32_t val) { _analysisCutOff = val; }
+
+protected:
+    TR_LinkHead<TR_PersistentProfileInfo> _activeProfilingList;
+    TR_PersistentProfileInfo *_activeProfilingListTail;
+
+    TR_LinkHead<TR_PersistentProfileInfo> _listOfProfileInfoToBePatched;
+
+    TR_LinkHead<TR_PersistentProfileInfo> _listOfPatchedMethodProfileInfo;
+
+    TR::Monitor *_listUpdateMonitor;
+
+    uint32_t _recompilationCutOff;
+    uint32_t _ageCutOffForPatching;
+    uint32_t _numOfMethodsToTriggerPatching;
+    uint32_t _analysisCutOff;
+
+    uint32_t _totalMethodsAddedForAnalysis;
+    uint32_t _infoInvalidatedAsInActive;
+    uint32_t _methodsRecompiledToWarm;
+    uint32_t _methodsAddedToPatchList;
+};
+
+/**
+ * @brief Central coordinator for the JProfiler thread pool which manages set of
+ *  native JVM threads which collectively performs following two distinct jobs.
+ * 1. Analysis - Main thread designed to perform analyze the profiling data and
+ *    decide if it requires recompilation or patched to enable or disable the data
+ *    collection.
+ * 2. Patching - Worker threads desinged to carry out mechanical work of
+ *    patching the methods.
+ *
+ * Each thread in the pool follows simple finite-state machine, declared as the nested enum State.
+ * 1. Initial - Thread has been created but not ready
+ * 2. Wait - Thread is idle - waiting for work
+ * 3. Reserve - Thread is reserved by dispatcher to perform the work
+ * 4. Run - Thread is actively executing the work-unit
+ * 5. Stop Thread is shutting down
+ */
+class TR_JProfilerThreadsDispatcher {
+public:
+    TR_PERSISTENT_ALLOC(TR_Memory::TR_JProfiler);
+
+    enum State {
+        Initial,
+        Wait,
+        Reserve,
+        Run,
+        Stop
+    };
+
+    TR_JProfilerThreadsDispatcher() {}
+
+    ~TR_JProfilerThreadsDispatcher();
+
+    /**
+     * @brief Allocates a Dispatcher object
+     *
+     * @return TR_JProfilerThreadsDispatcher* constructed JProfiler Thread Pool disaptcher
+     */
+    static TR_JProfilerThreadsDispatcher *allocate();
+
+    /**
+     * @brief Checks if the thread is main thread
+     *
+     * @param threadID Integer ID of the thread
+     * @return true If it is main thread
+     * @return false If it is worker thread
+     */
+    bool isMainThread(uint32_t threadID) { return threadID == 0; }
+
+    /**
+     * @brief Analysis thread's run loop
+     *
+     * @param javaVM J9JavaVM object
+     * @param threadID Thread ID
+     */
+    void analysisThreadEntryPoint(J9JavaVM *javaVM, uint32_t threadID);
+
+    /**
+     * @brief Worker thread's run loop
+     *
+     * @param javaVM J9JavaVM object
+     * @param threadID Thread ID
+     */
+    void workerThreadEntryPoint(J9JavaVM *javaVM, uint32_t threadID);
+
+    /**
+     * @brief Initializes various field of the JProfiler Thread Pool dispatcher
+     * object
+     *
+     * @param numberOfJProfilerThreads - Number of JProfiler Threads to create
+     * in this thread pool
+     */
+    void initializeDispatcher(uint32_t numberOfJProfilerThreads);
+
+    /**
+     * @brief Start all threads in the thread pool
+     *
+     * @param javaVM J9JavaVM object
+     */
+    void startThreads(J9JavaVM *javaVM);
+
+    /**
+     * @brief Stop all threads in the thread pool
+     *
+     * @param javaVM J9JavaVM object
+     */
+    void stopThreads(J9JavaVM *javaVM);
+
+    /**
+     * @brief A cyclic counting barrier for synchronizing between active threads
+     * in the pool
+     *
+     * @param threadID ID of the thread calling this rendezvous point
+     */
+    void synchronizeJProfilerThreads(uint32_t threadID);
+
+    /**
+     * @brief Returns native OS thread that is backing up the thread
+     *
+     * @param threadID Thread ID
+     * @return j9thread_t native j9thread_t object backing this JVM thread
+     */
+    j9thread_t getJProfilerOSThreadFromIndex(int32_t threadID) { return jProfilerOSThreadList[threadID]; }
+
+    /**
+     * @brief Returns the Analysis Work-Unit object
+     *
+     * @return TR_JProfilerAnalysisTask*
+     */
+    TR_JProfilerAnalysisTask *getJProfilerAnalysisTask() { return task; }
+
+    /**
+     * @brief Sets the JVM Thread that represents the Thread ID in the thread pool
+     *
+     * @param threadID ID of the thread
+     * @param vmThread JVM thread object
+     */
+    void setJProfilerVMThread(int32_t threadID, J9VMThread *vmThread) { jProfilerVMThreadList[threadID] = vmThread; }
+
+    /**
+     * @brief Returns the J9VMThread of the threadID thread
+     *
+     * @param threadID ID of the thread in the pool
+     * @return J9VMThread*
+     */
+    J9VMThread *getJProfilerVMThread(int32_t threadID) { return jProfilerVMThreadList[threadID]; }
+
+    /**
+     * @brief Get the Total JProfiler Threads in the thread pool
+     *
+     * @return int32_t number of threads in the thread pool
+     */
+    int32_t getTotalJProfilerThreads() { return _maxJProfilerThreadCount; }
+
+    /**
+     * @brief Performs the clean-up task for threadID
+     *
+     * @param javaVM J9JavaVM object
+     * @param threadID Thread ID
+     */
+    void cleanUpThread(J9JavaVM *javaVM, uint32_t threadID);
+
+    /**
+     * @brief Sets the state of the thread once the intialization work for
+     * threadID in the thread pool is finished.
+     *
+     * @param threadID Thread ID
+     * @param isAnalysisThread Boolean flag that conveys that this threadID
+     * contains an analysis work-unit
+     */
+    void completeThreadInitialization(uint32_t threadID, bool isAnalysisThread = false);
+
+    /**
+     * @brief Set the Analysis Thread Sleep Time
+     *
+     * @param sleepTime time in milliseconds at which analysis thread will be
+     * woken-up to perform analysis
+     */
+    void setAnalysisThreadSleepTime(int32_t sleepTime) { _analysisThreadSleepTime = sleepTime; }
+
+    /**
+     * @brief Set the Analysis Task List Size To Trigger Patching object
+     *
+     * @param val Number of methods held by analysis task for patching to start patching
+     */
+    void setAnalysisTaskListSizeToTriggerPatching(uint32_t val) { task->setNumberOfMethodsToTriggerPatching(val); }
+
+    /**
+     * @brief Set the Analysis Cut Off
+     *
+     * @param val Number of methods to inspect when analysis thread in the thread pool is woken up.
+     */
+    void setAnalysisCutOff(uint32_t val) { task->setAnalysisCutOff(val); }
+
+protected:
+    j9thread_t *jProfilerOSThreadList;
+
+    J9VMThread **jProfilerVMThreadList;
+
+    State *stateTable;
+
+    uint32_t _maxJProfilerThreadCount;
+
+    TR_JProfilerAnalysisTask *task;
+
+    TR_JProfilerPatchingTask **patchingTaskList;
+
+private:
+    volatile bool _inShutdown;
+
+    volatile bool _threadsReservedForPatchingWork;
+
+    volatile uint32_t _analysisThreadSleepTime;
+
+    uint32_t _numberOfThreadsToWakeUpForPatching;
+
+    TR::Monitor *_dispatcherMonitor;
+
+    TR::Monitor *_workerThreadMonitor;
+
+    TR::Monitor *_synchronizationMonitor;
+
+    uint32_t _synchronizationThreadCount;
+
+    uint32_t _synchronizationThreadIndex;
+
+    uint32_t _totalThreadCountForSynchronization;
+
+    uint32_t _totalExclusivePatchPhase;
+};
 #endif
