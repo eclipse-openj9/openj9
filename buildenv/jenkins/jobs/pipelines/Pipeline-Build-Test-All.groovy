@@ -565,6 +565,7 @@ def get_summary_table(identifier) {
     // table body
     summaryText += "<tbody>"
 
+    def rowColours = [ 0 : 'White', 1 : 'Gainsboro']
     for (spec in BUILD_SPECS.keySet().sort()) {
         if (!VARIABLES."${spec}") {
             // unsupported spec (is not defined in variables file), skip it
@@ -606,12 +607,14 @@ def get_summary_table(identifier) {
                 }
             }
 
-            innerTable += "<tr>"
+            def flip = 0
+            innerTable += "<tr style=\"background-color: ${rowColours[flip]}\">"
             innerTable += "<td>&nbsp;</td>"
             innerTable += "<td style=\"text-align: right;\">${pipelineLink}</td>"
             innerTable += "<td>&nbsp;</td>"
-            innerTable += "<td style=\"white-space: nowrap;\">${pipelineDuration}</td>"
+            innerTable += "<td style=\"text-align: right; white-space: nowrap;\">${pipelineDuration}</td>"
             innerTable += "</tr>"
+            flip++
 
             // add pipeline's downstream builds
             downstreamJobNames.each { label, jobName ->
@@ -645,12 +648,13 @@ def get_summary_table(identifier) {
                     restartImage += "<img title=\"This build has been restarted ${downstreamJobBuilds.size()} time[s]!\" src=\"/static/images/24x24/refresh.png\" alt=\"Restarts\" style=\"display: inline-block;\" />"
                 }
 
-                innerTable += "<tr>"
+                innerTable += "<tr style=\"vertical-align: bottom; background-color: ${rowColours[flip]};\">"
                 innerTable += "<td>${aLabel}</td>"
-                innerTable += "<td style=\"text-align: right;\">${link}</td>"
+                innerTable += "<td style=\"text-align: right\">${link}</td>"
                 innerTable += "<td>${restartImage}</td>"
                 innerTable += "<td style=\"text-align: right; white-space: nowrap;\">${duration}</td>"
                 innerTable += "</tr>"
+                flip = (++flip)%2
             }
 
             innerTable += "</tbody></table>"
