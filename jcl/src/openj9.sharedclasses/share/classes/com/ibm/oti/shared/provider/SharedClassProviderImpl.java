@@ -1,4 +1,4 @@
-/*[INCLUDE-IF (JAVA_SPEC_VERSION >= 9) & SharedClasses]*/
+/*[INCLUDE-IF (JAVA_SPEC_VERSION >= 9) & SharedClasses & RAM_CLASS_CACHE_SUPPORT]*/
 /*
  * Copyright IBM Corp. and others 2017
  *
@@ -23,6 +23,7 @@
 
 package com.ibm.oti.shared.provider;
 
+import com.ibm.oti.vm.VM;
 import java.net.URL;
 /*[IF JAVA_SPEC_VERSION < 24]*/
 import java.security.BasicPermission;
@@ -66,6 +67,9 @@ public class SharedClassProviderImpl implements SharedClassProvider {
 	@Override
 	public SharedClassProvider initializeProvider(ClassLoader loader, URL[] classpath, boolean urlHelper, boolean tokenHelper) {
 		if (!isSharedClassEnabled()) {
+			return null;
+		}
+		if (VM.isRCPEnabled()) {
 			return null;
 		}
 		SharedClassHelperFactory sharedClassHelperFactory = Shared.getSharedClassHelperFactory();
