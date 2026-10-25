@@ -79,6 +79,9 @@ public class TestJDKCRAC extends AttachApiTest {
 			case "testCRaCMXBeanGetObjectNameThrowsInternalError":
 				testJDKCRaC.testCRaCMXBeanGetObjectNameThrowsInternalError();
 				break;
+			case "testCRaCRestoreFrom":
+				testJDKCRaC.testCRaCRestoreFrom();
+				break;
 			default:
 				throw new RuntimeException("incorrect test name");
 			}
@@ -182,6 +185,10 @@ public class TestJDKCRAC extends AttachApiTest {
 		} catch (InternalError e) {
 			System.out.println("PASSED: CRaCMXBean.getObjectName() threw InternalError with malformedCRaCMXBeanName - " + malformedCRaCMXBeanName);
 		}
+	}
+
+	private void testCRaCRestoreFrom() throws Exception {
+		checkpointRestore();
 	}
 
 	private static void checkpointRestore() throws Exception {
