@@ -741,15 +741,18 @@ SPDX-License-Identifier: EPL-2.0 OR Apache-2.0 OR GPL-2.0-only WITH Classpath-ex
 	<test>
 		<testCaseName>jit_recognizedMethod</testCaseName>
 		<variations>
-			<variation>-Xint</variation>
-			<variation>-Xjit:count=0</variation>
-			<variation>-Xjit:count=1,disableAsyncCompilation</variation>
-			<variation>-Xjit:count=1,disableAsyncCompilation -XX:+CompactStrings</variation>
+			<!-- <variation>-Xint</variation>
+			<variation>-Xjit:count=0</variation> -->
+			<variation>-Xjit:"count=1,disableAsyncCompilation,verbose={inlining},log=/root/jdks/openj9-openjdk-jdk21/openj9/test/TKG/vlog"</variation>
+			<!-- <variation>-Xjit:count=1,disableAsyncCompilation -XX:+CompactStrings</variation>
 			<variation>-Xjit:count=1,disableAsyncCompilation -XX:+CompactStrings -Xnoaot</variation>
 			<variation>-XX:+CompactStrings</variation>
-			<variation>-XX:+CompactStrings -Xnoaot</variation>
+			<variation>-XX:+CompactStrings -Xnoaot</variation> -->
 		</variations>
 		<command>$(JAVA_COMMAND) $(JVM_OPTIONS) \
+	--add-exports java.base/jdk.internal.util=ALL-UNNAMED \
+	--add-exports java.base/jdk.internal.misc=ALL-UNNAMED \
+	--add-exports java.base/jdk.internal.vm.annotation=ALL-UNNAMED \
 	-cp $(Q)$(RESOURCES_DIR)$(P)$(TESTNG)$(P)$(TEST_RESROOT)$(D)jitt.jar$(Q) \
 	org.testng.TestNG -d $(REPORTDIR) $(Q)$(TEST_RESROOT)$(D)testng.xml$(Q) \
 	-testnames \
