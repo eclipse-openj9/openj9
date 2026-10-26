@@ -343,6 +343,9 @@ private :
 	void        writeObject                  (j9object_t obj);
 	void        writeThread                  (J9VMThread* vmThread, J9PlatformThread *nativeThread, UDATA vmstate, UDATA javaState, UDATA javaPriority, j9object_t lockObject, J9VMThread *lockOwnerThread);
 	void        writeThreadName              (J9VMThread* vmThread);
+#if JAVA_SPEC_VERSION >= 24
+	void        writeContinuationName        (J9VMContinuation *continuation);
+#endif /* JAVA_SPEC_VERSION >= 24 */
 	void        writeThreadBlockers          (J9VMThread* vmThread, UDATA vmstate, j9object_t lockObject, J9VMThread *lockOwnerThread);
 	UDATA       writeFrame                   (J9StackWalkState* state);
 	UDATA       writeExceptionFrame          (void *userData, J9ROMClass* romClass, J9ROMMethod* romMethod, J9UTF8* sourceFile, UDATA lineNumber);
@@ -4499,7 +4502,17 @@ JavaCoreDumpWriter::writeMonitorObject(J9ThreadMonitor* monitor, j9object_t obj,
 
 	/* Skip monitor if not interesting */
 	if (((NULL != obj) || (NULL == lock->name)) && (NULL == owner) && (NULL == lockOwner) && (NULL == lock->waiting)) {
+#if JAVA_SPEC_VERSION < 24
 		return;
+#else /* JAVA_SPEC_VERSION < 24 */
+		/* Monitors with waiting virtual threads are still interesting. */
+		J9ObjectMonitor *objectMonitor = (NULL != obj) ? monitorTablePeek(_VirtualMachine, obj) : NULL;
+		if ((NULL == objectMonitor)
+			|| ((NULL == objectMonitor->waitingContinuations) && (0 == objectMonitor->virtualThreadWaitCount))
+		) {
+			return;
+		}
+#endif /* JAVA_SPEC_VERSION < 24 */
 	}
 
 	/* Describe the monitor */
@@ -4518,16 +4531,25 @@ JavaCoreDumpWriter::writeMonitorObject(J9ThreadMonitor* monitor, j9object_t obj,
 	/* Describe its owning thread */
 	bool inflated = J9_ARE_ANY_BITS_SET(lock->flags, J9THREAD_MONITOR_INFLATED);
 
+#if JAVA_SPEC_VERSION >= 24
 	if (IS_J9_OBJECT_MONITOR_OWNER_DETACHED(lockOwner)) {
-		if (inflated) {
-			_OutputStream.writeCharacters("owner \"");
+		_OutputStream.writeCharacters("owner \"");
+		/* Resolve the owning virtual thread name via the continuation's vthread reference. */
+		J9ObjectMonitor *objectMonitor = (NULL != obj) ? monitorTablePeek(_VirtualMachine, obj) : NULL;
+		if ((NULL == objectMonitor) || (NULL == objectMonitor->ownerContinuation)) {
+			_OutputStream.writeCharacters("<detached virtual thread>\"");
 		} else {
-			_OutputStream.writeCharacters("Flat locked by \"");
+			J9VMContinuation *ownerCont = objectMonitor->ownerContinuation;
+			writeContinuationName(ownerCont);
+			_OutputStream.writeCharacters("\" (J9VMContinuation:");
+			_OutputStream.writePointer(ownerCont);
+			_OutputStream.writeCharacters(")");
 		}
-		_OutputStream.writeCharacters("<detached virtual thread>");
 		_OutputStream.writeCharacters(", entry count ");
 		_OutputStream.writeInteger(count, "%zu");
-	} else if ((NULL != owner) || (NULL != lockOwner)) {
+	} else
+#endif /* JAVA_SPEC_VERSION >= 24 */
+	if ((NULL != owner) || (NULL != lockOwner)) {
 		if (inflated) {
 			_OutputStream.writeCharacters("owner \"");
 		} else {
@@ -4584,6 +4606,32 @@ JavaCoreDumpWriter::writeMonitorObject(J9ThreadMonitor* monitor, j9object_t obj,
 		threadIndex++;
 	}
 
+#if JAVA_SPEC_VERSION >= 24
+	if (NULL != obj) {
+		J9ObjectMonitor *objectMonitor = monitorTablePeek(_VirtualMachine, obj);
+		if (NULL != objectMonitor) {
+			/* Output virtual threads waiting to enter. */
+			J9VMContinuation *blockedCont = _VirtualMachine->blockedContinuations;
+			while (NULL != blockedCont) {
+				if (blockedCont->objectWaitMonitor == objectMonitor) {
+					if (0 == blockedThreadCount) {
+						_OutputStream.writeCharacters("3LKWAITERQ            Waiting to enter:\n");
+					}
+
+					_OutputStream.writeCharacters("3LKWAITER                \"");
+					writeContinuationName(blockedCont);
+					_OutputStream.writeCharacters("\" (J9VMContinuation:");
+					_OutputStream.writePointer(blockedCont);
+					_OutputStream.writeCharacters(")\n");
+
+					blockedThreadCount += 1;
+				}
+				blockedCont = blockedCont->nextWaitingContinuation;
+			}
+		}
+	}
+#endif /* JAVA_SPEC_VERSION >= 24 */
+
 	threadIndex = 0;
 	int waitingThreadCount = 0;
 
@@ -4603,10 +4651,34 @@ JavaCoreDumpWriter::writeMonitorObject(J9ThreadMonitor* monitor, j9object_t obj,
 				_OutputStream.writePointer(walkThread);
 				_OutputStream.writeCharacters(")\n");
 
-				waitingThreadCount++;
+				waitingThreadCount += 1;
 		}
 		threadIndex++;
 	}
+
+#if JAVA_SPEC_VERSION >= 24
+	if (NULL != obj) {
+		J9ObjectMonitor *objectMonitor = monitorTablePeek(_VirtualMachine, obj);
+		if (NULL != objectMonitor) {
+			/* Output virtual threads waiting to be notified. */
+			J9VMContinuation *waitingCont = objectMonitor->waitingContinuations;
+			while (NULL != waitingCont) {
+				if (0 == waitingThreadCount) {
+					_OutputStream.writeCharacters("3LKNOTIFYQ            Waiting to be notified:\n");
+				}
+
+				_OutputStream.writeCharacters("3LKWAITNOTIFY            \"");
+				writeContinuationName(waitingCont);
+				_OutputStream.writeCharacters("\" (J9VMContinuation:");
+				_OutputStream.writePointer(waitingCont);
+				_OutputStream.writeCharacters(")\n");
+
+				waitingThreadCount += 1;
+				waitingCont = waitingCont->nextWaitingContinuation;
+			}
+		}
+	}
+#endif /* JAVA_SPEC_VERSION >= 24 */
 }
 
 /**************************************************************************************************/
@@ -5063,6 +5135,34 @@ JavaCoreDumpWriter::writeThreadName(J9VMThread* vmThread)
 		_OutputStream.writeCharacters("[osthread]");
 	}
 }
+
+#if JAVA_SPEC_VERSION >= 24
+/**************************************************************************************************/
+/*                                                                                                */
+/* JavaCoreDumpWriter::writeContinuationName() method implementation                              */
+/*                                                                                                */
+/**************************************************************************************************/
+void
+JavaCoreDumpWriter::writeContinuationName(J9VMContinuation *continuation)
+{
+	if (NULL == continuation) {
+		_OutputStream.writeCharacters("<unknown virtual thread>");
+	} else if (NULL == continuation->vthread) {
+		_OutputStream.writeCharacters("<dead virtual thread>");
+	} else {
+		J9VMThread *vmThread = _Context->onThread;
+		j9object_t nameObject = J9VMJAVALANGTHREAD_NAME(vmThread, continuation->vthread);
+		char *vthreadName = getVMThreadNameFromString(vmThread, nameObject);
+		if (NULL == vthreadName) {
+			_OutputStream.writeCharacters("<name unavailable>");
+		} else {
+			PORT_ACCESS_FROM_PORT(_PortLibrary);
+			_OutputStream.writeCharacters(vthreadName);
+			j9mem_free_memory(vthreadName);
+		}
+	}
+}
+#endif /* JAVA_SPEC_VERSION >= 24 */
 
 /**************************************************************************************************/
 /*                                                                                                */
@@ -6256,8 +6356,27 @@ continuationIteratorCallback(J9VMThread *vmThread, J9MM_IterateObjectDescriptor 
 		walkState.userData1 = (void *)jcw;
 		walkState.userData2 = &depth; /* Use this for a depth count. */
 		walkState.frameWalkFunction = writeFrameCallBack;
+#if JAVA_SPEC_VERSION >= 24
+		/* Gather owned monitor information from the continuation so writeFrame
+		 * can include the monitors associated with the correct stack frames.
+		 */
+		J9ObjectMonitorInfo monitorInfos[JavaCoreDumpWriter::_MaximumMonitorInfosPerThread];
+		IDATA monitorCount = 0;
+		memset(monitorInfos, 0, sizeof(monitorInfos));
+		{
+			struct walkClosure monitorClosure;
+			void *monitorArgs[] = { &stackThread, monitorInfos, &monitorCount };
+			monitorClosure.jcw = jcw;
+			monitorClosure.state = monitorArgs;
+			j9sig_protect(protectedGetOwnedObjectMonitors, &monitorClosure, handlerGetOwnedObjectMonitors, jcw,
+					J9PORT_SIG_FLAG_SIGALLSYNC | J9PORT_SIG_FLAG_MAY_RETURN, &sink);
+		}
+		walkState.userData3 = monitorInfos;
+		walkState.userData4 = (void *)monitorCount;
+#else /* JAVA_SPEC_VERSION >= 24 */
 		walkState.userData3 = NULL;
 		walkState.userData4 = 0;
+#endif /* JAVA_SPEC_VERSION >= 24 */
 
 		closure.jcw = jcw;
 		closure.state = &walkState;
