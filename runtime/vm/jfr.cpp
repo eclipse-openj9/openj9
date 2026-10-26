@@ -265,6 +265,7 @@ jfrEventSize(J9JFREvent *jfrEvent)
 	case J9JFR_EVENT_TYPE_MODULE_REQUIRE:
 	case J9JFR_EVENT_TYPE_MODULE_EXPORT:
 	case J9JFR_EVENT_TYPE_NATIVE_LIBRARY:
+	case J9JFR_EVENT_TYPE_GC_TLAB_CONFIGURATION:
 	case J9JFR_EVENT_TYPE_GC_CONFIGURATION:
 	case J9JFR_EVENT_TYPE_GC_SURVIVOR_CONFIGURATION:
 		size = sizeof(J9JFREvent);
@@ -3153,6 +3154,9 @@ JfrPeriodicEventSet::requestEvent(J9VMThread *currentThread, jlong id)
 	case JfrYoungGenerationConfigurationEvent:
 		requestYoungGenerationConfiguration(currentThread);
 		break;
+	case JfrGCTLABConfigurationEvent:
+		requestGCTLABConfiguration(currentThread);
+		break;
 	case JfrGCConfigurationEvent:
 		requestGCConfiguration(currentThread);
 		break;
@@ -3523,6 +3527,18 @@ JfrPeriodicEventSet::requestGCSurvivorConfiguration(J9VMThread *currentThread)
 	J9JFREvent *jfrEvent = (J9JFREvent *)reserveBuffer(currentThread, currentThread, sizeof(J9JFREvent));
 	if (NULL != jfrEvent) {
 		initializeEventFields(currentThread, currentThread, jfrEvent, J9JFR_EVENT_TYPE_GC_SURVIVOR_CONFIGURATION);
+	}
+}
+
+void
+JfrPeriodicEventSet::requestGCTLABConfiguration(J9VMThread *currentThread)
+{
+	if (!isJFREventEnabled(currentThread->javaVM, JfrGCTLABConfigurationEvent)) {
+		return;
+	}
+	J9JFREvent *jfrEvent = (J9JFREvent *)reserveBuffer(currentThread, currentThread, sizeof(J9JFREvent));
+	if (NULL != jfrEvent) {
+		initializeEventFields(currentThread, currentThread, jfrEvent, J9JFR_EVENT_TYPE_GC_TLAB_CONFIGURATION);
 	}
 }
 #endif /* JAVA_SPEC_VERSION >= 17 */
