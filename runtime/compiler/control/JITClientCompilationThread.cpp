@@ -1552,19 +1552,13 @@ static bool handleResponse(JITServer::MessageType response, JITServer::ClientStr
             mirror->setClassForNewInstance(clazz);
             client->write(response, JITServer::Void());
         } break;
-        case MessageType::ResolvedMethod_isUnresolvedString: {
-            auto recv = client->getRecvData<TR_ResolvedJ9Method *, int32_t, bool>();
-            auto mirror = std::get<0>(recv);
-            auto cpIndex = std::get<1>(recv);
-            auto optimizeForAOT = std::get<2>(recv);
-            client->write(response, mirror->isUnresolvedString(cpIndex, optimizeForAOT));
-        } break;
         case MessageType::ResolvedMethod_stringConstant: {
             auto recv = client->getRecvData<TR_ResolvedJ9Method *, int32_t>();
             auto mirror = std::get<0>(recv);
             auto cpIndex = std::get<1>(recv);
-            client->write(response, mirror->stringConstant(cpIndex), mirror->isUnresolvedString(cpIndex, true),
-                mirror->isUnresolvedString(cpIndex, false));
+            void *stringConst = mirror->TR_ResolvedJ9Method::stringConstant(cpIndex);
+            bool isUnresolved = mirror->isUnresolvedString(cpIndex, true);
+            client->write(response, stringConst, isUnresolved);
         } break;
         case MessageType::ResolvedMethod_getMultipleResolvedMethods: {
             auto recv

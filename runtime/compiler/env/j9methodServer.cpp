@@ -984,27 +984,48 @@ TR_ResolvedMethod *TR_ResolvedJ9JITServerMethod::getResolvedVirtualMethod(TR::Co
 
 void *TR_ResolvedJ9JITServerMethod::stringConstant(I_32 cpIndex)
 {
-    TR_ASSERT(cpIndex != -1, "cpIndex shouldn't be -1");
-    _stream->write(JITServer::MessageType::ResolvedMethod_stringConstant, _remoteMirror, cpIndex);
-    auto recv = _stream->read<void *, bool, bool>();
-
-    auto compInfoPT = static_cast<TR::CompilationInfoPerThreadRemote *>(_fe->_compInfoPT);
-    compInfoPT->cacheIsUnresolvedStr((TR_OpaqueClassBlock *)_ramClass, cpIndex,
-        TR_IsUnresolvedString(std::get<1>(recv), std::get<2>(recv)));
-    return std::get<0>(recv);
+    void *stringAddress = NULL;
+    isUnresolvedString(cpIndex, &stringAddress);
+    return stringAddress;
 }
 
 bool TR_ResolvedJ9JITServerMethod::isUnresolvedString(I_32 cpIndex, bool optimizeForAOT)
 {
+    void *stringAddress = NULL;
+    return isUnresolvedString(cpIndex, &stringAddress);
+}
+
+bool TR_ResolvedJ9JITServerMethod::isUnresolvedString(I_32 cpIndex, void **stringAddress)
+{
+    TR_ASSERT(cpIndex != -1, "cpIndex shouldn't be -1");
     auto compInfoPT = static_cast<TR::CompilationInfoPerThreadRemote *>(_fe->_compInfoPT);
-    TR_IsUnresolvedString stringAttrs;
-    if (compInfoPT->getCachedIsUnresolvedStr((TR_OpaqueClassBlock *)_ramClass, cpIndex, stringAttrs)) {
-        return optimizeForAOT ? stringAttrs._optimizeForAOTTrueResult : stringAttrs._optimizeForAOTFalseResult;
-    } else {
-        _stream->write(JITServer::MessageType::ResolvedMethod_isUnresolvedString, _remoteMirror, cpIndex,
-            optimizeForAOT);
-        return std::get<0>(_stream->read<bool>());
+    TR_StringConstantData data;
+    // Check the fast per-compilation cache first (no locking needed)
+    if (compInfoPT->getCachedStringConstantData((TR_OpaqueClassBlock *)_ramClass, cpIndex, data)) {
+        *stringAddress = data._stringConstant;
+        return data._isUnresolved;
     }
+    // Check the per-client ClassInfo cache (survives across compilations)
+    {
+        OMR::CriticalSection getRemoteROMClass(compInfoPT->getClientData()->getROMMapMonitor());
+        auto &perClientCache = JITServerHelpers::getJ9ClassInfo(compInfoPT, _ramClass)._stringConstantCache;
+        auto it = perClientCache.find(cpIndex);
+        if (it != perClientCache.end()) {
+            compInfoPT->cacheStringConstantData((TR_OpaqueClassBlock *)_ramClass, cpIndex, it->second);
+            *stringAddress = it->second._stringConstant;
+            return it->second._isUnresolved;
+        }
+    }
+    _stream->write(JITServer::MessageType::ResolvedMethod_stringConstant, _remoteMirror, cpIndex);
+    auto recv = _stream->read<void *, bool>();
+    TR_StringConstantData newData(std::get<0>(recv), std::get<1>(recv));
+    if (!newData._isUnresolved) {
+        OMR::CriticalSection getRemoteROMClass(compInfoPT->getClientData()->getROMMapMonitor());
+        JITServerHelpers::getJ9ClassInfo(compInfoPT, _ramClass)._stringConstantCache.insert({ cpIndex, newData });
+    }
+    compInfoPT->cacheStringConstantData((TR_OpaqueClassBlock *)_ramClass, cpIndex, newData);
+    *stringAddress = std::get<0>(recv);
+    return std::get<1>(recv);
 }
 
 bool TR_ResolvedJ9JITServerMethod::isSubjectToPhaseChange(TR::Compilation *comp)
@@ -2221,6 +2242,16 @@ bool TR_ResolvedRelocatableJ9JITServerMethod::isUnresolvedString(I_32 cpIndex, b
 
     if (optimizeForAOT)
         return TR_ResolvedJ9JITServerMethod::isUnresolvedString(cpIndex);
+    return true;
+}
+
+bool TR_ResolvedRelocatableJ9JITServerMethod::isUnresolvedString(I_32 cpIndex, void **stringAddress)
+{
+    TR_ASSERT(cpIndex != -1, "cpIndex shouldn't be -1");
+    // For AOT compilations with optimizeForAOT=false, strings are always treated as
+    // unresolved. Fetch the address from the base implementation but return true so
+    // the server never treats an AOT compilation's string slot as a resolved heap object.
+    TR_ResolvedJ9JITServerMethod::isUnresolvedString(cpIndex, stringAddress);
     return true;
 }
 
