@@ -2417,6 +2417,22 @@ TR::KnownObjectTable::Index TR_J9ServerVM::getMethodAccessorIndex(TR::Compilatio
 
 #endif /* defined(J9VM_OPT_OPENJDK_METHODHANDLE) */
 
+TR::KnownObjectTable::Index TR_J9ServerVM::getFieldAccessorIndex(TR::Compilation *comp,
+    TR::KnownObjectTable::Index fieldIndex)
+{
+    TR::KnownObjectTable *knot = comp->getKnownObjectTable();
+    if (!knot)
+        return TR::KnownObjectTable::UNKNOWN;
+
+    JITServer::ServerStream *stream = _compInfoPT->getMethodBeingCompiled()->_stream;
+    stream->write(JITServer::MessageType::VM_getFieldAccessorIndex, fieldIndex);
+    auto recv = stream->read<TR::KnownObjectTable::Index, uintptr_t *>();
+
+    TR::KnownObjectTable::Index faIndex = std::get<0>(recv);
+    knot->updateKnownObjectTableAtServer(faIndex, std::get<1>(recv));
+    return faIndex;
+}
+
 TR_J9VMBase::LayoutByteOrder TR_J9ServerVM::getLayoutByteOrder(TR::Compilation *comp,
     TR::KnownObjectTable::Index layoutIndex)
 {

@@ -671,6 +671,19 @@ public:
     virtual TR::KnownObjectTable::Index getMethodAccessorIndex(TR::Compilation *comp,
         TR::KnownObjectTable::Index methodIndex);
 
+    /**
+     * @brief Get the FieldAccessor Index of a java/lang/reflect/Field object, if the fieldAccessor field
+     * has been set. When the Field object is known and its fieldAccessor field is populated,
+     * the result of java/lang/reflect/Field.getFieldAccessor() can be evaluated at compile time.
+     *
+     * @param comp the compilation
+     * @param fieldIndex the java/lang/reflect/Field known object index
+     * @return TR::KnownObjectTable::Index the known object index of the FieldAccessor object if valid,
+     * TR::KnownObjectTable::UNKNOWN otherwise
+     */
+    virtual TR::KnownObjectTable::Index getFieldAccessorIndex(TR::Compilation *comp,
+        TR::KnownObjectTable::Index fieldIndex);
+
     virtual TR::Method *createMethod(TR_Memory *, TR_OpaqueClassBlock *, int32_t);
     virtual TR_ResolvedMethod *createResolvedMethod(TR_Memory *, TR_OpaqueMethodBlock *, TR_ResolvedMethod * = 0,
         TR_OpaqueClassBlock * = 0);

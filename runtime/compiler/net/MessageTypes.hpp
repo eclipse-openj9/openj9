@@ -204,6 +204,7 @@ enum MessageType : uint16_t {
     VM_getMethodHandleTableEntryIndex,
     VM_getLayoutVarHandle,
     VM_getMethodAccessorIndex,
+    VM_getFieldAccessorIndex,
     VM_mutableCallSiteEpoch,
     VM_numInterfacesImplemented,
     VM_getObjectClassInfoFromKnotIndex,

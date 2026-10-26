@@ -1113,6 +1113,14 @@ static bool handleResponse(JITServer::MessageType response, JITServer::ClientStr
             client->write(response, maIndex, maObj);
         } break;
 #endif // J9VM_OPT_OPENJDK_METHODHANDLE
+        case MessageType::VM_getFieldAccessorIndex: {
+            auto recv = client->getRecvData<TR::KnownObjectTable::Index>();
+            TR::KnownObjectTable::Index faIndex = fe->getFieldAccessorIndex(comp, std::get<0>(recv));
+            uintptr_t *faObj = NULL;
+            if (faIndex != TR::KnownObjectTable::UNKNOWN)
+                faObj = knot->getPointerLocation(faIndex);
+            client->write(response, faIndex, faObj);
+        } break;
         case MessageType::VM_isStable: {
             auto recv = client->getRecvData<J9Class *, int>();
             J9Class *fieldClass = std::get<0>(recv);
