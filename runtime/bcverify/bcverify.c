@@ -2489,7 +2489,6 @@ j9bcv_initializeVerificationData(J9JavaVM* javaVM)
 	if (NULL == verifyData->strictFields) {
 		goto error_no_memory;
 	}
-	verifyData->earlyLarvalFramePrevious = NULL;
 #endif /* defined(J9VM_OPT_VALHALLA_STRICT_FIELDS) */
 
 	verifyData->verifyBytecodesFunction = j9bcv_verifyBytecodes;
