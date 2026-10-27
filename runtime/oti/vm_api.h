@@ -484,9 +484,10 @@ totalStaticSlotsForClass( J9ROMClass *romClass );
 * @brief
 * @param *ramClass
 * @param *vmThread
+* @param BOOLEAN
 */
 void
-internalRunPreInitInstructions(J9Class * ramClass, J9VMThread * vmThread);
+internalRunPreInitInstructions(J9Class * ramClass, J9VMThread * vmThread, BOOLEAN initResolvedInstFieldRef);
 
 
 /**
