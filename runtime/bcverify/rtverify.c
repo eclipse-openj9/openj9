@@ -244,7 +244,7 @@ findAndMatchStack (J9BytecodeVerificationData *verifyData, IDATA targetPC, IDATA
 #if defined(J9VM_OPT_VALHALLA_STRICT_FIELDS)
 		if (J9_CLASSFILE_OR_ROMCLASS_SUPPORTS_STRICT_FIELDS(verifyData->romClass)
 			&& liveStack->uninitializedThis
-			&& (hashTableGetCount(verifyData->strictFields) > 0)
+			&& ((hashTableGetCount(verifyData->strictFields) > 0) || (hashTableGetCount(verifyData->earlyLarvalFrames) > 0))
 		) {
 			J9EarlyLarvalFrame *earlyLarvalFrame = NULL;
 			BOOLEAN allFieldsUnset = TRUE;
