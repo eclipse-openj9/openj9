@@ -4010,9 +4010,6 @@ void TR_ResolvedJ9Method::construct()
     };
 
     static Y class23[] = {
-#if defined(ENABLE_SPMD_SIMD)
-        { "com/ibm/simt/SPMDKernel", SPMDKernelBaseMethods }, // 23
-#endif
         { "x10/runtime/VMInterface", X10Methods },
         { "java/lang/J9VMInternals", VMInternalsMethods },
         { "java/lang/ref/Reference", ReferenceMethods },
@@ -4023,6 +4020,9 @@ void TR_ResolvedJ9Method::construct()
         { "sun/nio/ch/NativeThread", NativeThreadMethods },
         { "java/util/regex/Matcher", JavaUtilRegexMatcherMethods },
         { "java/lang/VirtualThread", VirtualThreadMethods },
+#if defined(ENABLE_SPMD_SIMD)
+        { "com/ibm/simt/SPMDKernel", SPMDKernelBaseMethods },
+#endif
         { 0 }
     };
 
