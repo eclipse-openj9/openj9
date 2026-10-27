@@ -49,6 +49,8 @@ typedef struct RasDumpGlobalStorage {
 struct J9RASdumpAgent; /* Forward struct declaration */
 struct J9RASdumpContext; /* Forward struct declaration */
 
+typedef omr_error_t (*J9RASdumpFn)(struct J9RASdumpAgent *agent, char *label, struct J9RASdumpContext *context);
+
 /* @ddr_namespace: map_to_type=J9RASdumpAgent */
 
 typedef struct J9RASdumpAgent {
@@ -60,7 +62,7 @@ typedef struct J9RASdumpAgent {
 	UDATA stopOnCount;
 	UDATA count;
 	char* labelTemplate;
-	omr_error_t  (*dumpFn)(struct J9RASdumpAgent *agent, char *label, struct J9RASdumpContext *context) ;
+	J9RASdumpFn dumpFn;
 	char* dumpOptions;
 	void* userData;
 	UDATA priority;
@@ -130,8 +132,6 @@ typedef struct J9RASAsyncPidInfo {
 	UDATA siPid;
 	char *siPidName;
 } J9RASAsyncPidInfo;
-
-typedef omr_error_t (*J9RASdumpFn)(struct J9RASdumpAgent *agent, char *label, struct J9RASdumpContext *context);
 
 typedef struct J9RASdumpFunctions {
 	void* reserved;
