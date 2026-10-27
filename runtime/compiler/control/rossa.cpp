@@ -136,10 +136,6 @@
 
 extern "C" int32_t encodeCount(int32_t count);
 
-extern "C" {
-struct J9RASdumpContext;
-}
-
 #if defined(TR_TARGET_X86) && defined(TR_HOST_32BIT)
 extern TR_X86CPUIDBuffer *queryX86TargetCPUID(void *javaVM);
 #endif
