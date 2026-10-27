@@ -31,6 +31,7 @@ SPDX-License-Identifier: EPL-2.0 OR Apache-2.0 OR GPL-2.0-only WITH Classpath-ex
 			<variation>Mode551</variation>
 			<variation>Mode501 -XXgc:disableVirtualLargeObjectHeap</variation>
 			<variation>Mode551 -XXgc:disableVirtualLargeObjectHeap</variation>
+			<variation>Mode551 -XXgc:forcedShiftingCompressionAmount=4</variation>
 			<variation>Mode610</variation>
 			<variation>Mode110 -XX:+GuardPageOnJavaStack</variation>
 		</variations>
