@@ -420,9 +420,8 @@ MM_IndexableObjectAllocationModel::getSparseAddressAndDecommitLeaves(MM_Environm
 		/* fail to reserve regions or allocateSparseFreeEntry, clean up reserved regions */
 		if (0 != fraction) {
 			/* rollback fraction */
-			if (reservedRegionAllocationContexts[reservedRegionCount - 1]->recycleToSharedArrayReservedRegion(env, fraction, true)) {
-				arrayReservedRegionCount -= 1;
-			}
+			reservedRegionAllocationContexts[reservedRegionCount - 1]->recycleToSharedArrayReservedRegion(env, fraction, true);
+			arrayReservedRegionCount -= 1;
 		}
 		if (0 < arrayReservedRegionCount) {
 			for (uintptr_t idx = 0; idx < arrayReservedRegionCount; idx++) {
