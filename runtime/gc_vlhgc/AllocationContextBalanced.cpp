@@ -1184,13 +1184,13 @@ MM_AllocationContextBalanced::allocateFromSharedReservedRegionForNode(MM_Environ
 	*reservedAddressLow = NULL;
 
 	lockCommon();
-	if (0 == _sharedArrayReservedRegionsBytesUsed) {
-		shouldAllocateNewSharedRegion = true;
+	uintptr_t wholeRegionsBefore = 0;
+	if (0 != _sharedArrayReservedRegionsBytesUsed) {
+		wholeRegionsBefore = MM_Math::roundToCeiling(regionSize, _sharedArrayReservedRegionsBytesUsed) / regionSize;
 	}
-	uintptr_t wholeRegionsBefore = _sharedArrayReservedRegionsBytesUsed / regionSize;
-	uintptr_t wholeRegionsAfter = (_sharedArrayReservedRegionsBytesUsed + fraction) / regionSize;
+	uintptr_t wholeRegionsAfter = MM_Math::roundToCeiling(regionSize, _sharedArrayReservedRegionsBytesUsed + fraction) / regionSize;
 
-	if (!shouldAllocateNewSharedRegion && (wholeRegionsBefore < wholeRegionsAfter)) {
+	if (wholeRegionsBefore < wholeRegionsAfter) {
 		shouldAllocateNewSharedRegion = true;
 	}
 
@@ -1243,19 +1243,21 @@ MM_AllocationContextBalanced::recycleToSharedArrayReservedRegion(MM_EnvironmentB
 {
 	const uintptr_t regionSize = _heapRegionManager->getRegionSize();
 	Assert_MM_true((regionSize > fraction) && (0 != fraction));
-	Assert_MM_true(_sharedArrayReservedRegionsBytesUsed >= fraction);
-
 	bool shouldReleaseCurrentSharedRegion = false;
 
 	if (needLock) {
 		lockCommon();
 	}
 
-	uintptr_t wholeRegionsBefore = _sharedArrayReservedRegionsBytesUsed / regionSize;
+	Assert_MM_true(_sharedArrayReservedRegionsBytesUsed >= fraction);
+	uintptr_t wholeRegionsBefore = MM_Math::roundToCeiling(regionSize, _sharedArrayReservedRegionsBytesUsed) / regionSize;
 	_sharedArrayReservedRegionsBytesUsed -= fraction;
-	uintptr_t wholeRegionsAfter = _sharedArrayReservedRegionsBytesUsed / regionSize;
+	uintptr_t wholeRegionsAfter = 0;
+	if (0 != _sharedArrayReservedRegionsBytesUsed) {
+		wholeRegionsAfter = MM_Math::roundToCeiling(regionSize, _sharedArrayReservedRegionsBytesUsed) / regionSize;
+	}
 
-	if ((0 == _sharedArrayReservedRegionsBytesUsed) || (wholeRegionsBefore > wholeRegionsAfter)) {
+	if (wholeRegionsBefore > wholeRegionsAfter) {
 		shouldReleaseCurrentSharedRegion = true;
 	}
 
