@@ -86,3 +86,4 @@ TraceEntry=Trc_Util_getDefinedArgumentFromJavaVMInitArgs_Entry Noenv Overhead=1 
 TraceExit=Trc_Util_getDefinedArgumentFromJavaVMInitArgs_Exit Noenv Overhead=1 Level=3 Template="getDefinedArgumentFromJavaVMInitArgs (result=%s)"
 
 TraceEntry=Trc_Util_validateLibrary_Entry Noenv Overhead=1 Level=5 Template="validateLibrary entered (library=%p, name=%s, isStatic=%d)"
+TraceException=Trc_Util_validateLibrary_NULL_cryptString NoEnv Overhead=1 Level=1 Template="validateLibrary validateFunc() returns NULL cryptString"
