@@ -220,7 +220,8 @@ jitInfoSecondTryMatch:
 						J9ROMMethod *romMethod = J9_ROM_METHOD_FROM_RAM_METHOD(walkState->method);
 						getROMMethodInfoForROMMethod(&romMethodInfo, walkState, romMethod);
 
-						if ((rc = walkFrame(&romMethodInfo, walkState)) != J9_STACKWALK_KEEP_ITERATING) {
+						rc = walkFrame(&romMethodInfo, walkState);
+						if (J9_STACKWALK_KEEP_ITERATING != rc) {
 							return rc;
 						}
 resumeWalkInline:
@@ -260,7 +261,8 @@ resumeWalkInline:
 #endif	 
 		J9ROMMethod *romMethod = J9_ROM_METHOD_FROM_RAM_METHOD(walkState->method);
 		getROMMethodInfoForROMMethod(&romMethodInfo, walkState, romMethod);
-		if ((rc = walkFrame(&romMethodInfo, walkState)) != J9_STACKWALK_KEEP_ITERATING) {
+		rc = walkFrame(&romMethodInfo, walkState);
+		if (J9_STACKWALK_KEEP_ITERATING != rc) {
 			return rc;
 		}
 resumeNonInline:
@@ -428,7 +430,8 @@ static UDATA walkTransitionFrame(J9StackWalkState *walkState)
 					UDATA rc;
 
 					walkState->frameFlags = 0;
-					if ((rc = walkFrame(&romMethodInfo, walkState)) != J9_STACKWALK_KEEP_ITERATING) {
+					rc = walkFrame(&romMethodInfo, walkState);
+					if (J9_STACKWALK_KEEP_ITERATING != rc) {
 						return rc;
 					}
 				}
