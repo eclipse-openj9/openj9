@@ -21,6 +21,7 @@
  *******************************************************************************/
 
 #include "optimizer/TransformUtil.hpp"
+#include "AtomicSupport.hpp"
 #include "compile/Compilation.hpp"
 #include "compile/SymbolReferenceTable.hpp"
 #if defined(J9VM_OPT_JITSERVER)
@@ -361,14 +362,50 @@ bool J9::TransformUtil::avoidFoldingInstanceField(uintptr_t object, TR::Symbol *
         // from MCS instances can be rejected unconditionally here without
         // affecting the non-LambdaForm implementation.
         //
+        // In an instance of ConstantCallSite, target is constant only once the
+        // instance has been fully constructed. The CCS constructor that takes a
+        // createTargetHook passes the partially constructed instance to the
+        // hook, and until the hook returns, target is the placeholder set by
+        // CallSite(MethodType), which throws IllegalStateException when invoked.
+        // Once the hook returns the bound target, CallSite sets this.target and
+        // issues an UNSAFE.storeStoreFence(). The CCS constructor then sets
+        // isFrozen = true.
+        //
+        // Therefore, we check isFrozen before allowing CallSite.target to be
+        // folded. If isFrozen is false (or not found), we return true to avoid
+        // folding. If isFrozen is true, we issue a VM_AtomicSupport::readBarrier()
+        // before returning false to ensure the compilation thread's subsequent
+        // read of CallSite.target is ordered after the read of isFrozen == true
+        // and is guaranteed to observe the fully initialized target.
+        //
         case TR::Symbol::Java_lang_invoke_CallSite_target: {
             TR_OpaqueClassBlock *objectClass = fej9->getObjectClass((uintptr_t)object);
 
             const char * const mcsName = "java/lang/invoke/MutableCallSite";
             TR_OpaqueClassBlock *mcsClass = fej9->getSystemClassFromClassName(mcsName, strlen(mcsName));
 
-            // If MCS isn't loaded, then object isn't an instance of it.
-            return mcsClass != NULL && fej9->isInstanceOf(objectClass, mcsClass, true) != TR_no;
+            // Never fold the target of a MutableCallSite. If MCS isn't loaded,
+            // then object can't be an instance of it.
+            if (mcsClass != NULL && fej9->isInstanceOf(objectClass, mcsClass, true) != TR_no)
+                return true;
+
+            const char * const ccsName = "java/lang/invoke/ConstantCallSite";
+            TR_OpaqueClassBlock *ccsClass = fej9->getSystemClassFromClassName(ccsName, strlen(ccsName));
+
+            // If CCS isn't loaded, then object isn't an instance of it.
+            if (ccsClass == NULL || fej9->isInstanceOf(objectClass, ccsClass, true) == TR_no)
+                return false;
+
+            uint32_t isFrozenOffset = fej9->getInstanceFieldOffset(ccsClass, "isFrozen", "Z");
+            if (isFrozenOffset == ~(uint32_t)0)
+                return true;
+
+            if (fej9->getInt32FieldAt(object, isFrozenOffset) == 0)
+                return true;
+
+            // must ensure order of load of isFrozen followed by the target is maintained
+            VM_AtomicSupport::readBarrier();
+            return false;
         }
 
         // MethodHandle.form can change even though it's declared final, so don't
