@@ -52,14 +52,18 @@ public class InvalidUpCallTests {
 	}
 	private static final SymbolLookup nativeLibLookup = SymbolLookup.loaderLookup();
 
-	@Test(expectedExceptions = IllegalArgumentException.class, expectedExceptionsMessageRegExp = "An exception is thrown from the upcall method")
+	@Test
 	public void test_throwExceptionFromUpcallMethod() throws Throwable {
+		runTerminatingUpcall("test_throwExceptionFromUpcallMethod", "IllegalArgumentException", false);
+	}
+
+	private void test_throwExceptionFromUpcallMethodInChild() throws Throwable {
 		GroupLayout structLayout = MemoryLayout.structLayout(JAVA_INT.withName("elem1"), JAVA_INT.withName("elem2"));
 		VarHandle intHandle1 = structLayout.varHandle(PathElement.groupElement("elem1"));
 		VarHandle intHandle2 = structLayout.varHandle(PathElement.groupElement("elem2"));
 
 		FunctionDescriptor fd = FunctionDescriptor.of(structLayout, structLayout, structLayout, ADDRESS);
-		MemorySegment functionSymbol = nativeLibLookup.find("add2IntStructs_returnStructByUpcallMH").get();
+		MemorySegment functionSymbol = nativeLibLookup.find("add2IntStructs_returnStructByUpcallMH_mustNotReturn").get();
 		MethodHandle mh = linker.downcallHandle(functionSymbol, fd);
 
 		try (Arena arena = Arena.ofConfined()) {
@@ -77,14 +81,18 @@ public class InvalidUpCallTests {
 		}
 	}
 
-	@Test(expectedExceptions = IllegalArgumentException.class, expectedExceptionsMessageRegExp = "An exception is thrown from the upcall method")
+	@Test
 	public void test_nestedUpcall_throwExceptionFromUpcallMethod() throws Throwable {
+		runTerminatingUpcall("test_nestedUpcall_throwExceptionFromUpcallMethod", "IllegalArgumentException", false);
+	}
+
+	private void test_nestedUpcall_throwExceptionFromUpcallMethodInChild() throws Throwable {
 		GroupLayout structLayout = MemoryLayout.structLayout(JAVA_INT.withName("elem1"), JAVA_INT.withName("elem2"));
 		VarHandle intHandle1 = structLayout.varHandle(PathElement.groupElement("elem1"));
 		VarHandle intHandle2 = structLayout.varHandle(PathElement.groupElement("elem2"));
 
 		FunctionDescriptor fd = FunctionDescriptor.of(structLayout, structLayout, structLayout, ADDRESS);
-		MemorySegment functionSymbol = nativeLibLookup.find("add2IntStructs_returnStructByUpcallMH").get();
+		MemorySegment functionSymbol = nativeLibLookup.find("add2IntStructs_returnStructByUpcallMH_mustNotReturn").get();
 		MethodHandle mh = linker.downcallHandle(functionSymbol, fd);
 
 		try (Arena arena = Arena.ofConfined()) {
@@ -102,8 +110,12 @@ public class InvalidUpCallTests {
 		}
 	}
 
-	@Test(expectedExceptions = NullPointerException.class)
+	@Test
 	public void test_nullValueForReturnPtr() throws Throwable {
+		runTerminatingUpcall("test_nullValueForReturnPtr", "NullPointerException", false);
+	}
+
+	private void test_nullValueForReturnPtrInChild() throws Throwable {
 		GroupLayout structLayout = MemoryLayout.structLayout(JAVA_INT.withName("elem1"), JAVA_INT.withName("elem2"));
 		VarHandle intHandle1 = structLayout.varHandle(PathElement.groupElement("elem1"));
 		VarHandle intHandle2 = structLayout.varHandle(PathElement.groupElement("elem2"));
@@ -127,8 +139,12 @@ public class InvalidUpCallTests {
 		}
 	}
 
-	@Test(expectedExceptions = NullPointerException.class)
+	@Test
 	public void test_nullValueForReturnStruct() throws Throwable {
+		runTerminatingUpcall("test_nullValueForReturnStruct", "NullPointerException", false);
+	}
+
+	private void test_nullValueForReturnStructInChild() throws Throwable {
 		GroupLayout structLayout = MemoryLayout.structLayout(JAVA_INT.withName("elem1"), JAVA_INT.withName("elem2"));
 		VarHandle intHandle1 = structLayout.varHandle(PathElement.groupElement("elem1"));
 		VarHandle intHandle2 = structLayout.varHandle(PathElement.groupElement("elem2"));
@@ -178,8 +194,12 @@ public class InvalidUpCallTests {
 		}
 	}
 
-	@Test(expectedExceptions = NullPointerException.class)
+	@Test
 	public void test_nullSegmentForReturnStruct() throws Throwable {
+		runTerminatingUpcall("test_nullSegmentForReturnStruct", "NullPointerException", false);
+	}
+
+	private void test_nullSegmentForReturnStructInChild() throws Throwable {
 		GroupLayout structLayout = MemoryLayout.structLayout(JAVA_INT.withName("elem1"), JAVA_INT.withName("elem2"));
 		VarHandle intHandle1 = structLayout.varHandle(PathElement.groupElement("elem1"));
 		VarHandle intHandle2 = structLayout.varHandle(PathElement.groupElement("elem2"));
@@ -203,8 +223,12 @@ public class InvalidUpCallTests {
 		}
 	}
 
-	@Test(expectedExceptions = IllegalArgumentException.class, expectedExceptionsMessageRegExp = "Heap segment not allowed.*")
+	@Test
 	public void test_heapSegmentForReturnPtr() throws Throwable {
+		runTerminatingUpcall("test_heapSegmentForReturnPtr", "IllegalArgumentException", false);
+	}
+
+	private void test_heapSegmentForReturnPtrInChild() throws Throwable {
 		GroupLayout structLayout = MemoryLayout.structLayout(JAVA_INT.withName("elem1"), JAVA_INT.withName("elem2"));
 		VarHandle intHandle1 = structLayout.varHandle(PathElement.groupElement("elem1"));
 		VarHandle intHandle2 = structLayout.varHandle(PathElement.groupElement("elem2"));
@@ -298,8 +322,12 @@ public class InvalidUpCallTests {
 		}
 	}
 
-	@Test(expectedExceptions = IllegalThreadStateException.class, expectedExceptionsMessageRegExp = ".* wrong thread state for upcall")
+	@Test
 	public void test_InvalidLinkerOptions_isCritical_2() throws Throwable {
+		runTerminatingUpcall("test_InvalidLinkerOptions_isCritical_2", "An FFM upcall is not allowed during a critical downcall", true);
+	}
+
+	private void test_InvalidLinkerOptions_isCritical_2InChild() throws Throwable {
 		FunctionDescriptor fd = FunctionDescriptor.of(JAVA_INT, JAVA_INT, ADDRESS);
 		MemorySegment functionSymbol = nativeLibLookup.find("captureTrivialOptionByUpcallMH").get();
 		MethodHandle mh = linker.downcallHandle(functionSymbol, fd, Linker.Option.critical(false));
@@ -309,6 +337,56 @@ public class InvalidUpCallTests {
 					FunctionDescriptor.of(JAVA_INT, JAVA_INT), arena);
 			int result = (int)mh.invoke(111, upcallFuncAddr);
 			fail("Failed to throw IllegalThreadStateException in the case of the invalid upcall during the critical downcall.");
+		}
+	}
+
+	@Test(enabled = false)
+	public static void main(String[] args) throws Throwable {
+		System.out.println("UPCALL_CHILD_STARTED");
+		try {
+			java.lang.reflect.Method method = InvalidUpCallTests.class.getDeclaredMethod(args[0] + "InChild");
+			method.invoke(new InvalidUpCallTests());
+		} catch (Throwable t) {
+			System.out.println("UPCALL_EXCEPTION_ESCAPED_TO_JAVA");
+			t.printStackTrace();
+		}
+		System.out.println("UPCALL_JAVA_CONTINUED");
+	}
+
+	private static void runTerminatingUpcall(String test, String diagnostic, boolean vmFailure) throws Exception {
+		java.util.List<String> command = new java.util.ArrayList<>();
+		command.add(java.nio.file.Path.of(System.getProperty("java.home"), "bin", "java").toString());
+		command.addAll(java.lang.management.ManagementFactory.getRuntimeMXBean().getInputArguments());
+		command.add("-Djava.library.path=" + System.getProperty("java.library.path"));
+		command.add("-cp");
+		command.add(System.getProperty("java.class.path"));
+		command.add(InvalidUpCallTests.class.getName());
+		command.add(test);
+		java.nio.file.Path output = java.nio.file.Files.createTempFile("upcall-termination-", ".log");
+		Process child = null;
+		try {
+			child = new ProcessBuilder(command).redirectErrorStream(true).redirectOutput(output.toFile()).start();
+			if (!child.waitFor(30, java.util.concurrent.TimeUnit.SECONDS)) {
+				child.destroyForcibly();
+				fail("Upcall child timed out: " + test);
+			}
+			String text = java.nio.file.Files.readString(output);
+			org.testng.Assert.assertTrue(text.contains("UPCALL_CHILD_STARTED"), text);
+			org.testng.Assert.assertTrue(text.contains(diagnostic), text);
+			if (vmFailure) {
+				org.testng.Assert.assertNotEquals(child.exitValue(), 0, text);
+			} else {
+				org.testng.Assert.assertEquals(child.exitValue(), 1, text);
+			}
+			org.testng.Assert.assertFalse(text.contains("UPCALL_NATIVE_CONTINUED"), text);
+			org.testng.Assert.assertFalse(text.contains("UPCALL_JAVA_CONTINUED"), text);
+			org.testng.Assert.assertFalse(text.contains("UPCALL_EXCEPTION_ESCAPED_TO_JAVA"), text);
+		} finally {
+			if (child != null && child.isAlive()) {
+				child.destroyForcibly();
+				child.waitFor();
+			}
+			java.nio.file.Files.deleteIfExists(output);
 		}
 	}
 }
