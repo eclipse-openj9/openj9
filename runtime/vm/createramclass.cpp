@@ -3393,8 +3393,9 @@ fail:
 			ramClass->reservedCounter = 0;
 			ramClass->cancelCounter = 0;
 
-			/* hostClass is exclusively defined only in Unsafe.defineAnonymousClass.
-			 * For all other cases, clazz->hostClass points to itself (clazz).
+			/* hostClass is set for anonymous classes (Unsafe.defineAnonymousClass), hidden classes
+			 * (Lookup.defineHiddenClass) and normal classes defined by Lookup.defineClass(), where
+			 * it is the lookup class. For all other cases, clazz->hostClass points to itself (clazz).
 			 */
 			if (NULL != hostClass) {
 				ramClass->hostClass = hostClass;
@@ -3928,7 +3929,7 @@ retry:
 				 */
 				bool findModule = false;
 				J9ClassLoader *findModuleClassLoader = classLoader;
-				if (J9_ARE_ANY_BITS_SET(options, J9_FINDCLASS_FLAG_ANON | J9_FINDCLASS_FLAG_HIDDEN)) {
+				if (NULL != hostClass) {
 #if JAVA_SPEC_VERSION >= 22
 					/* In JDK22, MethodHandleProxies.asInterfaceInstance was reimplemented using a more
 					 * direct MethodHandle approach to improve performance. This approach introduces hidden
