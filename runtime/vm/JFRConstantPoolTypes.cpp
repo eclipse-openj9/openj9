@@ -1700,6 +1700,56 @@ done:
 }
 
 void
+VM_JFRConstantPoolTypes::addSystemProcessEntry(J9JFRSystemProcess *systemProcessData)
+{
+	PORT_ACCESS_FROM_JAVAVM(_vm);
+	SystemProcessEntry *entry = (SystemProcessEntry *)pool_newElement(_systemProcessTable);
+
+	if (NULL == entry) {
+		/* The event owns commandLine; it is not going to be consumed, so release it. */
+		j9mem_free_memory(systemProcessData->commandLine);
+		_buildResult = OutOfMemory;
+		goto done;
+	}
+
+	entry->ticks = systemProcessData->ticks;
+	entry->pid = systemProcessData->pid;
+	entry->commandLine = systemProcessData->commandLine;
+
+	_systemProcessCount += 1;
+	_systemProcessStringSizeTotal += strlen(entry->commandLine);
+
+done:
+	return;
+}
+
+void
+VM_JFRConstantPoolTypes::addNativeLibraryEntry(J9JFRNativeLibrary *nativeLibraryData)
+{
+	PORT_ACCESS_FROM_JAVAVM(_vm);
+	NativeLibraryEntry *entry = (NativeLibraryEntry *)pool_newElement(_nativeLibrariesTable);
+
+	if (NULL == entry) {
+		/* The event owns name; it is not going to be consumed, so release it. */
+		j9mem_free_memory(nativeLibraryData->name);
+		_buildResult = OutOfMemory;
+		goto done;
+	}
+
+	entry->ticks = nativeLibraryData->startTicks;
+	entry->name = nativeLibraryData->name;
+	entry->addressLow = nativeLibraryData->addressLow;
+	entry->addressHigh = nativeLibraryData->addressHigh;
+	entry->next = NULL;
+
+	_nativeLibrariesCount += 1;
+	_nativeLibraryPathSizeTotal += strlen(entry->name);
+
+done:
+	return;
+}
+
+void
 VM_JFRConstantPoolTypes::printTables()
 {
 	j9tty_printf(PORTLIB, "--------------- StringUTF8Table ---------------\n");
