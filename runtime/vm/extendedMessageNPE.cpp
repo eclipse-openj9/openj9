@@ -793,7 +793,7 @@ computeNPEMsgAtPC(J9VMThread *vmThread, J9ROMMethod *romMethod, J9ROMClass *romC
 		j9mem_free_memory(*npeMsg);
 		*npeMsg = NULL;
 	}
-	if (BYTECODE_TEMP_CHANGED == npePC) {
+	if ((BYTECODE_TEMP_CHANGED == npePC) || (BYTECODE_BRANCH_TARGET == npePC)) {
 		/* *npeMsg is NULL */
 	} else {
 		J9ROMConstantPoolItem *constantPool = J9_ROM_CP_FROM_ROM_CLASS(romClass);
