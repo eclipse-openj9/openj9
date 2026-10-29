@@ -101,6 +101,15 @@ typedef struct J9JVMTIObjectTag {
 } J9JVMTIObjectTag;
 
 #if defined(J9VM_OPT_VALHALLA_VALUE_TYPES)
+/* Entry of valueTypeObjectTagTable. ref is a JNI global reference owned by the table; it keeps
+ * the tagged value type object alive and tracks it if the GC moves it. JVMTI code is responsible
+ * for removing entries and deleting their references.
+ * The tag member must stay at the same offset as in J9JVMTIObjectTag. */
+typedef struct J9JVMTIValueTypeTag {
+	jobject ref;
+	jlong tag;
+} J9JVMTIValueTypeTag;
+
 /* Bit 0 of ref marks an object tag entry as part of the dead-entry chain. */
 #define J9JVMTI_OBJECT_TAG_DEAD_ENTRY_BIT ((UDATA)1)
 /* True when ref points to a live object (dead-entry bit is clear). */
@@ -179,6 +188,11 @@ typedef struct J9JVMTIEnv {
 	omrthread_monitor_t threadDataPoolMutex;
 	J9Pool *threadDataPool;
 	J9HashTable *objectTagTable;
+#if defined(J9VM_OPT_VALHALLA_VALUE_TYPES)
+	/* Stores the tags of all value type objects. Unlike objectTagTable, entries are not
+	 * cleared by the GC: each holds a JNI global reference and must be removed by JVMTI code. */
+	J9HashTable *valueTypeObjectTagTable;
+#endif /* defined(J9VM_OPT_VALHALLA_VALUE_TYPES) */
 	J9JVMTIEventEnableMap globalEventEnable;
 	J9HashTable *watchedClasses;
 	J9Pool *breakpoints;
