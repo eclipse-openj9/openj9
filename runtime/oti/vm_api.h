@@ -3970,11 +3970,12 @@ swWalkObjectSlot(J9StackWalkState * walkState, j9object_t * objectSlot, void * i
 
 /**
 * @brief
+* @param romMethodInfo cached ROM method information for the frame being walked
 * @param walkState
 * @return UDATA
 */
 UDATA
-walkFrame(J9StackWalkState * walkState);
+walkFrame(J9ROMMethodInfo *romMethodInfo, J9StackWalkState *walkState);
 
 
 /**
@@ -4000,6 +4001,7 @@ invalidJITReturnAddress(J9StackWalkState *walkState);
  * parameter must represent the true count, including the hidden locals for AI count, sync object or
  * receiver object for Object <init>.
  *
+ * @param[in] *romMethodInfo cached ROM method information for the method being walked
  * @param[in] *walkState current J9StackWalkState pointer
  * @param[in] *method method whose slots are being walked
  * @param[in] offsetPC index into the bytecode array
@@ -4010,7 +4012,7 @@ invalidJITReturnAddress(J9StackWalkState *walkState);
  * @param[in] alwaysLocalMap TRUE to force use of the local mapper, FALSE to use normal walkState logic
  */
 void
-walkBytecodeFrameSlots(J9StackWalkState *walkState, J9Method *method, UDATA offsetPC, UDATA *pendingBase, UDATA pendingStackHeight, UDATA *localBase, UDATA numberOfLocals, UDATA alwaysLocalMap);
+walkBytecodeFrameSlots(J9ROMMethodInfo *romMethodInfo, J9StackWalkState *walkState, J9Method *method, UDATA offsetPC, UDATA *pendingBase, UDATA pendingStackHeight, UDATA *localBase, UDATA numberOfLocals, UDATA alwaysLocalMap);
 
 
 /* ---------------- trace.c ---------------- */

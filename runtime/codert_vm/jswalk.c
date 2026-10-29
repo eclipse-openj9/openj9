@@ -152,6 +152,7 @@ UDATA  jitWalkStackFrames(J9StackWalkState *walkState)
 	UDATA i;
 	U_8 ** returnTable;
 	void  (*savedDropToCurrentFrame)(struct J9StackWalkState * walkState) ;
+	J9ROMMethodInfo romMethodInfo;
 
 	if (J9_ARE_ANY_BITS_SET(walkState->flags, J9_STACKWALK_RESUME)) {
 		walkState->flags &= ~J9_STACKWALK_RESUME;
@@ -173,6 +174,9 @@ UDATA  jitWalkStackFrames(J9StackWalkState *walkState)
 
 	while ((walkState->jitInfo = jitGetExceptionTable(walkState)) != NULL) {
 jitInfoSecondTryMatch:
+#if defined(J9MAPCACHE_DEBUG)
+		memset(&romMethodInfo, 0, sizeof(romMethodInfo));
+#endif /* defined(J9MAPCACHE_DEBUG) */
 		walkState->stackMap = NULL;
 		walkState->inlineMap = NULL;
 		walkState->bp = walkState->unwindSP + getJitTotalFrameSize(walkState->jitInfo);
@@ -213,7 +217,11 @@ jitInfoSecondTryMatch:
 						lswRecord(walkState, LSW_TYPE_METHOD, walkState->method);
 						lswRecord(walkState, LSW_TYPE_JIT_FRAME_INFO, walkState);
 #endif
-						if ((rc = walkFrame(walkState)) != J9_STACKWALK_KEEP_ITERATING) {
+						J9ROMMethod *romMethod = J9_ROM_METHOD_FROM_RAM_METHOD(walkState->method);
+						getROMMethodInfoForROMMethod(&romMethodInfo, walkState, romMethod);
+
+						rc = walkFrame(&romMethodInfo, walkState);
+						if (J9_STACKWALK_KEEP_ITERATING != rc) {
 							return rc;
 						}
 resumeWalkInline:
@@ -251,7 +259,10 @@ resumeWalkInline:
 #ifdef J9VM_INTERP_LINEAR_STACKWALK_TRACING
 		lswRecord(walkState, LSW_TYPE_JIT_FRAME_INFO, walkState);
 #endif	 
-		if ((rc = walkFrame(walkState)) != J9_STACKWALK_KEEP_ITERATING) {
+		J9ROMMethod *romMethod = J9_ROM_METHOD_FROM_RAM_METHOD(walkState->method);
+		getROMMethodInfoForROMMethod(&romMethodInfo, walkState, romMethod);
+		rc = walkFrame(&romMethodInfo, walkState);
+		if (J9_STACKWALK_KEEP_ITERATING != rc) {
 			return rc;
 		}
 resumeNonInline:
@@ -316,6 +327,8 @@ i2jTransition: ;
 
 static UDATA walkTransitionFrame(J9StackWalkState *walkState)
 {
+	J9ROMMethodInfo romMethodInfo;
+	memset(&romMethodInfo, 0, sizeof(romMethodInfo));
 
 	if (walkState->frameFlags & J9_STACK_FLAGS_JIT_RESOLVE_FRAME) {
 		J9SFJITResolveFrame * resolveFrame = (J9SFJITResolveFrame *) ((U_8 *) walkState->bp - sizeof(J9SFJITResolveFrame) + sizeof(UDATA));
@@ -417,7 +430,8 @@ static UDATA walkTransitionFrame(J9StackWalkState *walkState)
 					UDATA rc;
 
 					walkState->frameFlags = 0;
-					if ((rc = walkFrame(walkState)) != J9_STACKWALK_KEEP_ITERATING) {
+					rc = walkFrame(&romMethodInfo, walkState);
+					if (J9_STACKWALK_KEEP_ITERATING != rc) {
 						return rc;
 					}
 				}
@@ -2010,6 +2024,7 @@ getSlotAddress(J9StackWalkState *walkState, J9JITStackAtlas *gcStackAtlas, U_16 
 static J9OSRFrame*
 jitWalkOSRFrame(J9StackWalkState *walkState, J9OSRFrame *osrFrame)
 {
+	J9ROMMethodInfo romMethodInfo;
 	J9Method *method = osrFrame->method;
 	U_8 *bytecodePC = osrFrame->bytecodePCOffset + J9_BYTECODE_START_FROM_RAM_METHOD(osrFrame->method);
 	UDATA numberOfLocals = osrFrame->numberOfLocals;
@@ -2020,6 +2035,8 @@ jitWalkOSRFrame(J9StackWalkState *walkState, J9OSRFrame *osrFrame)
 	UDATA *nextFrame = localSlots + numberOfLocals;
 	J9MonitorEnterRecord *enterRecord = osrFrame->monitorEnterRecords;
 
+	getROMMethodInfoForOSRFrame(&romMethodInfo, walkState, osrFrame);
+
 #ifdef J9VM_INTERP_STACKWALK_TRACING
 	{
 		J9Method *stateMethod = walkState->method;
@@ -2029,7 +2046,8 @@ jitWalkOSRFrame(J9StackWalkState *walkState, J9OSRFrame *osrFrame)
 		walkState->method = stateMethod;
 	}
 #endif
-	walkBytecodeFrameSlots(walkState, method, offsetPC,
+
+	walkBytecodeFrameSlots(&romMethodInfo, walkState, method, offsetPC,
 			localSlots - 1, pendingStackHeight,
 			nextFrame - 1, numberOfLocals, TRUE);
 	while (NULL != enterRecord) {
