@@ -1053,5 +1053,10 @@ final class Access implements JavaLangAccess {
 	public long[] getOrCreateConfinedMemoryPools(Thread thread, int poolSlots) {
 		return thread.getOrCreateConfinedMemoryPools(poolSlots);
 	}
+
+	@Override
+	public boolean hasModuleReflectionData() {
+		return Module.hasReflectionData();
+	}
 	/*[ENDIF] JAVA_SPEC_VERSION >= 28 */
 }
