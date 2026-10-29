@@ -156,6 +156,7 @@ javaCheckAsyncMessages(J9VMThread *currentThread, UDATA throwExceptions)
 				if (throwExceptions) {
 					/* Deliver scoped exception for this close request. */
 					currentThread->currentException = J9_JNI_UNWRAP_REFERENCE(head->scopeError);
+					Assert_VM_true(NULL != currentThread->currentException);
 					result = J9_CHECK_ASYNC_THROW_EXCEPTION;
 				} else {
 					/* Retry later when exceptions can be thrown. */
