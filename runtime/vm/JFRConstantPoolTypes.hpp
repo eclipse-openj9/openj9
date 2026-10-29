@@ -1563,9 +1563,6 @@ public:
 			case J9JFR_EVENT_TYPE_CLASS_LOADER_STATISTICS:
 				addClassLoaderStatisticsEntry((J9JFRClassLoaderStatistics *)event);
 				break;
-			case J9JFR_EVENT_TYPE_THREAD_DUMP:
-				addThreadDumpEntry((J9JFRThreadDump *)event);
-				break;
 			case J9JFR_EVENT_TYPE_DATA_LOSS:
 				addDataLossEntry((J9JFRDataLoss *)event);
 				break;
@@ -1593,6 +1590,17 @@ public:
 			default:
 				Assert_VM_unreachable();
 				break;
+			}
+			event = jfrBufferNextDo(&walkstate);
+		}
+
+		/* Load ThreadDump event */
+		event = jfrBufferStartDo(&_vm->jfrThreadDumpBuffer, &walkstate);
+		while (NULL != event) {
+			if (event->eventType) {
+				addThreadDumpEntry((J9JFRThreadDump *)event);
+			} else {
+				Assert_VM_unreachable();
 			}
 			event = jfrBufferNextDo(&walkstate);
 		}

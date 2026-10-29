@@ -587,7 +587,6 @@ typedef struct J9JFRThreadDump {
 	J9JFR_EVENT_COMMON_FIELDS
 	U_8 *result;
 	UDATA resultLength;
-	UDATA bufferSize;
 } J9JFRThreadDump;
 
 typedef struct J9JFRThreadAllocationStatistics {
@@ -6957,6 +6956,7 @@ typedef struct J9JavaVM {
 #if defined(J9VM_OPT_JFR)
 	JFRState jfrState;
 	J9JFRBuffer jfrBuffer;
+	J9JFRBuffer jfrThreadDumpBuffer;
 	omrthread_monitor_t jfrBufferMutex;
 	omrthread_monitor_t jfrSamplerMutex;
 	omrthread_t jfrSamplerThread;
