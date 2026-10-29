@@ -31,6 +31,7 @@ import java.lang.invoke.WrongMethodTypeException;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Set;
+import jdk.internal.foreign.abi.SharedUtils;
 
 /*[IF JAVA_SPEC_VERSION >= 21]*/
 import java.lang.foreign.AddressLayout;
@@ -75,6 +76,7 @@ public final class InternalUpcallHandler {
 	private static final MethodHandle argRetAddrOfPtrFilter;
 	/*[ENDIF] JAVA_SPEC_VERSION >= 21 */
 	private static final MethodHandle argRetSegmtFilter;
+	private static final MethodHandle uncaughtExceptionHandler;
 
 	static {
 		try {
@@ -84,9 +86,28 @@ public final class InternalUpcallHandler {
 			argRetAddrOfPtrFilter = lookup.findStatic(InternalUpcallHandler.class, "argRetAddrOfPtr", methodType(MemoryAddress.class, MemoryAddress.class));
 			/*[ENDIF] JAVA_SPEC_VERSION >= 21 */
 			argRetSegmtFilter = lookup.findStatic(InternalUpcallHandler.class, "argRetSegmt", methodType(MemorySegment.class, MemorySegment.class));
+			/* JDK 17's SharedUtils helper is package-private in this module. */
+			uncaughtExceptionHandler = MethodHandles.privateLookupIn(SharedUtils.class, lookup).findStatic(
+					SharedUtils.class, "handleUncaughtException", methodType(void.class, Throwable.class));
 		} catch (IllegalAccessException | NoSuchMethodException e) {
 			throw new InternalError(e);
 		}
+	}
+
+	private static MethodHandle addUncaughtExceptionHandler(MethodHandle target) {
+		MethodHandle handler = uncaughtExceptionHandler;
+		Class<?> returnType = target.type().returnType();
+
+		if (returnType != void.class) {
+			handler = MethodHandles.filterReturnValue(
+					handler,
+					MethodHandles.zero(returnType));
+		}
+
+		return MethodHandles.catchException(
+				target,
+				Throwable.class,
+				handler);
 	}
 
 	/* Intended for argRetSegmtOfPtrFilter that validates the memory segment
@@ -230,6 +251,7 @@ public final class InternalUpcallHandler {
 		 */
 		MethodHandle retFilter = getUpcallArgRetValFilter(targetHandle.type().returnType(), realReturnLayout);
 		boundHandle = MethodHandles.filterReturnValue(boundHandle, retFilter);
+		boundHandle = addUncaughtExceptionHandler(boundHandle);
 
 		return boundHandle;
 	}
