@@ -5236,3 +5236,13 @@ addIntAndShortsFromUnion_Nested4ShortStructByUpcallMH(int arg1, union_Int_Nested
 {
 	return (*upcallMH)(arg1, arg2);
 }
+
+/* A returning callback is an error in the subprocess termination tests. */
+stru_2_Ints
+add2IntStructs_returnStructByUpcallMH_mustNotReturn(stru_2_Ints arg1, stru_2_Ints arg2, stru_2_Ints (*upcallMH)(stru_2_Ints, stru_2_Ints))
+{
+	stru_2_Ints result = upcallMH(arg1, arg2);
+	fputs("UPCALL_NATIVE_CONTINUED\n", stderr);
+	fflush(stderr);
+	return result;
+}
