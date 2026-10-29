@@ -31,6 +31,56 @@ extern "C" {
 
 static jvmtiError JNICALL jvmtiForceEarlyReturn(jvmtiEnv* env, jthread thread, jvmtiParamTypes returnValueType, void *value);
 
+#if defined(J9VM_OPT_VALHALLA_STRICT_FIELDS)
+/**
+ * Check whether forcing an early return from the given method is prohibited
+ * because it is an <init> or <clinit> in a class that has strict fields which
+ * may not have been initialized yet.
+ *
+ * @param vm         the J9JavaVM
+ * @param method     the RAM method being returned from
+ * @param romMethod  the ROM method corresponding to method
+ * @return JVMTI_ERROR_OPAQUE_FRAME if the return must be rejected, JVMTI_ERROR_NONE otherwise
+ */
+static jvmtiError
+checkStrictFieldsEarlyReturn(J9JavaVM *vm, J9Method *method, J9ROMMethod *romMethod)
+{
+	jvmtiError rc = JVMTI_ERROR_NONE;
+	if (J9_ARE_ANY_BITS_SET(vm->extendedRuntimeFlags2, J9_EXTENDED_RUNTIME2_ENABLE_PREVIEW)
+		&& J9_CLASSFILE_OR_ROMCLASS_SUPPORTS_STRICT_FIELDS(J9_CLASS_FROM_METHOD(method)->romClass)
+	) {
+		/* Early return from an <init> or <clinit> method is not supported
+		 * if the class (or any superclass, for <init>) has strict fields
+		 * that may not have been initialized yet. For <init>, walk the
+		 * declaring class and its superclass chain. For <clinit>, walk
+		 * only the declaring class (strict static fields).
+		 */
+		BOOLEAN isInit = J9UTF8_LITERAL_EQUALS_UTF8(J9ROMMETHOD_NAME(romMethod), "<init>");
+		if (isInit || J9UTF8_LITERAL_EQUALS_UTF8(J9ROMMETHOD_NAME(romMethod), "<clinit>")) {
+			J9Class *clazz = J9_CLASS_FROM_METHOD(method);
+			do {
+				J9ROMFieldWalkState fieldWalkState = {0};
+				J9ROMFieldShape *field = romFieldsStartDo(clazz->romClass, &fieldWalkState);
+				while (NULL != field) {
+					if (J9ROMFIELD_IS_STRICT(field->modifiers)) {
+						if (isInit != (BOOLEAN)J9_ARE_ANY_BITS_SET(field->modifiers, J9AccStatic)) {
+							rc = JVMTI_ERROR_OPAQUE_FRAME;
+							break;
+						}
+					}
+					field = romFieldsNextDo(&fieldWalkState);
+				}
+				if (JVMTI_ERROR_OPAQUE_FRAME == rc) {
+					break;
+				}
+				clazz = (J9CLASS_DEPTH(clazz) > 0) ? clazz->superclasses[J9CLASS_DEPTH(clazz) - 1] : NULL;
+			} while (isInit && (NULL != clazz));
+		}
+	}
+	return rc;
+}
+#endif /* defined(J9VM_OPT_VALHALLA_STRICT_FIELDS) */
+
 jvmtiError JNICALL
 jvmtiForceEarlyReturnObject(jvmtiEnv* env,
 			    jthread thread,
@@ -194,17 +244,13 @@ jvmtiForceEarlyReturn(jvmtiEnv* env,
 					J9ROMMethod *romMethod = J9_ROM_METHOD_FROM_RAM_METHOD(method);
 					if (J9_ARE_ANY_BITS_SET(romMethod->modifiers, J9AccNative)) {
 						rc = JVMTI_ERROR_OPAQUE_FRAME;
-#if defined(J9VM_OPT_VALHALLA_VALUE_TYPES)
-					} else if (J9_ARE_ANY_BITS_SET(vm->extendedRuntimeFlags2, J9_EXTENDED_RUNTIME2_ENABLE_PREVIEW)
-						&& J9ROMCLASS_IS_VALUE(J9_CLASS_FROM_METHOD(method)->romClass)
-						&& J9UTF8_LITERAL_EQUALS_UTF8(J9ROMMETHOD_NAME(romMethod), "<init>")
-					) {
-						/* Early return from a value class constructor is not supported
-						 * since strict instance fields may not have been initialized.
-						 */
-						rc = JVMTI_ERROR_OPAQUE_FRAME;
-#endif /* defined(J9VM_OPT_VALHALLA_VALUE_TYPES) */
-					} else {
+					}
+#if defined(J9VM_OPT_VALHALLA_STRICT_FIELDS)
+					if (JVMTI_ERROR_NONE == rc) {
+						rc = checkStrictFieldsEarlyReturn(vm, method, romMethod);
+					}
+#endif /* defined(J9VM_OPT_VALHALLA_STRICT_FIELDS) */
+					if (JVMTI_ERROR_NONE == rc) {
 						J9UTF8 *sig = J9ROMMETHOD_SIGNATURE(romMethod);
 						U_8 *data = J9UTF8_DATA(sig);
 						U_16 length = J9UTF8_LENGTH(sig);
