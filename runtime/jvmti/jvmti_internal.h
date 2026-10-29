@@ -1063,6 +1063,51 @@ deleteAgentBreakpoint(J9VMThread * currentThread, J9JVMTIEnv * j9env, J9JVMTIAge
 void
 disposeEnvironment(J9JVMTIEnv * j9env, UDATA freeData);
 
+#if defined(J9VM_OPT_VALHALLA_VALUE_TYPES)
+/**
+* @brief Delete the JNI global reference of every entry in j9env->valueTypeObjectTagTable.
+* Requires VM access; does nothing without it. The caller must then free or recreate the table.
+* @param j9env
+* @return void
+*/
+void
+releaseValueTypeTagRefs(J9JVMTIEnv * j9env);
+
+/**
+* @brief Find the entry of a value type object in j9env->valueTypeObjectTagTable.
+* The caller needs VM access and must hold j9env->mutex.
+* @param j9env
+* @param object a value type object
+* @return the entry, or NULL if the object is not tagged
+*/
+J9JVMTIValueTypeTag *
+findValueTypeTag(J9JVMTIEnv * j9env, j9object_t object);
+
+/**
+* @brief Set, update or clear (tag == 0) the tag of a value type object in
+* j9env->valueTypeObjectTagTable. The caller needs VM access and must hold j9env->mutex.
+* @param currentThread
+* @param j9env
+* @param object a value type object
+* @param tag the new tag, 0 to remove the tag
+* @return JVMTI_ERROR_NONE, or JVMTI_ERROR_OUT_OF_MEMORY
+*/
+jvmtiError
+setValueTypeObjectTag(J9VMThread * currentThread, J9JVMTIEnv * j9env, j9object_t object, jlong tag);
+#endif /* defined(J9VM_OPT_VALHALLA_VALUE_TYPES) */
+
+/**
+* @brief Get the tag of an object. Value type objects are looked up in
+* j9env->valueTypeObjectTagTable and all other objects in j9env->objectTagTable.
+* The caller needs VM access and must hold j9env->mutex.
+* @param j9env
+* @param currentThread
+* @param object
+* @return the tag, or 0 if the object is not tagged
+*/
+jlong
+getObjectTagValue(J9JVMTIEnv * j9env, J9VMThread * currentThread, j9object_t object);
+
 
 /**
 * @brief

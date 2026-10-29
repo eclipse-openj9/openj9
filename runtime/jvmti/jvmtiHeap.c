@@ -103,6 +103,9 @@ typedef struct J9JVMTIHeapData {
 
 static UDATA copyObjectTags (J9JVMTIObjectTag * entry, J9JVMTIObjectTagMatch * results);
 static UDATA countObjectTags (J9JVMTIObjectTag * entry, J9JVMTIObjectTagMatch * results);
+#if defined(J9VM_OPT_VALHALLA_VALUE_TYPES)
+static UDATA copyValueTypeTags (J9JVMTIValueTypeTag * entry, J9JVMTIObjectTagMatch * results);
+#endif /* defined(J9VM_OPT_VALHALLA_VALUE_TYPES) */
 static jvmtiIterationControl iterateThroughHeapCallback(J9JavaVM * vm, J9MM_IterateObjectDescriptor *objectDesc, void * userData);
 
 static jvmtiIterationControl wrap_heapReferenceCallback(J9JavaVM * vm, J9JVMTIHeapData * iteratorData);
@@ -174,7 +177,6 @@ jvmtiGetTag(jvmtiEnv* env,
 	rc = getCurrentVMThread(vm, &currentThread);
 	if (rc == JVMTI_ERROR_NONE) {
 		J9JVMTIObjectTag entry;
-		J9JVMTIObjectTag * objectTag;
 
 		vm->internalVMFunctions->internalEnterVMFromJNI(currentThread);
 
@@ -191,10 +193,8 @@ jvmtiGetTag(jvmtiEnv* env,
 			/* Ensure exclusive access to tag table */
 			omrthread_monitor_enter(((J9JVMTIEnv *)env)->mutex);
 
-			objectTag = hashTableFind(((J9JVMTIEnv *)env)->objectTagTable, &entry);
-			if (objectTag) {
-				rv_tag = objectTag->tag;
-			}
+			/* Value type objects are looked up in valueTypeObjectTagTable, all others in objectTagTable. */
+			rv_tag = getObjectTagValue((J9JVMTIEnv *)env, currentThread, entry.ref);
 
 			omrthread_monitor_exit(((J9JVMTIEnv *)env)->mutex);
 
@@ -244,17 +244,26 @@ jvmtiSetTag(jvmtiEnv* env,
 			/* Ensure exclusive access to tag table */
 			omrthread_monitor_enter(((J9JVMTIEnv *)env)->mutex);
 
-			objectTag = hashTableFind(((J9JVMTIEnv *)env)->objectTagTable, &entry);
-			if (objectTag) {
-				if (tag) {
-					objectTag->tag = tag;
+#if defined(J9VM_OPT_VALHALLA_VALUE_TYPES)
+			/* All tagged value type objects are kept in valueTypeObjectTagTable, which owns a
+			 * JNI global reference to each of them. */
+			if (J9_IS_J9CLASS_VALUETYPE(J9OBJECT_CLAZZ(currentThread, entry.ref))) {
+				rc = setValueTypeObjectTag(currentThread, (J9JVMTIEnv *)env, entry.ref, tag);
+			} else
+#endif /* defined(J9VM_OPT_VALHALLA_VALUE_TYPES) */
+			{
+				objectTag = hashTableFind(((J9JVMTIEnv *)env)->objectTagTable, &entry);
+				if (objectTag) {
+					if (tag) {
+						objectTag->tag = tag;
+					} else {
+						hashTableRemove(((J9JVMTIEnv *)env)->objectTagTable, &entry);
+					}
 				} else {
-					hashTableRemove(((J9JVMTIEnv *)env)->objectTagTable, &entry);
-				}
-			} else {
-				if (tag) {
-					if ( hashTableAdd(((J9JVMTIEnv *)env)->objectTagTable, &entry) == NULL ) {
-						rc = JVMTI_ERROR_OUT_OF_MEMORY;
+					if (tag) {
+						if ( hashTableAdd(((J9JVMTIEnv *)env)->objectTagTable, &entry) == NULL ) {
+							rc = JVMTI_ERROR_OUT_OF_MEMORY;
+						}
 					}
 				}
 			}
@@ -357,6 +366,10 @@ jvmtiGetObjectsWithTags(jvmtiEnv* env,
 		results.forLen = tag_count;
 
 		hashTableForEachDo(((J9JVMTIEnv *)env)->objectTagTable, (J9HashTableDoFn) countObjectTags, &results);
+#if defined(J9VM_OPT_VALHALLA_VALUE_TYPES)
+		/* J9JVMTIValueTypeTag keeps tag at the same offset as J9JVMTIObjectTag. */
+		hashTableForEachDo(((J9JVMTIEnv *)env)->valueTypeObjectTagTable, (J9HashTableDoFn) countObjectTags, &results);
+#endif /* defined(J9VM_OPT_VALHALLA_VALUE_TYPES) */
 
 		if (object_result_ptr) {
 			results.objects = j9mem_allocate_memory(sizeof(jobject) * results.count, J9MEM_CATEGORY_JVMTI_ALLOCATE);
@@ -386,6 +399,9 @@ jvmtiGetObjectsWithTags(jvmtiEnv* env,
 			/* Fill in elements ... unwinds results.count */
 			if (object_result_ptr || tag_result_ptr) {
 				hashTableForEachDo(((J9JVMTIEnv *)env)->objectTagTable, (J9HashTableDoFn) copyObjectTags, &results);
+#if defined(J9VM_OPT_VALHALLA_VALUE_TYPES)
+				hashTableForEachDo(((J9JVMTIEnv *)env)->valueTypeObjectTagTable, (J9HashTableDoFn) copyValueTypeTags, &results);
+#endif /* defined(J9VM_OPT_VALHALLA_VALUE_TYPES) */
 			}
 
 		} else {
@@ -456,6 +472,38 @@ countObjectTags(J9JVMTIObjectTag * entry, J9JVMTIObjectTagMatch * results)
 
 	return 0;
 }
+
+
+#if defined(J9VM_OPT_VALHALLA_VALUE_TYPES)
+/* Like copyObjectTags, but the entry's ref is a JNI global reference that must be dereferenced. */
+static UDATA
+copyValueTypeTags(J9JVMTIValueTypeTag * entry, J9JVMTIObjectTagMatch * results)
+{
+	J9JavaVM * vm = results->vm;
+	JNIEnv * jniEnv = (JNIEnv *)results->currentThread;
+
+	int i;
+
+	for ( i = 0; i < results->forLen; i++ ) {
+		if ( results->forTags[i] == entry->tag ) {
+			jint slot = results->count - 1;
+
+			/* Reverse fill */
+			if (results->objects) {
+				results->objects[slot] = (jobject) vm->internalVMFunctions->j9jni_createLocalRef( jniEnv, *(j9object_t *)entry->ref );
+			}
+			if (results->tags) {
+				results->tags[slot] = entry->tag;
+			}
+			results->count = slot;
+
+			break;
+		}
+	}
+
+	return 0;
+}
+#endif /* defined(J9VM_OPT_VALHALLA_VALUE_TYPES) */
 
 
 

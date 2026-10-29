@@ -2419,6 +2419,11 @@ jvmtiRemoveAllTags(jvmtiEnv* jvmti_env, ...)
 {
 	J9JVMTIEnv * j9env = (J9JVMTIEnv *) jvmti_env;
 	jvmtiError rc = JVMTI_ERROR_NOT_AVAILABLE;
+#if defined(J9VM_OPT_VALHALLA_VALUE_TYPES)
+	J9JavaVM * vm = j9env->vm;
+	J9VMThread * currentThread = NULL;
+	jboolean hasVMAccess = JNI_FALSE;
+#endif /* defined(J9VM_OPT_VALHALLA_VALUE_TYPES) */
 
 	J9HashTableHashFn hashFn = j9env->objectTagTable->hashFn;
 	J9HashTableEqualFn hashEqualFn = j9env->objectTagTable->hashEqualFn;
@@ -2426,16 +2431,52 @@ jvmtiRemoveAllTags(jvmtiEnv* jvmti_env, ...)
 
 	Trc_JVMTI_jvmtiRemoveAllTags_Entry(jvmti_env);
 
+#if defined(J9VM_OPT_VALHALLA_VALUE_TYPES)
+	/* Deleting the global references held by valueTypeObjectTagTable requires VM access.
+	 * Enter the VM before taking the env mutex, the same order as jvmtiGetTag/jvmtiSetTag;
+	 * the opposite order could deadlock. */
+	if (JVMTI_ERROR_NONE == getCurrentVMThread(vm, &currentThread)) {
+		vm->internalVMFunctions->internalEnterVMFromJNI(currentThread);
+		hasVMAccess = JNI_TRUE;
+	}
+#endif /* defined(J9VM_OPT_VALHALLA_VALUE_TYPES) */
+
 	/* Ensure exclusive access to tag table */
 	omrthread_monitor_enter(j9env->mutex);
 
 	if (j9env->objectTagTable != NULL) {
 		hashTableFree(j9env->objectTagTable);
+#if defined(J9VM_OPT_VALHALLA_VALUE_TYPES)
+		/* hashObjectTag needs the J9JavaVM as userData to hash value types by content. */
+		j9env->objectTagTable = hashTableNew(OMRPORT_FROM_J9PORT(j9env->vm->portLibrary), J9_GET_CALLSITE(), 0, sizeof(J9JVMTIObjectTag), sizeof(jlong), 0,  J9MEM_CATEGORY_JVMTI, hashFn, hashEqualFn, NULL, j9env->vm);
+#else /* defined(J9VM_OPT_VALHALLA_VALUE_TYPES) */
 		j9env->objectTagTable = hashTableNew(OMRPORT_FROM_J9PORT(j9env->vm->portLibrary), J9_GET_CALLSITE(), 0, sizeof(J9JVMTIObjectTag), sizeof(jlong), 0,  J9MEM_CATEGORY_JVMTI, hashFn, hashEqualFn, NULL, NULL);
+#endif /* defined(J9VM_OPT_VALHALLA_VALUE_TYPES) */
 		rc = JVMTI_ERROR_NONE;
 	}
 
+#if defined(J9VM_OPT_VALHALLA_VALUE_TYPES)
+	if (NULL != j9env->valueTypeObjectTagTable) {
+		J9HashTableHashFn vtHashFn = j9env->valueTypeObjectTagTable->hashFn;
+		J9HashTableEqualFn vtEqualFn = j9env->valueTypeObjectTagTable->hashEqualFn;
+
+		/* The global references can only be deleted with VM access. If the VM thread could not
+		 * be obtained they are not deleted and stay in the VM's global reference pool. */
+		if (hasVMAccess) {
+			releaseValueTypeTagRefs(j9env);
+		}
+		hashTableFree(j9env->valueTypeObjectTagTable);
+		j9env->valueTypeObjectTagTable = hashTableNew(OMRPORT_FROM_J9PORT(vm->portLibrary), J9_GET_CALLSITE(), 0, sizeof(J9JVMTIValueTypeTag), sizeof(jlong), 0, J9MEM_CATEGORY_JVMTI, vtHashFn, vtEqualFn, NULL, vm);
+	}
+#endif /* defined(J9VM_OPT_VALHALLA_VALUE_TYPES) */
+
 	omrthread_monitor_exit(j9env->mutex);
+
+#if defined(J9VM_OPT_VALHALLA_VALUE_TYPES)
+	if (hasVMAccess) {
+		vm->internalVMFunctions->internalExitVMToJNI(currentThread);
+	}
+#endif /* defined(J9VM_OPT_VALHALLA_VALUE_TYPES) */
 
 	TRACE_JVMTI_RETURN(jvmtiRemoveAllTags);
 }
