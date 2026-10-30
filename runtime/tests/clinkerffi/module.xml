@@ -525,6 +525,7 @@ SPDX-License-Identifier: EPL-2.0 OR Apache-2.0 OR GPL-2.0-only WITH Classpath-ex
 		<export name="addIntAndIntsFromStructWithNestedStructArrayByUpcallMH"/>
 		<export name="addIntAndIntsFromStructWithNestedStructArray_reverseOrderByUpcallMH"/>
 		<export name="add2IntStructs_returnStructByUpcallMH"/>
+		<export name="add2IntStructs_returnStructByUpcallMH_mustNotReturn"/>
 		<export name="add2IntStructs_returnStructPointerByUpcallMH"/>
 		<export name="add3IntStructs_returnStructByUpcallMH"/>
 		<export name="addLongAndLongsFromStructByUpcallMH"/>

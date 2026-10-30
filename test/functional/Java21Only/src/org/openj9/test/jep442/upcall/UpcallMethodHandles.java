@@ -1765,7 +1765,7 @@ public class UpcallMethodHandles {
 	public static MemorySegment add2IntStructs_returnStruct_nestedUpcall(MemorySegment arg1, MemorySegment arg2) {
 		GroupLayout structLayout = MemoryLayout.structLayout(JAVA_INT.withName("elem1"), JAVA_INT.withName("elem2"));
 		FunctionDescriptor fd = FunctionDescriptor.of(structLayout, structLayout, structLayout, ADDRESS);
-		MemorySegment functionSymbol = nativeLibLookup.find("add2IntStructs_returnStructByUpcallMH").get();
+		MemorySegment functionSymbol = nativeLibLookup.find("add2IntStructs_returnStructByUpcallMH_mustNotReturn").get();
 		MethodHandle mh = linker.downcallHandle(functionSymbol, fd);
 		MemorySegment upcallFuncAddr = linker.upcallStub(UpcallMethodHandles.MH_add2IntStructs_returnStruct_throwException,
 				FunctionDescriptor.of(structLayout, structLayout, structLayout), arena);

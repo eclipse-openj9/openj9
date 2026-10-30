@@ -631,7 +631,10 @@ public class InternalDowncallHandler {
 			boundMH = MethodHandles.foldArguments(boundMH, pushHeapArgInfoMH);
 			/*[ENDIF] JAVA_SPEC_VERSION >= 21 */
 			/*[IF JAVA_SPEC_VERSION >= 22]*/
-			boundMH = isFfiProtoOn ? getNativeMHWithInvokeCache(boundMH) : boundMH;
+			if (isFfiProtoOn && isSimpleNativeCall()) {
+				MethodHandle nativeMH = getNativeMHWithInvokeCache(boundMH);
+				boundMH = guardNativeSegments(nativeMH, boundMH);
+			}
 			/*[ENDIF] JAVA_SPEC_VERSION >= 22 */
 			return boundMH;
 		} catch (ReflectiveOperationException e) {
@@ -640,6 +643,68 @@ public class InternalDowncallHandler {
 	}
 
 	/*[IF JAVA_SPEC_VERSION >= 22]*/
+	/* Storage guards do not replace validation or scope acquisition. Both branches
+	 * still execute the existing adapters and runNativeMethod().
+	 */
+	private boolean isSimpleNativeCall() {
+		if (linkerOpts.isCritical() || linkerOpts.hasCapturedCallState() || linkerOpts.isVariadicFunction()) {
+			return false;
+		}
+
+		if ((realReturnLayout != null) && !(realReturnLayout instanceof ValueLayout)) {
+			return false;
+		}
+
+		/* NativeMethodHandle wraps the adapted Java handle here, so its type
+		 * still contains the public FFM carriers. Keep unsupported carriers on
+		 * the existing path until they are lowered at a separate native leaf.
+		 * In particular, an ADDRESS result is still a MemorySegment here.
+		 */
+		Class<?> returnType = funcMethodType.returnType();
+		if ((returnType != void.class) && !isNativeMethodHandlePrimitive(returnType)) {
+			return false;
+		}
+
+		for (int index = 0; index < argLayoutArray.length; index++) {
+			if (!(argLayoutArray[index] instanceof ValueLayout)) {
+				return false;
+			}
+			Class<?> carrier = funcMethodType.parameterType(index);
+			if ((carrier != MemorySegment.class) && !isNativeMethodHandlePrimitive(carrier)) {
+				return false;
+			}
+		}
+
+		return true;
+	}
+
+	private static boolean isNativeMethodHandlePrimitive(Class<?> carrier) {
+		return (carrier == int.class) || (carrier == long.class)
+				|| (carrier == float.class) || (carrier == double.class);
+	}
+
+	private static boolean isNativeSegment(MemorySegment segment) {
+		/* Let the existing fallback perform null, scope and thread checks. */
+		return (segment != null) && segment.isNative();
+	}
+
+	private static MethodHandle guardNativeSegments(MethodHandle nativeMH, MethodHandle fallback) throws ReflectiveOperationException {
+		MethodType type = fallback.type();
+		MethodHandle test = lookup.findStatic(
+				InternalDowncallHandler.class, "isNativeSegment", methodType(boolean.class, MemorySegment.class));
+		MethodHandle result = nativeMH;
+
+		for (int index = 0; index < type.parameterCount(); index++) {
+			if (type.parameterType(index) == MemorySegment.class) {
+				MethodHandle argumentTest = MethodHandles.permuteArguments(
+						test, type.changeReturnType(boolean.class), index);
+				result = MethodHandles.guardWithTest(argumentTest, result, fallback);
+			}
+		}
+
+		return result;
+	}
+
 	/* Generate the native MethodHandle with the resolved bound handle. */
 	private MethodHandle getNativeMHWithInvokeCache(MethodHandle handle) {
 		MethodHandle nativeMH = SharedSecrets.getJavaLangInvokeAccess().nativeMethodHandle(handle);
