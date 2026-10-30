@@ -812,3 +812,45 @@ int32_t J9::CodeCache::disclaim(TR::CodeCacheManager *manager, bool canDisclaimO
 
     return disclaimDone;
 }
+
+int32_t J9::CodeCache::disclaimAOT(TR::CodeCacheManager *manager, bool canDisclaimOnSwap, bool canDisclaimOnFile)
+{
+    int32_t disclaimDone = 0;
+
+#ifdef LINUX
+    if (_kind != TR::CodeCacheKind::AOT)
+        return disclaimDone;
+
+    // At the beginning of the memory region that all code caches are allocated in, a small amount of
+    // metadata is written. This results in codeCacheSegment sometimes not being page aligned. As
+    // a result, the starting address and size may need to be adjusted.
+    J9JavaVM *javaVM = jitConfig->javaVM;
+    PORT_ACCESS_FROM_JAVAVM(javaVM); // for j9vmem_supported_page_sizes
+    uintptr_t round = (uintptr_t)(j9vmem_supported_page_sizes()[0] - 1);
+    uint8_t *start_addr = reinterpret_cast<uint8_t *>(reinterpret_cast<uintptr_t>(_segment->segmentBase()) & ~round);
+    uint8_t *end_addr = reinterpret_cast<uint8_t *>(reinterpret_cast<uintptr_t>(getHelperTop()) & ~round);
+
+    size_t size = (end_addr - start_addr);
+
+    if (0 != madvise(start_addr, size, MADV_PAGEOUT)) {
+        if (TR::Options::getCmdLineOptions()->getVerboseOption(TR_VerbosePerformance)) {
+            TR_VerboseLog::writeLineLocked(TR_Vlog_PERF,
+                "Warning: madvise failed while disclaiming code cache "
+                "%p",
+                start_addr);
+        }
+
+        if (errno != EAGAIN) {
+            if (TR::Options::getCmdLineOptions()->getVerboseOption(TR_VerbosePerformance)) {
+                TR_VerboseLog::writeLineLocked(TR_Vlog_PERF,
+                    "WARNING: Disabling AOT code cache disclaiming due to madvise error");
+            }
+            manager->setAOTDisclaimEnabled(false);
+        }
+    } else {
+        disclaimDone = 1;
+    }
+#endif // ifdef LINUX
+
+    return disclaimDone;
+}

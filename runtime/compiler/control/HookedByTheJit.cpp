@@ -4479,11 +4479,24 @@ void disclaimCodeCaches(uint64_t crtElapsedTime)
             ((long)(rssAfter - rssBefore) * 100.0 / rssBefore));
 }
 
+void disclaimAOTCodeCaches(uint64_t crtElapsedTime)
+{
+    size_t rssBefore = getRSS_Kb();
+    int numDisclaimed = TR::CodeCacheManager::instance()->disclaimAOTCodeCaches();
+    size_t rssAfter = getRSS_Kb();
+    if (TR::Options::getCmdLineOptions()->getVerboseOption(TR_VerbosePerformance))
+        TR_VerboseLog::writeLineLocked(TR_Vlog_PERF,
+            "t=%u JIT disclaimed %d AOT Code Caches RSS before=%zu KB, RSS after=%zu KB, delta=%zd KB = %5.2f%%",
+            (uint32_t)crtElapsedTime, numDisclaimed, rssBefore, rssAfter, rssBefore - rssAfter,
+            ((long)(rssAfter - rssBefore) * 100.0 / rssBefore));
+}
+
 void memoryDisclaimLogic(TR::CompilationInfo *compInfo, uint64_t crtElapsedTime, uint8_t jitState)
 {
     static uint64_t lastDataCacheDisclaimTime = 0;
     static int32_t lastNumAllocatedDataCaches = 0;
     static uint64_t lastCodeCacheDisclaimTime = 0;
+    static uint64_t lastAOTCodeCacheDisclaimTime = 0;
     static uint64_t lastClassMemoryDisclaimTime = 0;
     static int32_t lastNumAllocatedCodeCaches = 0;
     static uint64_t lastIProfilerDisclaimTime = 0;
@@ -4492,6 +4505,7 @@ void memoryDisclaimLogic(TR::CompilationInfo *compInfo, uint64_t crtElapsedTime,
     static uint64_t lastSCCDisclaimTime = 0;
     static uint64_t lastNumAllocatedClassMemorySegments = 0;
     static uint32_t lastNumCompilationsDuringIProfilerDisclaim = 0;
+    static uint32_t lastNumAOTloads = 0;
 
     J9JITConfig *jitConfig = compInfo->getJITConfig();
 
@@ -4568,6 +4582,32 @@ void memoryDisclaimLogic(TR::CompilationInfo *compInfo, uint64_t crtElapsedTime,
                 lastCodeCacheDisclaimTime = crtElapsedTime; // Update the time when disclaim was last performed
                 lastNumAllocatedCodeCaches = TR::CodeCacheManager::instance()->getCurrentNumberOfCodeCaches();
             }
+        }
+    }
+
+    if (TR::CodeCacheManager::instance()->isAOTDisclaimEnabled()
+        && TR::Options::getCmdLineOptions()->getOption(TR_EnableAOTCodeCacheDisclaiming)) {
+        uint32_t numAotLoads = compInfo->getNumMethodsFromSharedCache();
+        uint32_t minimumTimeChangeForDisclaim
+            = (numAotLoads > lastNumAOTloads + TR::Options::_minAOTLoadsBetweenAOTCodeCacheDisclaims)
+            ? 2 * TR::Options::_minTimeBetweenMemoryDisclaims
+            : 12 * TR::Options::_minTimeBetweenMemoryDisclaims;
+        if ((crtElapsedTime > lastAOTCodeCacheDisclaimTime + minimumTimeChangeForDisclaim)
+            && compInfo->getPersistentInfo()->getJitState() != RAMPUP_STATE) {
+            static OMR::RSSReport *rssReport = OMR::RSSReport::instance();
+
+            if (rssReport) {
+                rssReport->printTitle();
+                rssReport->printRegions();
+            }
+
+            disclaimAOTCodeCaches(crtElapsedTime);
+
+            if (rssReport)
+                rssReport->printRegions();
+
+            lastAOTCodeCacheDisclaimTime = crtElapsedTime; // Update the time when disclaim was last performed
+            lastNumAOTloads = numAotLoads;
         }
     }
 
