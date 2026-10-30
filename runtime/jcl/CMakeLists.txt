@@ -37,6 +37,7 @@ target_include_directories(jclse
 		${CMAKE_CURRENT_SOURCE_DIR}
 		${CMAKE_CURRENT_SOURCE_DIR}/common
 		${j9vm_SOURCE_DIR}/shared_common/include
+		${j9vm_SOURCE_DIR}/vm
 		${CMAKE_CURRENT_BINARY_DIR}
 )
 
