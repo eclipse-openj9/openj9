@@ -362,6 +362,7 @@ bool TR_J9InlinerPolicy::alwaysWorthInlining(TR_ResolvedMethod *calleeMethod, TR
         case TR::com_ibm_jit_JITHelpers_jitHelpers:
         case TR::com_ibm_jit_JITHelpers_intrinsicIndexOfLatin1:
         case TR::com_ibm_jit_JITHelpers_intrinsicIndexOfUTF16:
+        case TR::java_lang_reflect_Method_isCallerSensitive:
         case TR::java_lang_String_charAt:
         case TR::java_lang_String_charAtInternal_I:
         case TR::java_lang_String_charAtInternal_IB:
