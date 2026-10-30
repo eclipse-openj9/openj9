@@ -223,7 +223,7 @@ Java_com_ibm_oti_vm_VM_jfrDump(JNIEnv *env, jclass unused)
 	vmFuncs->internalEnterVMFromJNI(currentThread);
 	vmFuncs->acquireExclusiveVMAccess(currentThread);
 
-	vmFuncs->jfrDump(currentThread, FALSE);
+	vmFuncs->jfrDump(currentThread, TRUE);
 
 	vmFuncs->releaseExclusiveVMAccess(currentThread);
 	vmFuncs->internalExitVMToJNI(currentThread);

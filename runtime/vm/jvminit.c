@@ -1220,12 +1220,18 @@ initializeJavaVM(void * osMainThread, J9JavaVM ** vmPtr, J9CreateJavaVMParams *c
 	vm->threadDllHandle = createParams->threadDllHandle;
 #if defined(J9VM_OPT_JFR)
 	vm->loadedClassCount = 0;
+	vm->classLoaderCount = 0;
+	vm->moduleCount = 0;
 	vm->jfrState.blobFileDescriptor = -1;
 	vm->jfrState.isCreated = FALSE;
 	vm->jfrState.isStarted = FALSE;
 	vm->jfrState.shouldRotateDisk = FALSE;
 	vm->jfrState.stackTraceIDCount = 0;
 	vm->jfrState.logFileDescriptor = -1;
+	vm->jfrState.chunkGeneration = 0;
+	vm->jfrState.lastGenerationFileCursor = 0;
+	vm->jfrState.lastCheckpointEvent = 0;
+	memset(&vm->jfrState.checkpointEventTables, 0, sizeof(vm->jfrState.checkpointEventTables));
 #endif /* defined(J9VM_OPT_JFR) */
 	vm->defaultPageSize = j9vmem_supported_page_sizes()[0];
 #if JAVA_SPEC_VERSION >= 19

@@ -300,7 +300,9 @@ createModule(J9VMThread *currentThread, j9object_t moduleObject, J9ClassLoader *
 	}
 	if (NULL != j9mod) {
 		j9mod->moduleName = moduleName;
-
+#if defined(J9VM_OPT_JFR)
+		j9mod->moduleID = vm->moduleCount++;
+#endif /* defined(J9VM_OPT_JFR) */
 		j9mod->readAccessHashTable = vmFuncs->hashModulePointerTableNew(vm, INITIAL_INTERNAL_MODULE_HASHTABLE_SIZE);
 
 		if (NULL != j9mod->readAccessHashTable) {

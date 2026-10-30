@@ -2171,6 +2171,9 @@ typedef struct J9Module {
 	struct J9HashTable *removeExportsHashTable;
 	BOOLEAN isLoose;
 	BOOLEAN isOpen;
+#if defined(J9VM_OPT_JFR)
+	U_32 moduleID;
+#endif /* defined(J9VM_OPT_JFR) */
 } J9Module;
 
 typedef struct J9Package {
@@ -4021,6 +4024,7 @@ typedef struct J9ClassLoader {
 	void *outlivingLoaders;
 #if defined(J9VM_OPT_JFR)
 	UDATA loadedClassCount;
+	U_32 classLoaderID;
 #endif /* defined(J9VM_OPT_JFR) */
 } J9ClassLoader;
 
@@ -6347,6 +6351,28 @@ typedef enum JFRLogOutputType {
 	JFROUTPUT_FILE      /* 2 */
 } JFRLogOutputType;
 
+typedef struct JFRCheckpointEventTables {
+	J9HashTable *classTable;
+	J9HashTable *packageTable;
+	J9HashTable *moduleTable;
+	J9HashTable *classLoaderTable;
+	J9HashTable *methodTable;
+	J9HashTable *stringUTF8Table;
+	J9Pool *threadTable;
+	J9HashTable *threadGroupTable;
+	U_32 classCount;
+	U_32 packageCount;
+	U_32 moduleCount;
+	U_32 classLoaderCount;
+	U_32 methodCount;
+	U_32 stringUTF8Count;
+	U_32 threadCount;
+	U_32 threadGroupCount;
+	U_32 packageNameCount;
+	void **globalStringTable;
+	U_32 globalStringTableCount;
+} JFRCheckpointEventTables;
+
 typedef struct JFRState {
 	char *jfrFileName;
 	const char *jfrCMDLineOption;
@@ -6363,6 +6389,10 @@ typedef struct JFRState {
 	uint64_t lastGCCycleEndTicks;
 	I_64 chunkStartTime;
 	I_64 chunkStartTicks;
+	U_8 chunkGeneration;
+	U_64 lastGenerationFileCursor;
+	I_64 lastCheckpointEvent;
+	JFRCheckpointEventTables checkpointEventTables;
 	void *constantEvents;
 	BOOLEAN isConstantEventsInitialized;
 	BOOLEAN isStarted;
@@ -6976,6 +7006,8 @@ typedef struct J9JavaVM {
 #endif /* defined(J9VM_OPT_SNAPSHOTS) */
 #if defined(J9VM_OPT_JFR)
 	U_32 loadedClassCount;
+	U_32 classLoaderCount;
+	U_32 moduleCount;
 #endif /* defined(J9VM_OPT_JFR) */
 #if JAVA_SPEC_VERSION >= 24
 	J9VMContinuation *blockedContinuations;

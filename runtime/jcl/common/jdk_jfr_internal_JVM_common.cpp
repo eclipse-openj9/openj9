@@ -701,11 +701,28 @@ Java_jdk_jfr_internal_JVM_setMemorySize(JNIEnv *env, jobject obj, jlong size)
 void JNICALL
 Java_jdk_jfr_internal_JVM_setOutput(JNIEnv *env, jobject obj, jstring file)
 {
-	J9VMThread *currentThread = (J9VMThread*) env;
+	J9VMThread *currentThread = (J9VMThread *)env;
+	J9JavaVM *vm = currentThread->javaVM;
+	J9InternalVMFunctions *vmFuncs = vm->internalVMFunctions;
+
+	vmFuncs->internalEnterVMFromJNI(currentThread);
+	vmFuncs->acquireExclusiveVMAccess(currentThread);
 	if (NULL != currentThread->javaVM->jfrState.jfrFileName) {
-		Java_com_ibm_oti_vm_VM_jfrDump(env, NULL);
+		vmFuncs->jfrDump(currentThread, TRUE);
 	}
-	Java_com_ibm_oti_vm_VM_setJFRRecordingFileName(env, NULL, file);
+	if (NULL != file) {
+		j9object_t fileNameObject = J9_JNI_UNWRAP_REFERENCE(file);
+		char *fileName = vmFuncs->copyStringToUTF8WithMemAlloc(currentThread, fileNameObject, J9_STR_NULL_TERMINATE_RESULT, "", 0, NULL, 0, NULL);
+		if (NULL == fileName) {
+			vmFuncs->setNativeOutOfMemoryError(currentThread, 0, 0);
+		} else {
+			vmFuncs->setJFRRecordingFileName(vm, fileName);
+		}
+	} else {
+		vmFuncs->setJFRRecordingFileName(vm, NULL);
+	}
+	vmFuncs->releaseExclusiveVMAccess(currentThread);
+	vmFuncs->internalExitVMToJNI(currentThread);
 }
 
 void JNICALL

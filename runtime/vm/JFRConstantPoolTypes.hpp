@@ -108,7 +108,7 @@ enum ThreadState {
 };
 
 struct ClassEntry {
-	J9Class *clazz;
+	U_32 classID;
 	U_32 classLoaderIndex;
 	U_32 nameStringUTF8Index;
 	U_32 packageIndex;
@@ -120,17 +120,18 @@ struct ClassEntry {
 };
 
 struct PackageEntry {
-	J9ROMClass *romClass;
+	UDATA romClass;
 	U_32 moduleIndex;
 	BOOLEAN exported;
 	U_32 packageNameLength;
 	const U_8 *packageName;
 	U_32 index;
+	U_32 symbolTableEntry;
 	PackageEntry *next;
 };
 
 struct ModuleEntry {
-	J9Module *module;
+	U_32 moduleID;
 	U_32 nameStringIndex;
 	U_32 versionStringIndex;
 	U_32 locationStringUTF8Index;
@@ -140,7 +141,7 @@ struct ModuleEntry {
 };
 
 struct ClassloaderEntry {
-	J9ClassLoader *classLoader;
+	U_32 classLoaderID;
 	U_32 classIndex;
 	U_32 nameIndex;
 	U_32 index;
@@ -148,7 +149,7 @@ struct ClassloaderEntry {
 };
 
 struct MethodEntry {
-	J9ROMMethod *romMethod;
+	UDATA methodID;
 	U_32 classIndex;
 	U_32 nameStringUTF8Index;
 	U_32 descriptorStringUTF8Index;
@@ -176,7 +177,6 @@ struct ThreadEntry {
 };
 
 struct ThreadGroupEntry {
-	j9object_t threadGroupName;
 	U_32 index;
 	U_32 parentIndex;
 	J9UTF8* name;
@@ -529,6 +529,8 @@ private:
 	JfrBuildResult _buildResult;
 	bool _debug;
 	J9PortLibrary *privatePortLibrary;
+	bool _finalWrite;
+	bool _jfrV2;
 
 	/* Constantpool types */
 	J9HashTable *_classTable;
@@ -671,6 +673,8 @@ private:
 	UDATA _requiredBufferSize;
 	U_32 _currentFrameCount;
 	void **_globalStringTable;
+	U_32 _newStringUTF8Count;
+	U_32 _newPackageCount;
 
 protected:
 
@@ -679,13 +683,13 @@ public:
 
 	/* Function members */
 private:
-	static UDATA classloaderNameHashFn(void *key, void *userData);
+	static UDATA classloaderHashFn(void *key, void *userData);
 
-	static UDATA classloaderNameHashEqualFn(void *tableNode, void *queryNode, void *userData);
+	static UDATA classloaderHashEqualFn(void *tableNode, void *queryNode, void *userData);
 
-	static UDATA methodNameHashFn(void *key, void *userData);
+	static UDATA methodHashFn(void *key, void *userData);
 
-	static UDATA methodNameHashEqualFn(void *tableNode, void *queryNode, void *userData);
+	static UDATA methodHashEqualFn(void *tableNode, void *queryNode, void *userData);
 
 	static UDATA jfrStringHashFn(void *key, void *userData);
 
@@ -797,6 +801,8 @@ private:
 
 	void printMergedStringTables();
 
+	void copyToPersistentHashTable(J9HashTable *persistentTable, J9HashTable *transientTable);
+
 	bool isResultNotOKay() {
 		if (_buildResult != OK) {
 			if (_debug) {
@@ -838,16 +844,30 @@ skipFrame:
 	}
 
 	void mergeStringTables() {
-		_globalStringTable = (void **)j9mem_allocate_memory(sizeof(void *) * (_stringUTF8Count + _packageCount), J9MEM_CATEGORY_JFR);
+		/* _stringUTF8Count starts at globalStringTableCount (strings and packages share one index space). */
+		_newStringUTF8Count = _stringUTF8Count - _vm->jfrState.checkpointEventTables.globalStringTableCount;
+		_newPackageCount = _packageCount - _vm->jfrState.checkpointEventTables.packageCount;
+		void **oldGlobalStringTable = _vm->jfrState.checkpointEventTables.globalStringTable;
+		U_32 oldGlobalStringTableCount = _vm->jfrState.checkpointEventTables.globalStringTableCount;
+
+		U_32 newTableCount = _vm->jfrState.checkpointEventTables.globalStringTableCount + _newStringUTF8Count + _newPackageCount;
+		_globalStringTable = (void **)j9mem_allocate_memory(sizeof(void *) * newTableCount, J9MEM_CATEGORY_JFR);
 		if (NULL == _globalStringTable) {
 			_buildResult = OutOfMemory;
 			goto done;
 		}
+
+		if (NULL != oldGlobalStringTable) {
+			memcpy(_globalStringTable, oldGlobalStringTable, sizeof(void *) * oldGlobalStringTableCount);
+		}
+		/* Slots 0-4 must always point at this object's default entries; any pointers
+		 * inherited from a previous (now destroyed) object are dangling.
+		 */
 		_globalStringTable[0] = &_defaultStringUTF8Entry;
 		_globalStringTable[1] = &_unknownClassStringUTF8Entry;
 		_globalStringTable[2] = &_nativeMethodStringUTF8Entry;
 		_globalStringTable[3] = &_nativeMethodSignatureStringUTF8Entry;
-		_globalStringTable[_stringUTF8Count] = &_defaultPackageEntry;
+		_globalStringTable[4] = &_defaultPackageEntry;
 
 		hashTableForEachDo(_stringUTF8Table, &mergeStringUTF8EntriesToGlobalTable, this);
 		hashTableForEachDo(_packageTable, &mergePackageEntriesToGlobalTable, this);
@@ -855,6 +875,7 @@ skipFrame:
 		if (_debug) {
 			printMergedStringTables();
 		}
+		j9mem_free_memory(oldGlobalStringTable);
 done:
 		return;
 	}
@@ -1247,7 +1268,7 @@ public:
 
 	U_32 getClassloaderCount()
 	{
-		return _classLoaderCount;
+		return _classLoaderCount - _vm->jfrState.checkpointEventTables.classLoaderCount;
 	}
 
 	ClassEntry *getClassEntry()
@@ -1257,7 +1278,7 @@ public:
 
 	U_32 getClassCount()
 	{
-		return _classCount;
+		return _classCount - _vm->jfrState.checkpointEventTables.classCount;
 	}
 
 	ModuleEntry *getModuleEntry()
@@ -1267,7 +1288,7 @@ public:
 
 	U_32 getModuleCount()
 	{
-		return _moduleCount;
+		return _moduleCount - _vm->jfrState.checkpointEventTables.moduleCount;
 	}
 
 	MethodEntry *getMethodEntry()
@@ -1277,7 +1298,7 @@ public:
 
 	U_32 getMethodCount()
 	{
-		return _methodCount;
+		return _methodCount - _vm->jfrState.checkpointEventTables.methodCount;
 	}
 
 	void *getSymbolTableEntry(UDATA index)
@@ -1287,12 +1308,12 @@ public:
 
 	U_32 getSymbolTableCount()
 	{
-		return _stringUTF8Count + _packageCount;
+		return _newStringUTF8Count + _newPackageCount;
 	}
 
 	U_32 getStringUTF8Count()
 	{
-		return _stringUTF8Count;
+		return _newStringUTF8Count;
 	}
 
 	PackageEntry *getPackageEntry()
@@ -1302,7 +1323,7 @@ public:
 
 	U_32 getPackageCount()
 	{
-		return _packageCount;
+		return _newPackageCount;
 	}
 
 	UDATA getRequiredBufferSize()
@@ -1312,7 +1333,7 @@ public:
 
 	U_32 getThreadGroupCount()
 	{
-		return _threadGroupCount;
+		return _threadGroupCount - _vm->jfrState.checkpointEventTables.threadGroupCount;
 	}
 
 	ThreadGroupEntry *getThreadGroupEntry()
@@ -1456,7 +1477,7 @@ public:
 		return _buildResult;
 	}
 
-	void loadEvents(bool dumpCalled)
+	void loadEvents()
 	{
 		J9JFRBufferWalkState walkstate = {0};
 		J9Pool *shallowEntries = NULL;
@@ -1601,15 +1622,29 @@ public:
 			goto done;
 		}
 
-		if (J9_ARE_NO_BITS_SET(_vm->extendedRuntimeFlags3, J9_EXTENDED_RUNTIME3_JFR_V2_SUPPORT)) {
-			if (dumpCalled) {
-				loadSystemProcesses(_currentThread);
-				loadNativeLibraries(_currentThread);
-				loadModuleRequireAndModuleExportEvents();
-				loadClassLoaderStatisticsEvents(_currentThread);
-				loadThreadDumpEvents(_currentThread);
-				loadThreadAllocationStatisticsEvents();
+		if (FALSE == _vm->jfrState.isConstantEventsInitialized) {
+			omrthread_monitor_enter(_vm->jfrState.isConstantEventsInitializedMutex);
+			if (FALSE == _vm->jfrState.isConstantEventsInitialized) {
+				VM_JFRConstantPoolTypes::initializeJFRConstantEvents(_vm, _currentThread, &_buildResult);
+				if (isResultNotOKay()) {
+					VM_JFRConstantPoolTypes::freeJFRConstantEvents(_vm);
+					omrthread_monitor_exit(_vm->jfrState.isConstantEventsInitializedMutex);
+					goto done;
+				}
+				/* Ensure that initialization is complete when the initialized variable is set to true */
+				VM_AtomicSupport::writeBarrier();
+				_vm->jfrState.isConstantEventsInitialized = TRUE;
 			}
+			omrthread_monitor_exit(_vm->jfrState.isConstantEventsInitializedMutex);
+		}
+
+		if (J9_ARE_NO_BITS_SET(_vm->extendedRuntimeFlags3, J9_EXTENDED_RUNTIME3_JFR_V2_SUPPORT)) {
+			loadSystemProcesses(_currentThread);
+			loadNativeLibraries(_currentThread);
+			loadModuleRequireAndModuleExportEvents();
+			loadClassLoaderStatisticsEvents(_currentThread);
+			loadThreadDumpEvents(_currentThread);
+			loadThreadAllocationStatisticsEvents();
 		} else {
 			if (_shouldWriteSystemProcess) {
 				loadSystemProcesses(_currentThread);
@@ -2351,12 +2386,14 @@ done:
 		vmFuncs->releaseExclusiveVMAccess(_currentThread);
 	}
 
-	VM_JFRConstantPoolTypes(J9VMThread *currentThread)
+	VM_JFRConstantPoolTypes(J9VMThread *currentThread, bool finalWrite)
 		: _currentThread(currentThread)
 		, _vm(currentThread->javaVM)
 		, _buildResult(OK)
 		, _debug(false)
 		, privatePortLibrary(_vm->portLibrary)
+		, _finalWrite(finalWrite)
+		, _jfrV2(isJFRV2SupportEnabled(_vm))
 		, _classTable(NULL)
 		, _packageTable(NULL)
 		, _moduleTable(NULL)
@@ -2486,13 +2523,13 @@ done:
 			goto done;
 		}
 
-		_classLoaderTable = hashTableNew(OMRPORT_FROM_J9PORT(privatePortLibrary), J9_GET_CALLSITE(), 0, sizeof(ClassloaderEntry), sizeof(J9ClassLoader *), 0, J9MEM_CATEGORY_JFR, classloaderNameHashFn, classloaderNameHashEqualFn, NULL, _vm);
+		_classLoaderTable = hashTableNew(OMRPORT_FROM_J9PORT(privatePortLibrary), J9_GET_CALLSITE(), 0, sizeof(ClassloaderEntry), sizeof(J9ClassLoader *), 0, J9MEM_CATEGORY_JFR, classloaderHashFn, classloaderHashEqualFn, NULL, _vm);
 		if (NULL == _classLoaderTable) {
 			_buildResult = OutOfMemory;
 			goto done;
 		}
 
-		_methodTable = hashTableNew(OMRPORT_FROM_J9PORT(privatePortLibrary), J9_GET_CALLSITE(), 0, sizeof(MethodEntry), sizeof(J9ROMMethod *), 0, J9MEM_CATEGORY_JFR, methodNameHashFn, methodNameHashEqualFn, NULL, _vm);
+		_methodTable = hashTableNew(OMRPORT_FROM_J9PORT(privatePortLibrary), J9_GET_CALLSITE(), 0, sizeof(MethodEntry), sizeof(J9ROMMethod *), 0, J9MEM_CATEGORY_JFR, methodHashFn, methodHashEqualFn, NULL, _vm);
 		if (NULL == _methodTable) {
 			_buildResult = OutOfMemory;
 			goto done;
@@ -2705,58 +2742,83 @@ done:
 			goto done;
 		}
 
-		/* Add reserved index for default entries. For strings zero is the empty or NUll string.
-		 * For package zero is the deafult package, for Module zero is the unnamed module. ThreadGroup
-		 * zero is NULL threadGroup.
-		 */
-		_stringUTF8Count += 1;
 		memset(&_defaultStringUTF8Entry, 0, sizeof(_defaultStringUTF8Entry));
 		_defaultStringUTF8Entry.string = (J9UTF8 *)&nullString;
 
-		_stringUTF8Count += 1;
 		memset(&_unknownClassStringUTF8Entry , 0, sizeof(_unknownClassStringUTF8Entry));
 		_unknownClassStringUTF8Entry.string = (J9UTF8 *)&unknownClass;
 
-		_stringUTF8Count += 1;
 		memset(&_nativeMethodStringUTF8Entry, 0, sizeof(_nativeMethodStringUTF8Entry));
 		_nativeMethodStringUTF8Entry.string = (J9UTF8 *)&nativeMethod;
 
-		_stringUTF8Count += 1;
 		memset(&_nativeMethodSignatureStringUTF8Entry, 0, sizeof(_nativeMethodSignatureStringUTF8Entry));
 		_nativeMethodSignatureStringUTF8Entry.string = (J9UTF8 *)&nativeMethodSignature;
+		if (NULL == _vm->jfrState.checkpointEventTables.stringUTF8Table) {
+		   /* Add reserved index for default entries. For strings zero is the empty or NUll string.
+			* For package zero is the deafult package, for Module zero is the unnamed module. ThreadGroup
+			* zero is NULL threadGroup.
+			*/
+			_stringUTF8Count += 5;
+		} else {
+			_globalStringTable = _vm->jfrState.checkpointEventTables.globalStringTable;
+			_stringUTF8Count = _vm->jfrState.checkpointEventTables.globalStringTableCount;
+		}
 
-		_moduleCount += 1;
-		memset(&_defaultModuleEntry, 0, sizeof(_defaultModuleEntry));
-		_firstModuleEntry = &_defaultModuleEntry;
-		_previousModuleEntry = _firstModuleEntry;
-
-		_packageCount += 1;
 		memset(&_defaultPackageEntry, 0, sizeof(_defaultPackageEntry));
 		_defaultPackageEntry.exported = TRUE;
+		_defaultPackageEntry.symbolTableEntry = 4;
 		_defaultPackageEntry.packageName = J9UTF8_DATA((J9UTF8 *)&defaultPackage);
 		_defaultPackageEntry.packageNameLength = J9UTF8_LENGTH((J9UTF8 *)&defaultPackage);
-		_firstPackageEntry = &_defaultPackageEntry;
-		_previousPackageEntry = _firstPackageEntry;
+		if (NULL == _vm->jfrState.checkpointEventTables.packageTable) {
+			_packageCount += 1;
+			_firstPackageEntry = &_defaultPackageEntry;
+			_previousPackageEntry = _firstPackageEntry;
+		} else {
+			_packageCount = _vm->jfrState.checkpointEventTables.packageCount;
+		}
 
-		_threadGroupCount += 1;
-		memset(&_defaultThreadGroup, 0, sizeof(_defaultThreadGroup));
-		_firstThreadGroupEntry = &_defaultThreadGroup;
-		_previousThreadGroupEntry = _firstThreadGroupEntry;
+		if (0 == _vm->jfrState.checkpointEventTables.moduleCount) {
+			_moduleCount += 1;
+			memset(&_defaultModuleEntry, 0, sizeof(_defaultModuleEntry));
+			_firstModuleEntry = &_defaultModuleEntry;
+			_previousModuleEntry = _firstModuleEntry;
+		} else {
+			_moduleCount = _vm->jfrState.checkpointEventTables.moduleCount;
+		}
 
-		_classCount += 1;
-		memset(&_defaultClassEntry, 0, sizeof(_defaultClassEntry));
-		_defaultClassEntry.nameStringUTF8Index = (U_32)UnknownClass;
-		_firstClassEntry = &_defaultClassEntry;
-		_previousClassEntry = _firstClassEntry;
+		if (0 == _vm->jfrState.checkpointEventTables.threadGroupCount) {
+			_threadGroupCount += 1;
+			memset(&_defaultThreadGroup, 0, sizeof(_defaultThreadGroup));
+			_firstThreadGroupEntry = &_defaultThreadGroup;
+			_previousThreadGroupEntry = _firstThreadGroupEntry;
+		} else {
+			_threadGroupCount = _vm->jfrState.checkpointEventTables.threadGroupCount;
+		}
 
-		_methodCount += 1;
-		memset(&_defaultMethodEntry, 0, sizeof(_defaultMethodEntry));
-		_defaultMethodEntry.nameStringUTF8Index = (U_32)NativeMethod;
-		_defaultMethodEntry.descriptorStringUTF8Index = (U_32)NativeMethodSignature;
-		/* default class */
-		_defaultMethodEntry.classIndex = 0;
-		_firstMethodEntry = &_defaultMethodEntry;
-		_previousMethodEntry = _firstMethodEntry;
+		if (0 == _vm->jfrState.checkpointEventTables.classCount) {
+			_classCount += 1;
+			memset(&_defaultClassEntry, 0, sizeof(_defaultClassEntry));
+			_defaultClassEntry.nameStringUTF8Index = (U_32)UnknownClass;
+			_firstClassEntry = &_defaultClassEntry;
+			_previousClassEntry = _firstClassEntry;
+		} else {
+			_classCount = _vm->jfrState.checkpointEventTables.classCount;
+		}
+
+		if (0 == _vm->jfrState.checkpointEventTables.methodCount) {
+			_methodCount += 1;
+			memset(&_defaultMethodEntry, 0, sizeof(_defaultMethodEntry));
+			_defaultMethodEntry.nameStringUTF8Index = (U_32)NativeMethod;
+			_defaultMethodEntry.descriptorStringUTF8Index = (U_32)NativeMethodSignature;
+			/* default class */
+			_defaultMethodEntry.classIndex = 0;
+			_firstMethodEntry = &_defaultMethodEntry;
+			_previousMethodEntry = _firstMethodEntry;
+		} else {
+			_methodCount = _vm->jfrState.checkpointEventTables.methodCount;
+		}
+
+		_classLoaderCount = _vm->jfrState.checkpointEventTables.classLoaderCount;
 
 		_stackTraceCount += 1;
 		memset(&_defaultStackTraceEntry, 0, sizeof(_defaultStackTraceEntry));
@@ -2773,10 +2835,86 @@ done:
 
 	~VM_JFRConstantPoolTypes()
 	{
-		hashTableForEachDo(_stringUTF8Table, &freeUTF8Strings, _currentThread);
+		if (_finalWrite) {
+			hashTableForEachDo(_threadGroupTable, &freeThreadGroupNameEntries, _currentThread);
+			hashTableForEachDo(_stringUTF8Table, &freeUTF8Strings, _currentThread);
+			j9mem_free_memory(_globalStringTable);
+			if (_vm->jfrState.chunkGeneration > 1) {
+				/* Free owned strings and tables persisted across prior chunks.
+				 * Generation 1 has no persisted tables; generation > 1 has tables
+				 * populated by copyToPersistentHashTable in prior non-final instances. */
+				hashTableForEachDo(_vm->jfrState.checkpointEventTables.threadGroupTable, &freeThreadGroupNameEntries, _currentThread);
+				hashTableForEachDo(_vm->jfrState.checkpointEventTables.stringUTF8Table, &freeUTF8Strings, _currentThread);
+				hashTableFree(_vm->jfrState.checkpointEventTables.classTable);
+				hashTableFree(_vm->jfrState.checkpointEventTables.packageTable);
+				hashTableFree(_vm->jfrState.checkpointEventTables.moduleTable);
+				hashTableFree(_vm->jfrState.checkpointEventTables.classLoaderTable);
+				hashTableFree(_vm->jfrState.checkpointEventTables.methodTable);
+				hashTableFree(_vm->jfrState.checkpointEventTables.threadGroupTable);
+				hashTableFree(_vm->jfrState.checkpointEventTables.stringUTF8Table);
+
+				_vm->jfrState.checkpointEventTables.classTable = NULL;
+				_vm->jfrState.checkpointEventTables.packageTable = NULL;
+				_vm->jfrState.checkpointEventTables.moduleTable = NULL;
+				_vm->jfrState.checkpointEventTables.classLoaderTable = NULL;
+				_vm->jfrState.checkpointEventTables.methodTable = NULL;
+				_vm->jfrState.checkpointEventTables.threadGroupTable = NULL;
+				_vm->jfrState.checkpointEventTables.stringUTF8Table = NULL;
+				_vm->jfrState.checkpointEventTables.globalStringTable = NULL;
+				_vm->jfrState.checkpointEventTables.classCount = 0;
+				_vm->jfrState.checkpointEventTables.packageCount = 0;
+				_vm->jfrState.checkpointEventTables.moduleCount = 0;
+				_vm->jfrState.checkpointEventTables.classLoaderCount = 0;
+				_vm->jfrState.checkpointEventTables.methodCount = 0;
+				_vm->jfrState.checkpointEventTables.stringUTF8Count = 0;
+				_vm->jfrState.checkpointEventTables.threadGroupCount = 0;
+				_vm->jfrState.checkpointEventTables.packageNameCount = 0;
+				_vm->jfrState.checkpointEventTables.globalStringTableCount = 0;
+				_vm->jfrState.checkpointEventTables.globalStringTable = NULL;
+			}
+			_vm->jfrState.chunkGeneration = 0;
+		} else {
+			if (1 == _vm->jfrState.chunkGeneration) {
+				/* Instead of allocating new tables to persist, simply use the existing tables.
+				 * This is only done for the first generation.
+				 */
+				_vm->jfrState.checkpointEventTables.classTable = _classTable;
+				_vm->jfrState.checkpointEventTables.packageTable = _packageTable;
+				_vm->jfrState.checkpointEventTables.moduleTable = _moduleTable;
+				_vm->jfrState.checkpointEventTables.classLoaderTable = _classLoaderTable;
+				_vm->jfrState.checkpointEventTables.methodTable = _methodTable;
+				_vm->jfrState.checkpointEventTables.threadGroupTable = _threadGroupTable;
+				_vm->jfrState.checkpointEventTables.stringUTF8Table = _stringUTF8Table;
+				_classTable = NULL;
+				_packageTable = NULL;
+				_moduleTable = NULL;
+				_classLoaderTable = NULL;
+				_methodTable = NULL;
+				_threadGroupTable = NULL;
+				_stringUTF8Table = NULL;
+			} else {
+				copyToPersistentHashTable(_vm->jfrState.checkpointEventTables.classTable, _classTable);
+				copyToPersistentHashTable(_vm->jfrState.checkpointEventTables.packageTable, _packageTable);
+				copyToPersistentHashTable(_vm->jfrState.checkpointEventTables.moduleTable, _moduleTable);
+				copyToPersistentHashTable(_vm->jfrState.checkpointEventTables.classLoaderTable, _classLoaderTable);
+				copyToPersistentHashTable(_vm->jfrState.checkpointEventTables.methodTable, _methodTable);
+				copyToPersistentHashTable(_vm->jfrState.checkpointEventTables.threadGroupTable, _threadGroupTable);
+				copyToPersistentHashTable(_vm->jfrState.checkpointEventTables.stringUTF8Table, _stringUTF8Table);
+			}
+			_vm->jfrState.checkpointEventTables.globalStringTable = _globalStringTable;
+			_vm->jfrState.checkpointEventTables.globalStringTableCount += _newStringUTF8Count + _newPackageCount;
+			_vm->jfrState.checkpointEventTables.classCount = _classCount;
+			_vm->jfrState.checkpointEventTables.packageCount = _packageCount;
+			_vm->jfrState.checkpointEventTables.moduleCount = _moduleCount;
+			_vm->jfrState.checkpointEventTables.classLoaderCount = _classLoaderCount;
+			_vm->jfrState.checkpointEventTables.methodCount = _methodCount;
+			_vm->jfrState.checkpointEventTables.stringUTF8Count = _stringUTF8Count;
+			_vm->jfrState.checkpointEventTables.threadGroupCount = _threadGroupCount;
+			_vm->jfrState.checkpointEventTables.packageNameCount = _packageNameCount;
+		}
+
 		hashTableForEachDo(_stackTraceTable, &freeStackStraceEntries, _currentThread);
 		pool_do(_threadTable, &freeThreadNameEntries, _currentThread);
-		hashTableForEachDo(_threadGroupTable, &freeThreadGroupNameEntries, _currentThread);
 		hashTableFree(_classTable);
 		hashTableFree(_packageTable);
 		hashTableFree(_moduleTable);
@@ -2816,7 +2954,6 @@ done:
 		pool_kill(_javaEventDataTable);
 		pool_kill(_objectAllocationSampleTable);
 		freeNetworkInterfaceNames();
-		j9mem_free_memory(_globalStringTable);
 	}
 
 };
