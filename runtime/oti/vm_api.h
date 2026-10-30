@@ -2843,6 +2843,25 @@ isFieldNullRestricted(J9ROMFieldShape *field);
 j9object_t
 loadFlattenableArrayElement(J9VMThread *currentThread, j9object_t receiverObject, U_32 index, BOOLEAN fast);
 
+#if defined(J9VM_OPT_VALHALLA_FLATTENABLE_VALUE_TYPES)
+/**
+ * Allocates a new unflattened value object and copies the flattened instance field bytes into it.
+ *
+ * Returns NULL if allocation fails.
+ * If fast == FALSE, a special stack frame must be built before calling as GC may occur.
+ *
+ * @param[in] currentThread  thread token
+ * @param[in] fieldClass     J9Class of the flattened field
+ * @param[in] srcObject      the object containing the flattened field
+ * @param[in] srcOffset      byte offset of the field payload within srcObject
+ * @param[in] fast           TRUE for fast-path (no GC), FALSE for slow path
+ *
+ * @return allocated unflattened value object, or NULL on allocation failure
+ */
+j9object_t
+getFlattenedInstanceFieldAtOffset(J9VMThread *currentThread, J9Class *fieldClass, j9object_t srcObject, UDATA srcOffset, BOOLEAN fast);
+#endif /* defined(J9VM_OPT_VALHALLA_FLATTENABLE_VALUE_TYPES) */
+
 /**
  * Performs an aastore operation on an object. Handles flattened and non-flattened cases.
  *
