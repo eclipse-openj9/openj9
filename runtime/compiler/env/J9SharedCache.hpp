@@ -597,10 +597,32 @@ private:
     void createClassKey(UDATA classOffsetInCache, char *key, uint32_t &keyLength);
 
     bool writeClassToChain(J9ROMClass *romClass, UDATA *&chainPtr);
-    bool writeClassesToChain(J9Class *clazz, int32_t numSuperclasses, UDATA *&chainPtr);
+    bool writeClassesToChain(J9Class *clazz, uint32_t numSuperclasses, UDATA *&chainPtr);
     bool writeInterfacesToChain(J9Class *clazz, UDATA *&chainPtr);
+
+    /**
+     * \brief Writes the flattened fields portion of the class chain.  This method updates the \c chainPtr, the
+     *        \c numSlotsUsed, and the \c numFlattenedFields arguments.  The number of slots that can be used
+     *        for the entire class chain must not exceed \ref maxClassChainLength, so this method will return
+     *        false if the number of slots already used for the class chain plus the number of slots required
+     *        for the flattened fields portion will exceed \c maxClassChainLength.  Otherwise, the method will
+     *        succeed and return true.
+     *
+     * \param[in] romClass The \ref J9ROMClass of the class whose flattened fields portion of the class chain is to be
+     *                     written
+     * \param[in] clazz The \ref J9Class of the class whose flattened fields portion of the class chain is to be
+     *                     written
+     * \param[in] numSuperclasses The number of ancestor classes in the inheritance chain for the current class
+     * \param[in,out] chainPtr Pointer to start of flattened fields portion of class chain, passed by reference
+     * \param[in,out] numSlotsUsed The number of slots used for the class chain
+     * \param[out] numFlattenedFields The number of flattened fields contained in the class
+     *
+     * \return true if the flattened fields were successfully written to the class chain; false otherwise.
+     */
+    bool writeFlattenedFieldsToChain(J9ROMClass *romClass, J9Class *clazz, uint32_t numSuperclasses, UDATA *&chainPtr,
+        uint32_t &numSlotsUsed, uint32_t &numFlattenedFields);
     bool fillInClassChain(J9Class *clazz, UDATA *chainData, uint32_t chainLength, uint32_t numSuperclasses,
-        uint32_t numInterfaces);
+        uint32_t numInterfaces, uint32_t &numFlattenedFields, uint32_t &numSlotsUsed);
 
     bool romclassMatchesCachedVersion(J9ROMClass *romClass, UDATA *&chainPtr, UDATA *chainEnd);
     UDATA *findChainForClass(J9Class *clazz, const char *key, uint32_t keyLength);
@@ -663,6 +685,23 @@ private:
      * \return true if validation succeeded, false otherwise.
      */
     bool validateInterfacesInClassChain(TR_OpaqueClassBlock *clazz, UDATA *&chainPtr, UDATA *chainEnd);
+
+    /**
+     * \brief Validates the flattened fields portion of the class chain.  This method modifies the \c chainPtr arg.
+     *
+     * \param[in] romClass The \ref J9ROMClass of the class whose flattened fields portion of the class chain is to be
+     *                     validated
+     * \param[in] clazz The \ref J9Class of the class whose flattened fields portion of the class chain is to be
+     *                     validated
+     * \param[in,out] chainPtr Pointer to the start of the flattened fields portion of the class chain, passed by
+     *                     reference
+     * \param[in] chainEnd Pointer to the end of the flattened fields portion of the class chain
+     * \param[in] cachedFlattenedFieldCount The number of flattened fields that are expected to be found in this portion
+     *                     of the class chain
+     * \return true if validation succeeded; false otherwise.
+     */
+    bool validateFlattenedFieldsInClassChain(J9ROMClass *romClass, J9Class *clazz, UDATA *&chainPtr, UDATA *chainEnd,
+        uint32_t cachedFlattenedFieldCount);
 
     /**
      * \brief Helper method; used to check if a pointer is within the metadata section of the SCC

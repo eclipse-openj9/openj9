@@ -92,7 +92,47 @@ might be different, in which case the AOT load fails. In the case of
 inlined methods however, the AOT load doesn't necessarily fail, rather, 
 the AOT infrastructure disables a particular inlined call site.
 
-## Finding a candidate J9Class
+## Flattening of Null-Restricted Value Types
+
+If null-restricted value types support is enabled along with flattening
+of fields of those value types, the Class Chain of any `J9Class` that
+actually contains a flattened field is augmented with information about
+the position and class chain offset of each such field.
+
+When AOT code is loaded into a different instance, the portion of the
+Class Chain that's augmented with information about flattened fields
+is checked in addition to the checking that's performed for the portion
+of the Class Chain that contains ROMClasses.  Any mismatch in the
+number, position or class chain of flattened fields will similarly result
+in the AOT load's failing.
+
+## Schematic Diagram of Class Chain
+
+The following diagram illustrates the layout of a class chain that was
+described in the previous sections.
+
+```
++-------------------------+ // Start of chain data
+| Reserved                | // One or five bytes (in 32-bit mode or 64-bit, respectively)
+| Flattened field count   | // One byte
+| Size of class chain     | // Two bytes for size of just the class chain, not including the field data section
++-------------------------+ // Start of class chain
+| ROM Class offset        |
+| ROM Class offset        |
+| ...                     |
+| ROM Class offset        |
++-------------------------+ // End of class chain; start of flattened field data
+| Field index             | // Identifies the first flattened field
+| Class chain offset      | // Class chain offset of the first flattened field
+| Field index             | // Identifies the second flattened field
+| Class chain offset      | // Class chain offset of the second flattened field
+| ...                     |
+| Field index             | // Identifies the nth flattened field
+| Class chain offset      | // Class chain offset of the nth flattened field
++-------------------------+ // End of extended class chain
+```
+
+## Finding a Candidate J9Class
 For classes that are directly referenced in a method's code, there is a 
 Constant Pool entry in the romclass. For example, in `C.foo()` there is a
 call to `D.bar()`; if `D.bar()` is a static call, there will be an entry
