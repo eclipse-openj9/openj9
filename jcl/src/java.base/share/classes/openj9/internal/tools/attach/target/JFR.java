@@ -48,6 +48,7 @@ public class JFR {
 	static final String DIAGNOSTICS_JFR_DUMP = "JFR.dump";
 	static final String DIAGNOSTICS_JFR_STOP = "JFR.stop";
 	static final String DIAGNOSTICS_JFR_CONFIGURE = "JFR.configure";
+	static final String DIAGNOSTICS_JFR_CHECK = "JFR.check";
 
 	private static final int ERROR_NO_TIME_UNIT = -1;
 	private static final int ERROR_NO_TIME_DURATION = -2;
@@ -86,6 +87,14 @@ public class JFR {
 			+ "%n"
 			+ "samplethreads      (Optional) Flag for activating thread sampling. (BOOLEAN, true)%n";
 
+	private static final String JFR_CHECK_OPTION_HELP =
+			" [options]%n"
+			+ "%n"
+			+ "Options:%n"
+			+ "%n"
+			+ "name     (Optional) Name of the flight recording. (STRING, no default value)%n"
+			+ "verbose  (Optional) Flag for printing the event settings for the recording. (BOOLEAN, false)%n";
+
 	static final String DIAGNOSTICS_JFR_START_HELP = "Start a new Recording%n%n"
 			+ DiagnosticUtils.SYNTAX_PREFIX + DIAGNOSTICS_JFR_START + JFR_START_OPTION_HELP;
 
@@ -97,6 +106,9 @@ public class JFR {
 
 	static final String DIAGNOSTICS_JFR_STOP_HELP = "Stop a JFR recording%n%n"
 			+ DiagnosticUtils.SYNTAX_PREFIX + DiagnosticUtils.FORMAT_PREFIX + DIAGNOSTICS_JFR_STOP + JFR_STOP_OPTION_HELP;
+
+	static final String DIAGNOSTICS_JFR_CHECK_HELP = "Check JFR recording in progress%n%n"
+			+ DiagnosticUtils.SYNTAX_PREFIX + DIAGNOSTICS_JFR_CHECK + JFR_CHECK_OPTION_HELP;
 
 	private static long convertToMilliseconds(String timeValue) {
 		long timeInMilli = 0L;
@@ -399,6 +411,15 @@ public class JFR {
 				if (LOGGING_ENABLED == loggingStatus) {
 					for (String str : jfrDcmdResult) {
 						IPC.logMessage("JFR.configure Result string = " + str);
+					}
+				}
+				result = DiagnosticProperties.makeStringResult(Stream.of(jfrDcmdResult).collect(Collectors.joining("\n")));
+				break;
+			case DIAGNOSTICS_JFR_CHECK:
+				jfrDcmdResult = access.doJFRDCmdCheckExecute(execArgs);
+				if (LOGGING_ENABLED == loggingStatus) {
+					for (String str : jfrDcmdResult) {
+						IPC.logMessage("JFR.check Result string = " + str);
 					}
 				}
 				result = DiagnosticProperties.makeStringResult(Stream.of(jfrDcmdResult).collect(Collectors.joining("\n")));

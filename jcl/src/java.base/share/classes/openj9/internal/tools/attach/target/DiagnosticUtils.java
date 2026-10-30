@@ -679,6 +679,9 @@ public class DiagnosticUtils {
 
 				commandTable.put(JFR.DIAGNOSTICS_JFR_CONFIGURE, JFR::doJFRv2);
 				helpTable.put(JFR.DIAGNOSTICS_JFR_CONFIGURE, JFR.DIAGNOSTICS_JFR_CONFIGURE_HELP);
+
+				commandTable.put(JFR.DIAGNOSTICS_JFR_CHECK, JFR::doJFRv2);
+				helpTable.put(JFR.DIAGNOSTICS_JFR_CHECK, JFR.DIAGNOSTICS_JFR_CHECK_HELP);
 			} else
 /*[ENDIF] JAVA_SPEC_VERSION == 17 */
 			{
@@ -705,6 +708,9 @@ public class DiagnosticUtils {
 
 			commandTable.put(JFR.DIAGNOSTICS_JFR_CONFIGURE, JFR::getJFRModuleUnavailableMessage);
 			helpTable.put(JFR.DIAGNOSTICS_JFR_CONFIGURE, JFR.DIAGNOSTICS_JFR_CONFIGURE_HELP);
+
+			commandTable.put(JFR.DIAGNOSTICS_JFR_CHECK, JFR::getJFRModuleUnavailableMessage);
+			helpTable.put(JFR.DIAGNOSTICS_JFR_CHECK, JFR.DIAGNOSTICS_JFR_CHECK_HELP);
 /*[ENDIF] JAVA_SPEC_VERSION == 17 */
 		}
 /*[ENDIF] JFR_SUPPORT */
