@@ -18,6 +18,7 @@
  * [2] https://openjdk.org/legal/assembly-exception.html
  *
  * SPDX-License-Identifier: EPL-2.0 OR Apache-2.0 OR GPL-2.0-only WITH Classpath-exception-2.0 OR GPL-2.0-only WITH OpenJDK-assembly-exception-1.0
+ * Assisted-by: OpenAI Codex
  *******************************************************************************/
 
 #include "compile/Method.hpp"
@@ -51,9 +52,13 @@ bool J9::CFGSimplifier::simplifyIfPatterns(bool needToDuplicateTree)
 //
 // OR
 //
-// ifacmpne block_A
+// ifacmpne block_B
 //   ... some ref
 //   aconst NULL
+//
+// block_A is the exception block; block_B is the non-null continuation.
+// For ifacmpeq, block_A is taken and block_B is fall-through.
+// For ifacmpne, block_B is taken and block_A is fall-through.
 //
 // Where block_A looks like:
 // ResolveCHK
@@ -215,20 +220,27 @@ bool J9::CFGSimplifier::simplifyUnresolvedRequireNonNull(bool needToDuplicateTre
 //
 // OR
 //
-// ifacmpne block_A
+// ifacmpne block_B
 //   ... some ref
 //   aconst NULL
+//
+// block_A is the exception block; block_B is the non-null continuation.
+// For ifacmpeq, block_A is taken and block_B is fall-through.
+// For ifacmpne, block_B is taken and block_A is fall-through.
 //
 // Where block_A looks like:
 // treetop
 //    new
 //       loadaddr java/lang/NullPointerException
 // treetop | NULLCHK
-//    call java/lang/NullPointerException.<init>();
+//    call java/lang/Throwable.<init>()V
 //       => new
 // treetop | NULLCHK
 //    athrow
 //       => new
+//
+// Constructor inlining can expose the Throwable constructor call on the
+// NullPointerException allocation.
 //
 // Replace the branch with a NULLCHK PassThrough of some ref
 //
