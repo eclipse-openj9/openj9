@@ -18,6 +18,7 @@
  * [2] https://openjdk.org/legal/assembly-exception.html
  *
  * SPDX-License-Identifier: EPL-2.0 OR Apache-2.0 OR GPL-2.0-only WITH Classpath-exception-2.0 OR GPL-2.0-only WITH OpenJDK-assembly-exception-1.0
+ * Assisted-by: IBM Bob
  *******************************************************************************/
 
 #include <string.h>
@@ -34,6 +35,27 @@
 extern "C" {
 
 #if JAVA_SPEC_VERSION >= 16
+
+/**
+ * Check whether a method carries the @Scoped extended modifier.
+ *
+ * @param[in] method the J9Method to check
+ *
+ * @return true if the method is annotated with @Scoped, false otherwise
+ */
+static bool
+isScopedMethod(J9Method *method)
+{
+	if (NULL != method) {
+		J9ROMMethod *romMethod = J9_ROM_METHOD_FROM_RAM_METHOD(method);
+		if ((NULL != romMethod) && J9ROMMETHOD_HAS_EXTENDED_MODIFIERS(romMethod)) {
+			U_32 extraModifiers = getExtendedModifiersDataFromROMMethod(romMethod);
+			return J9ROMMETHOD_HAS_SCOPED_ANNOTATION(extraModifiers);
+		}
+	}
+	return false;
+}
+
 /**
  * Frame walk function, which is used with hasMemoryScope.
  *
@@ -50,6 +72,20 @@ closeScope0FrameWalkFunction(J9VMThread *vmThread, J9StackWalkState *walkState)
 		/* Scope has been found. */
 		return J9_STACKWALK_STOP_ITERATING;
 	}
+
+	bool *inlinedIsScoped = (bool *)walkState->userData3;
+	if (0 != walkState->inlineDepth) {
+		// Method inlined into a JIT frame. The frame's O-slots are walked after all of
+		// its inlined methods have been reported, so remember whether any is @Scoped.
+		if (isScopedMethod(walkState->method)) {
+			*inlinedIsScoped = true;
+		}
+	} else {
+		// Outer method of a JIT frame (reported after its O-slots) or a non-JIT frame.
+		// Reset for the next frame.
+		*inlinedIsScoped = false;
+	}
+
 	return J9_STACKWALK_KEEP_ITERATING;
 }
 
@@ -64,16 +100,9 @@ closeScope0FrameWalkFunction(J9VMThread *vmThread, J9StackWalkState *walkState)
 static void
 closeScope0OSlotWalkFunction(J9VMThread *vmThread, J9StackWalkState *walkState, j9object_t *slot, const void *stackLocation)
 {
-	J9Method *method = walkState->method;
-	if (NULL != method) {
-		J9ROMMethod *romMethod = J9_ROM_METHOD_FROM_RAM_METHOD(method);
-		if (NULL != romMethod && J9ROMMETHOD_HAS_EXTENDED_MODIFIERS(romMethod)) {
-			U_32 extraModifiers = getExtendedModifiersDataFromROMMethod(romMethod);
-			if (J9ROMMETHOD_HAS_SCOPED_ANNOTATION(extraModifiers)) {
-				if (*slot == walkState->userData1) {
-					*(bool *)walkState->userData2 = true;
-				}
-			}
+	if (*slot == walkState->userData1) {
+		if (*(bool *)walkState->userData3 || isScopedMethod(walkState->method)) {
+			*(bool *)walkState->userData2 = true;
 		}
 	}
 }
@@ -82,6 +111,7 @@ BOOLEAN
 hasMemoryScope(J9VMThread *walkThread, j9object_t scope)
 {
 	bool scopeFound = false;
+	bool inlinedIsScoped = false;
 
 	if (NULL != scope) {
 		J9StackWalkState walkState;
@@ -91,6 +121,7 @@ hasMemoryScope(J9VMThread *walkThread, j9object_t scope)
 		walkState.skipCount = 0;
 		walkState.userData1 = (void *)scope;
 		walkState.userData2 = (void *)&scopeFound;
+		walkState.userData3 = (void *)&inlinedIsScoped;
 		walkState.frameWalkFunction = closeScope0FrameWalkFunction;
 		walkState.objectSlotWalkFunction = closeScope0OSlotWalkFunction;
 
