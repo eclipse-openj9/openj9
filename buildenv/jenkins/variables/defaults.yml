@@ -372,7 +372,7 @@ x86-64_windows:
     8: 'windows-x86_64-normal-server-release'
     11: 'windows-x86_64-normal-server-release'
   extra_configure_options:
-    all: '--with-toolchain-version=2022 --disable-ccache --with-cuda="C:/Program Files/NVIDIA GPU Computing Toolkit/CUDA/v9.0"'
+    all: '--with-toolchain-version=2022 --disable-ccache --with-cuda="C:/Program Files/NVIDIA GPU Computing Toolkit/CUDA/v9.1"'
   openjdk_reference_repo: '${HOME}/openjdk_cache'
   node_labels:
     build: 'ci.role.build && hw.arch.x86 && sw.os.windows'
