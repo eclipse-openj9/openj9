@@ -3123,7 +3123,87 @@ bool TR_J9InlinerPolicy::callMustBeInlined(TR_CallTarget *calltarget)
         return true;
 #endif
 
+    if (isVectorAPIWrapper(method)) {
+        logprintf(comp()->trace(OMR::inlining), comp()->log(),
+            "Vector API wrapper %s must be inlined, in callMustBeInlined\n", method->signature(comp()->trMemory()));
+        return true;
+    }
+
     return callMustBeInlinedInCold(method);
+}
+
+/*
+ * Returns true if the simple (package-less) class name denotes a public Vector API value type:
+ * Vector, <Lane>Vector (e.g. FloatVector), VectorMask or VectorShuffle.
+ * VectorSpecies, VectorShape and VectorOperators are intentionally not matched.
+ */
+static bool isVectorAPIValueClassName(const char *name, int32_t length)
+{
+    static const char vector[] = "Vector";
+    static const char vectorMask[] = "VectorMask";
+    static const char vectorShuffle[] = "VectorShuffle";
+
+    if (length >= (int32_t)(sizeof(vector) - 1)
+        && !strncmp(name + length - (sizeof(vector) - 1), vector, sizeof(vector) - 1))
+        return true;
+
+    if (length == (int32_t)(sizeof(vectorMask) - 1) && !strncmp(name, vectorMask, length))
+        return true;
+
+    return length == (int32_t)(sizeof(vectorShuffle) - 1) && !strncmp(name, vectorShuffle, length);
+}
+
+bool TR_J9InlinerPolicy::isVectorAPIWrapper(TR_ResolvedMethod *method)
+{
+    static const bool disabled = feGetEnv("TR_DisableVectorWrapperInlining") != NULL;
+    static const char vectorPackage[] = "jdk/incubator/vector/";
+    static const int32_t vectorPackageLength = sizeof(vectorPackage) - 1;
+
+    if (disabled)
+        return false;
+
+    // Methods in the Vector API itself are handled by the @ForceInline logic.
+    // Methods in jdk/internal/vm/vector are handled the same way.
+    int32_t classNameLength = method->classNameLength();
+    const char *className = method->classNameChars();
+    if ((classNameLength >= vectorPackageLength && !strncmp(className, vectorPackage, vectorPackageLength))
+        || (classNameLength >= 23 && !strncmp(className, "jdk/internal/vm/vector/", 23)))
+        return false;
+
+    int32_t length = method->signatureLength();
+    const char *signature = method->signatureChars();
+
+    // Walk the descriptor: (<param types>)<return type>. Array types are not considered.
+    for (int32_t i = 0; i < length;) {
+        bool isArray = false;
+        while (i < length && signature[i] == '[') {
+            isArray = true;
+            i++;
+        }
+
+        if (i >= length)
+            break;
+
+        if (signature[i] != 'L') {
+            i++; // '(' or ')' or a primitive type
+            continue;
+        }
+
+        const char *type = signature + i + 1;
+        int32_t remaining = length - i - 1;
+        const char *end = (const char *)memchr(type, ';', remaining);
+        if (!end)
+            break;
+
+        int32_t typeLength = (int32_t)(end - type);
+        if (!isArray && typeLength > vectorPackageLength && !strncmp(type, vectorPackage, vectorPackageLength)
+            && isVectorAPIValueClassName(type + vectorPackageLength, typeLength - vectorPackageLength))
+            return true;
+
+        i += 1 + typeLength + 1;
+    }
+
+    return false;
 }
 
 void TR_J9InlinerUtil::adjustCallerWeightLimit(TR::ResolvedMethodSymbol *callerSymbol, int &callerWeightLimit)

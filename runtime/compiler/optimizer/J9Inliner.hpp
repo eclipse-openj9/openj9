@@ -386,6 +386,13 @@ protected:
         bool arrayBlockNeeded, bool typeTestsNeeded, TR::Node *orderedCallNode);
     virtual bool callMustBeInlined(TR_CallTarget *calltarget);
     virtual bool callMustBeInlinedInCold(TR_ResolvedMethod *method);
+
+    /** \brief
+     *     Returns true if \c method is not part of the Vector API itself but takes and/or returns a Vector API
+     *     value object (Vector, VectorMask or VectorShuffle), judging by its signature.
+     *     Always false if the \c TR_DisableVectorWrapperInlining environment variable is set.
+     */
+    bool isVectorAPIWrapper(TR_ResolvedMethod *method);
     bool mustBeInlinedEvenInDebug(TR_ResolvedMethod *calleeMethod, TR::TreeTop *callNodeTreeTop);
     bool _tryToGenerateILForMethod(TR::ResolvedMethodSymbol *calleeSymbol, TR::ResolvedMethodSymbol *callerSymbol,
         TR_CallTarget *calltarget);
