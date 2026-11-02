@@ -193,6 +193,7 @@ const char *messageNames[] = {
     "VM_getLayoutVarHandle",
     "VM_getMethodAccessorIndex",
     "VM_getFieldAccessorIndex",
+    "VM_getVectorOperatorInfo",
     "VM_mutableCallSiteEpoch",
     "VM_numInterfacesImplemented",
     "VM_getObjectClassInfoFromKnotIndex",

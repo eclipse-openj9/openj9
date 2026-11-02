@@ -1121,6 +1121,11 @@ static bool handleResponse(JITServer::MessageType response, JITServer::ClientStr
                 faObj = knot->getPointerLocation(faIndex);
             client->write(response, faIndex, faObj);
         } break;
+        case MessageType::VM_getVectorOperatorInfo: {
+            auto recv = client->getRecvData<TR::KnownObjectTable::Index>();
+            int32_t opInfo = fe->getVectorOperatorInfo(comp, std::get<0>(recv));
+            client->write(response, opInfo);
+        } break;
         case MessageType::VM_isStable: {
             auto recv = client->getRecvData<J9Class *, int>();
             J9Class *fieldClass = std::get<0>(recv);

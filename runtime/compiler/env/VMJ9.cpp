@@ -4912,6 +4912,33 @@ TR::KnownObjectTable::Index TR_J9VMBase::getFieldAccessorIndex(TR::Compilation *
     return result;
 }
 
+int32_t TR_J9VMBase::getVectorOperatorInfo(TR::Compilation *comp, TR::KnownObjectTable::Index opIndex)
+{
+    TR::KnownObjectTable *knot = comp->getKnownObjectTable();
+    if (!knot || opIndex == TR::KnownObjectTable::UNKNOWN || knot->isNull(opIndex))
+        return -1;
+
+    TR::VMAccessCriticalSection getOpInfo(this);
+
+    const char * const opImplClassName = "jdk/incubator/vector/VectorOperators$OperatorImpl";
+    const int32_t opImplClassNameLen = (int32_t)strlen(opImplClassName);
+    TR_OpaqueClassBlock *opImplClass = getSystemClassFromClassName(opImplClassName, opImplClassNameLen);
+
+    TR_OpaqueClassBlock *opObjClass = getObjectClassFromKnownObjectIndex(comp, opIndex);
+
+    if (opImplClass == NULL || isInstanceOf(opObjClass, opImplClass, true, true) != TR_yes) {
+        logprintf(comp->getOption(TR_TraceOptDetails), comp->log(),
+            "getVectorOperatorInfo: failed jdk/incubator/vector/VectorOperators$OperatorImpl type check.\n");
+        return -1;
+    }
+
+    uintptr_t opObj = knot->getPointer(opIndex);
+
+    // opInfo is a non-negative int (an opcode shifted left by VO_OPCODE_SHIFT plus flag bits), so -1 is a safe
+    // "unknown" result.
+    return getInt32Field(opObj, "opInfo");
+}
+
 int32_t TR_J9VMBase::getVarHandleAccessDescriptorMode(TR::Compilation *comp, TR::KnownObjectTable::Index adIndex)
 {
     TR::VMAccessCriticalSection getAccessDescriptorMode(this);
