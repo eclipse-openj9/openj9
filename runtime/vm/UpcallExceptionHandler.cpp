@@ -22,10 +22,15 @@
 
 #include "ut_j9vm.h"
 #include "vm_internal.h"
+
 #if JAVA_SPEC_VERSION >= 16
 #include "ffi.h"
 #include <setjmp.h>
 #endif /* JAVA_SPEC_VERSION >= 16 */
+
+#if JAVA_SPEC_VERSION >= 21
+#include "ForeignCallHelpers.hpp"
+#endif /* JAVA_SPEC_VERSION >= 21 */
 
 extern "C" {
 
@@ -41,18 +46,25 @@ extern "C" {
  * Note: this is a wrapper for setjmp() as a function calling
  * setjmp() can never be inlined as captured in compilation.
  *
+ * The wrapper also handles captured native call state. Selected state is
+ * restored immediately before the native downcall where required and
+ * stored after the downcall completes.
+ *
  * @param currentThread[in] The pointer to the current J9VMThread
  * @param cif[in] The pointer to the ffi_cif structure
  * @param function[in] The pointer to the native function address
  * @param returnStorage[in] The pointer to the return value
  * @param values[in] The pointer to an array of the passed-in arguments
+ * @param capturedCallStateMask[in] The mask identifying the native call state to capture
+ * @param returnState[in,out] The captured call state storage used to restore state before
+ *                            the downcall and updated after the downcall
  * @param values_raw[in] The pointer to the ffi_raw structure for the defined FFI_NATIVE_RAW_API
  */
 void
 #if FFI_NATIVE_RAW_API
-ffiCallWithSetJmpForUpcall(J9VMThread *currentThread, ffi_cif *cif, void *function, UDATA *returnStorage, void **values, ffi_raw *values_raw)
+ffiCallWithSetJmpForUpcall(J9VMThread *currentThread, ffi_cif *cif, void *function, UDATA *returnStorage, void **values, I_32 capturedCallStateMask, I_32 *returnState, ffi_raw *values_raw)
 #else /* FFI_NATIVE_RAW_API */
-ffiCallWithSetJmpForUpcall(J9VMThread *currentThread, ffi_cif *cif, void *function, UDATA *returnStorage, void **values)
+ffiCallWithSetJmpForUpcall(J9VMThread *currentThread, ffi_cif *cif, void *function, UDATA *returnStorage, void **values, I_32 capturedCallStateMask, I_32 *returnState)
 #endif /* FFI_NATIVE_RAW_API */
 {
 	jmp_buf jmpBufferEnv = {};
@@ -68,10 +80,24 @@ ffiCallWithSetJmpForUpcall(J9VMThread *currentThread, ffi_cif *cif, void *functi
 	if (!setjmp(jmpBufferEnv)) {
 #if FFI_NATIVE_RAW_API
 		ffi_ptrarray_to_raw(cif, values, values_raw);
+#endif /* FFI_NATIVE_RAW_API */
+
+#if JAVA_SPEC_VERSION >= 25
+		/* Keep call-state handling immediately around the native call since
+		 * intervening native code may modify the captured thread-local state.
+		 */
+		ForeignCallHelpers::restoreCapturedCallState(returnState, capturedCallStateMask);
+#endif /* JAVA_SPEC_VERSION >= 25 */
+
+#if FFI_NATIVE_RAW_API
 		ffi_raw_call(cif, FFI_FN(function), returnStorage, values_raw);
 #else /* FFI_NATIVE_RAW_API */
 		ffi_call(cif, FFI_FN(function), returnStorage, values);
 #endif /* FFI_NATIVE_RAW_API */
+
+#if JAVA_SPEC_VERSION >= 21
+		ForeignCallHelpers::storeCapturedCallState(returnState, capturedCallStateMask);
+#endif /* JAVA_SPEC_VERSION >= 21 */
 	}
 	currentThread->jmpBufEnvPtr = jmpBufEnvPtr;
 }
