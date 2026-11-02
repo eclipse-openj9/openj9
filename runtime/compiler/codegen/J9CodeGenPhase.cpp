@@ -55,6 +55,47 @@ void J9::CodeGenPhase::reportPhase(PhaseValue phase)
 
 int J9::CodeGenPhase::getNumPhases() { return static_cast<int>(TR::CodeGenPhase::LastJ9Phase); }
 
+void J9::CodeGenPhase::performBinaryEncodingPhase(TR::CodeGenerator *cg, TR::CodeGenPhase *phase)
+{
+    OMR::CodeGenPhase::performBinaryEncodingPhase(cg, phase);
+    TR::Compilation *comp = cg->comp();
+    if (comp->getOptimizationPlan()->insertPatchableJProfiling() && comp->getRecompilationInfo() != NULL) {
+        uintptr_t key = reinterpret_cast<uintptr_t>(comp->getRecompilationInfo()->getJittedBodyInfo());
+        TR_BlockFrequencyInfo *info = TR_BlockFrequencyInfo::getCurrent(comp);
+        if (info != NULL) {
+            TR::list<TR::Instruction *> instrList = cg->getJProfilingCounterBumpInstructionList();
+            if (!instrList->empty()) {
+                TR::JProfBFPatchSites *sites = new (comp->trPersistentMemory())
+                    TR::JProfBFPatchSites(comp->trPersistentMemory(), instrList->size());
+                for (auto iter = instrList->begin(); itre != instrList->end(); ++iter) {
+                    uint8_t *location = (*iter)->getBinaryEncoding();
+                    uint8_t instrLength = (*iter)->getBinaryLength();
+                    // Need to pass the length of the instruction here.
+                    sites->add(location, instrLength);
+                }
+                TR_JProfBlockFrequencyCounterSites *patchSites = TR_JProfBlockFrequencyCounterSites::make(comp->fe(),
+                    comp->trPersistentMemory(), key, sites, comp->getMetadataAssumptionList());
+                info->addJProfBlockFrequencyCounterPatchSites(patchSites);
+            }
+        }
+        TR_ValueProfileInfo *valueInfo = TR_ValueProfileInfo::getCurrent(comp);
+        if (valueInfo != NULL) {
+            TR::list<TR::Instruction *> instrList = cg->getJProfValueBranchInstrList();
+            if (instrList != NULL && !instrList->empty()) {
+                TR::PatchSites *sites
+                    = new (comp->trPersistentMemory()) TR::PatchSites(comp->trPersistentMemory(), instrList->size());
+                for (auto iter = instrList->begin(); iter != instrList->end(); ++iter) {
+                    uint8_t *location = (*iter)->getBinaryEncoding();
+                    sites->add(location, 0);
+                }
+                TR_JProfValueSites *valueProfSites = TR_JProfValueSites::make(comp->fe(), comp->trPersistentMemory(),
+                    key, sites, comp->getMetadataAssumptionList());
+                valueInfo->addJProfValueSites(valueProfSites);
+            }
+        }
+    }
+}
+
 void J9::CodeGenPhase::performFixUpProfiledInterfaceGuardTestPhase(TR::CodeGenerator *cg, TR::CodeGenPhase *phase)
 {
     cg->fixUpProfiledInterfaceGuardTest();
