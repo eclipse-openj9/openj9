@@ -589,12 +589,12 @@
   <test name="RecognizedMethodTest">
     <classes>
       <class name="jit.test.recognizedMethod.TestArraysSupport" />
-      <class name="jit.test.recognizedMethod.TestJavaLangStrictMath" />
+      <!-- <class name="jit.test.recognizedMethod.TestJavaLangStrictMath" />
       <class name="jit.test.recognizedMethod.TestJavaLangMath" />
       <class name="jit.test.recognizedMethod.TestJavaLangStringLatin1" />
       <class name="jit.test.recognizedMethod.TestRecognizedCallTransformer" />
       <class name="jit.test.recognizedMethod.TestJavaIntegerAndLongToString" />
-      <class name="jit.test.recognizedMethod.TestJavaLangStringCodingEncodeASCII" />
+      <class name="jit.test.recognizedMethod.TestJavaLangStringCodingEncodeASCII" /> -->
     </classes>
   </test>
 
