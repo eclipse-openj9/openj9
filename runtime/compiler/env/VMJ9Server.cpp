@@ -2433,6 +2433,19 @@ TR::KnownObjectTable::Index TR_J9ServerVM::getFieldAccessorIndex(TR::Compilation
     return faIndex;
 }
 
+int32_t TR_J9ServerVM::getVectorOperatorInfo(TR::Compilation *comp, TR::KnownObjectTable::Index opIndex)
+{
+    TR::KnownObjectTable *knot = comp->getKnownObjectTable();
+    if (!knot || opIndex == TR::KnownObjectTable::UNKNOWN || knot->isNull(opIndex))
+        return -1;
+
+    JITServer::ServerStream *stream = _compInfoPT->getMethodBeingCompiled()->_stream;
+    stream->write(JITServer::MessageType::VM_getVectorOperatorInfo, opIndex);
+    auto recv = stream->read<int32_t>();
+
+    return std::get<0>(recv);
+}
+
 TR_J9VMBase::LayoutByteOrder TR_J9ServerVM::getLayoutByteOrder(TR::Compilation *comp,
     TR::KnownObjectTable::Index layoutIndex)
 {
