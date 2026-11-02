@@ -416,7 +416,7 @@ ConstantPoolMap::constantPoolDo(ConstantPoolVisitor *visitor)
 			case J9CPTYPE_INTERFACE_METHOD: /* fall through */
 			case J9CPTYPE_INTERFACE_INSTANCE_METHOD: /* fall through */
 			case J9CPTYPE_INTERFACE_STATIC_METHOD:
-				visitor->visitFieldOrMethod(getROMClassCPIndexForReference(slot1), U_16(slot2));
+				visitor->visitFieldOrMethod(getROMClassCPIndex(slot1), U_16(slot2));
 				break;
 			case J9CPTYPE_METHOD_TYPE:
 				if (CFR_CONSTANT_Methodref == getCPTag(cfrCPIndex)) {
