@@ -2182,7 +2182,7 @@ unresolveAllClasses(J9VMThread *currentThread, J9HashTable *classPairs, J9HashTa
 				memset(
 					((J9RAMConstantPoolItem *)J9_CP_FROM_CLASS(clazz)) + 1, 0,
 					(romClass->ramConstantPoolCount - 1) * sizeof(J9RAMConstantPoolItem));
-				vmFuncs->internalRunPreInitInstructions(clazz, currentThread);
+				vmFuncs->internalRunPreInitInstructions(clazz, currentThread, TRUE);
 			} else {
 				reresolveHotSwappedConstantPool(J9_CP_FROM_CLASS(clazz), currentThread, classPairs, methodPairs);
 			}
