@@ -1,0 +1,314 @@
+apiVersion: operators.coreos.com/v1alpha1
+kind: ClusterServiceVersion
+metadata:
+  annotations:
+    alm-examples: |-
+      [
+        {
+          "apiVersion": "open.j9/v1beta1",
+          "kind": "RuntimeComponent",
+          "metadata": {
+            "name": "sample-openj9"
+          },
+          "spec": {
+            "applicationImage": "adoptopenjdk:openj9",
+            "command": [
+              "java"
+            ]
+          }
+        },
+        {
+          "apiVersion": "open.j9/v1beta1",
+          "kind": "RuntimeComponent",
+          "metadata": {
+            "name": "openj9-jitserver"
+          },
+          "spec": {
+            "applicationImage": "adoptopenjdk:openj9",
+            "command": [
+              "jitserver"
+            ],
+            "service": {
+              "port": 38400,
+              "targetPort": 38400
+            }
+          }
+        }
+      ]
+    capabilities: Auto Pilot
+  name: openj9-operator.v0.6.0
+  namespace: placeholder
+spec:
+  apiservicedefinitions: {}
+  customresourcedefinitions: 
+    owned:
+      - description: OpenJ9 Operator allows you to deploy and manage java applications running on OpenJ9 into OKD or OpenShift clusters. 
+        displayName: OpenJ9 Operator
+        kind: RuntimeComponent
+        name: runtimecomponents.open.j9
+        resources:
+        - kind: Deployment
+          version: v1
+          name: ''
+        - kind: Pod
+          version: v1
+          name: ''
+        - kind: StatefulSet
+          version: v1
+          name: ''
+        - kind: Service
+          version: v1
+          name: ''
+        - kind: Route
+          version: v1  
+          name: ''
+        - kind: HorizontalPodAutoscaler
+          version: v1  
+          name: ''
+        - kind: Route
+          version: v1  
+          name: ''
+        - kind: ServiceMonitor
+          version: v1
+          name: ''
+        - kind: ServiceAccount
+          version: v1  
+          name: ''
+        - kind: ConfigMap
+          version: v1  
+          name: ''
+        - kind: RuntimeComponent
+          version: v1beta1
+          name: ''
+        - kind: Secret
+          version: v1
+          name: ''
+        - kind: ImageStream
+          version: v1
+          name: ''
+        specDescriptors:
+        - description: application name to be installed
+          displayName: Application Name
+          path: applicationName
+          x-descriptors:
+          - urn:alm:descriptor:com.tectonic.ui:text
+        - description: application image to be installed
+          displayName: Application Image
+          path: applicationImage
+          x-descriptors:
+          - urn:alm:descriptor:com.tectonic.ui:text
+        - description: version of the application
+          displayName: Application Version
+          path: version
+          x-descriptors:
+          - urn:alm:descriptor:com.tectonic.ui:text
+        - description: start command for container
+          displayName: Command
+          path: command
+          x-descriptors:
+          - urn:alm:descriptor:com.tectonic.ui:text
+        - description: image pull policy for container image
+          displayName: Pull Policy
+          path: pullPolicy
+          x-descriptors:
+          - urn:alm:descriptor:com.tectonic.ui:imagePullPolicy
+        - description: number of pods to create
+          displayName: Replicas
+          path: replicas
+          x-descriptors:
+          - urn:alm:descriptor:com.tectonic.ui:podCount
+        - description: automatically create HTTP Route
+          displayName: Expose
+          path: expose
+          x-descriptors:
+          - urn:alm:descriptor:com.tectonic.ui:booleanSwitch
+        - description: resource requirements for cpu and memory
+          displayName: Resource Requirements
+          path: resourceConstraints
+          x-descriptors:
+          - urn:alm:descriptor:com.tectonic.ui:resourceRequirements
+        - description: kubernetes service
+          displayName: Service
+          path: service
+          x-descriptors:
+          - urn:alm:descriptor:com.tectonic.ui:text
+        - description: port to use for kubernetes service
+          displayName: Service Port
+          path: service.port
+          x-descriptors:
+          - urn:alm:descriptor:com.tectonic.ui:number
+        - description: type to use for kubernetes service
+          displayName: Service Type
+          path: service.type
+          x-descriptors:
+          - urn:alm:descriptor:com.tectonic.ui:text
+        - description: horizontal pod autoscaling
+          displayName: Autoscaling
+          path: autoscaling
+          x-descriptors:
+          - urn:alm:descriptor:com.tectonic.ui:fieldGroup:label
+        statusDescriptors:
+        - description: status conditions
+          displayName: Status conditions
+          path: conditions
+          x-descriptors:
+          - urn:alm:descriptor:io.kubernetes.conditions
+        - description: image reference
+          displayName: Image Reference
+          path: imageReference
+          x-descriptors:
+          - urn:alm:descriptor:com.tectonic.ui:text
+        version: v1beta1  
+  description: 
+    '## OpenJ9 Operator
+    
+    Eclipse OpenJ9 is an independent implementation of a Java Virtual Machine.
+    The OpenJ9 Operator is integrated based on [Runtime Component Operator](https://github.com/application-stacks/runtime-component-operator), which allows you to deploy and manage java applications running on OpenJ9 into OKD or OpenShift clusters. You can also perform Day-2 operations such as rolling update your application, enabling JITServer technology for continued performance enhancements or gathering JVM dumps using the operator.
+    ## Disclaimer
+    This is a development version, not intented to be used in production environment.
+    ## Want to learn more?
+    - OpenJ9 Website: [https://www.eclipse.org/openj9/](https://www.eclipse.org/openj9/)
+  displayName: Openj9 Operator
+  install:
+    spec:
+      deployments:
+      - name: openj9-operator
+        spec:
+          replicas: 1
+          selector:
+            matchLabels:
+              name: openj9-operator
+          strategy: {}
+          template:
+            metadata:
+              labels:
+                name: openj9-operator
+            spec:
+              containers:
+              - command:
+                - openj9-operator
+                env:
+                - name: WATCH_NAMESPACE
+                  valueFrom:
+                    fieldRef:
+                      fieldPath: metadata.annotations['olm.targetNamespaces']
+                - name: POD_NAME
+                  valueFrom:
+                    fieldRef:
+                      fieldPath: metadata.name
+                - name: OPERATOR_NAME
+                  value: openj9-operator
+                image: chrisc66/openj9-opeartor:v0.6.0-amd64
+                imagePullPolicy: Always
+                name: openj9-operator
+                resources: {}
+              serviceAccountName: openj9-operator
+      permissions:
+      - rules:
+        - apiGroups:
+          - ""
+          resources:
+          - pods
+          - services
+          - endpoints
+          - persistentvolumeclaims
+          - events
+          - configmaps
+          - secrets
+          - serviceaccounts
+          verbs:
+          - '*'
+        - apiGroups:
+          - apps
+          resources:
+          - deployments
+          - daemonsets
+          - replicasets
+          - statefulsets
+          verbs:
+          - '*'
+        - apiGroups:
+          - autoscaling
+          resources:
+          - horizontalpodautoscalers
+          verbs:
+          - '*'
+        - apiGroups:
+          - monitoring.coreos.com
+          resources:
+          - servicemonitors
+          verbs:
+          - '*'
+        - apiGroups:
+          - apps
+          resourceNames:
+          - runtime-component-operator
+          resources:
+          - deployments/finalizers
+          verbs:
+          - update
+        - apiGroups:
+          - app.stacks
+          resources:
+          - '*'
+          verbs:
+          - '*'
+        - apiGroups:
+          - image.openshift.io
+          resources:
+          - '*'
+          verbs:
+          - '*'
+        - apiGroups:
+          - route.openshift.io
+          resources:
+          - routes
+          - routes/custom-host
+          verbs:
+          - '*'
+        - apiGroups:
+          - serving.knative.dev
+          resources:
+          - services
+          verbs:
+          - '*'
+        - apiGroups:
+          - cert-manager.io
+          resources:
+          - certificates
+          verbs:
+          - '*'
+        - apiGroups:
+          - app.k8s.io
+          resources:
+          - applications
+          verbs:
+          - '*'
+        - apiGroups:
+          - apps.openshift.io
+          resources:
+          - servicebindingrequests
+          verbs:
+          - '*'
+        - apiGroups:
+          - networking.k8s.io
+          - extensions
+          resources:
+          - ingresses
+          verbs:
+          - '*'
+        serviceAccountName: openj9-operator
+    strategy: deployment
+  installModes:
+  - supported: true
+    type: OwnNamespace
+  - supported: true
+    type: SingleNamespace
+  - supported: false
+    type: MultiNamespace
+  - supported: true
+    type: AllNamespaces
+  maturity: alpha
+  provider:
+    name: Community
+  version: 0.6.0

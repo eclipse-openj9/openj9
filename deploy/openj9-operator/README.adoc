@@ -1,0 +1,65 @@
+# OpenJ9 Operator
+
+Eclipse OpenJ9 is an independent implementation of a Java Virtual Machine.
+
+The OpenJ9 Operator is integrated based on link:++https://github.com/application-stacks/runtime-component-operator++[Runtime Component Operator], which allows you to deploy and manage java applications running on OpenJ9 into OKD or OpenShift clusters. You can also perform Day-2 operations such as rolling update your application, enabling JITServer technology for continued performance enhancements or gathering JVM dumps using the operator.
+
+## Installing OpenJ9 Opeartor
+
+You can install the OpenJ9 Operator directly via `oc` or `kubectl` commands. Modify link:++deploy/crds/openj9_cr.yaml++[CustomResource] file and specify your java application image name.
+
+``` bash
+cd <operator-directory>
+oc create -f deploy/service_account.yaml
+oc create -f deploy/role.yaml
+oc create -f deploy/role_binding.yaml
+oc create -f deploy/crds/open.j9_runtimecomponents_crd.yaml
+oc create -f deploy/operator.yaml
+oc create -f deploy/crds/open.j9_runtimecomponents_cr.yaml
+```
+
+## Uninstalling OpenJ9 Operator
+
+You can install the OpenJ9 Operator directly via `oc` or `kubectl` commands.
+
+``` bash
+cd <operator-directory>
+oc delete -f deploy/crds/open.j9_runtimecomponents_cr.yaml
+oc delete -f deploy/operator.yaml
+oc delete -f deploy/crds/open.j9_runtimecomponents_crd.yaml
+oc delete -f deploy/role_binding.yaml
+oc delete -f deploy/role.yaml
+oc delete -f deploy/service_account.yaml
+```
+
+## Enabling OpenJ9 JITServer Technology
+
+JITServer Technology can be used for any OpenJ9 OpenJDK based Java applications. 
+
+JITServer link:++deploy/crds/openj9_jitserver_cr.yaml++[CustomResource] is written for you, please make sure that JITServer image runs the same build version of JDK as your java application image. 
+
+``` bash
+oc create -f deploy/crds/open.j9_runtimecomponents_jitserver_cr.yaml
+```
+
+Once JITServer is deployed, you can enable JITServer by adding the following JVM option to your Java application.
+
+``` bash
+OPENJ9_JAVA_OPTIONS = -XX:+UseJITServer -XX:JITServerAddress=<servicename> -XX:JITServerPort=<serverport>
+```
+
+By default configuration, `<servicename>` is `openj9-jitserver` and `<serverport>` is `38400`. You may change `<servicename>` and `<serverport>` by updating the operator Custom Resource, and look for service name by `oc get service`.
+
+See the link:++doc/enabling-jitserver.adoc++[JITServer quick start guide] for more information on how to enable JITServer technology with Open Liberty WebServer as an example java application.
+
+## Documentation
+
+* See openj9 website: https://www.eclipse.org/openj9/index.html
+* See openj9 jitserver: https://www.eclipse.org/openj9/docs/jitserver/
+* See openj9 repo: https://github.com/eclipse/openj9/tree/jitaas
+* See openj9 docs: https://github.com/eclipse/openj9-docs
+
+## Limitations
+
+* Deploys on x86 (amd64) architecture only, it is intended to support other architectures in future releases.
+* Supports Java 8 and Java 11 only, it is intended to support other java versions in future releases.

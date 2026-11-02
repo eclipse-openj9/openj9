@@ -1,0 +1,19 @@
+# This CustomResource deploys a sample OpenJ9 image from AdoptOpenJDK dockerhub 
+# and runs as a JITServer JVM
+# Please make sure that JITServer runs the exact same jvm build as client JVMs
+apiVersion: open.j9/v1beta1
+kind: RuntimeComponent
+metadata:
+  name: openj9-jitserver
+spec:
+  # Change applicationImage field to run the same JVM image as client JVMs
+  applicationImage: adoptopenjdk:openj9
+  command: ["jitserver"]
+  service: 
+    # Service port that JITServer listens on
+    # This value is mapped to targetPort
+    # Set to JITServer port 38400 by default
+    port: 38400
+    # Exposed container port that JITServer listens on
+    # The image listens on JITServer port 38400 by default
+    targetPort: 38400
