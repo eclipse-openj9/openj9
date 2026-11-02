@@ -3123,8 +3123,112 @@ bool TR_J9InlinerPolicy::callMustBeInlined(TR_CallTarget *calltarget)
         return true;
 #endif
 
+    // Begin Assisted-by: IBM Bob
+    if (isVectorAPIWrapper(method)) {
+        logprintf(comp()->trace(OMR::inlining), comp()->log(),
+            "Vector API wrapper %s must be inlined, in callMustBeInlined\n", method->signature(comp()->trMemory()));
+        return true;
+    }
+    // End Assisted-by: IBM Bob
+
     return callMustBeInlinedInCold(method);
 }
+
+// Begin Assisted-by: IBM Bob
+/*
+ * Returns true if the simple (package-less) class name denotes a public Vector API object type:
+ * Vector, <Lane>Vector (e.g. FloatVector), VectorMask or VectorShuffle.
+ * VectorSpecies, VectorShape and VectorOperators are intentionally not matched.
+ */
+static bool isVectorAPIObjectClassName(const char *name, int32_t length)
+{
+    static const char vector[] = "Vector";
+    static const char vectorMask[] = "VectorMask";
+    static const char vectorShuffle[] = "VectorShuffle";
+
+    if (length >= (int32_t)(sizeof(vector) - 1)
+        && !strncmp(name + length - (sizeof(vector) - 1), vector, sizeof(vector) - 1))
+        return true;
+
+    if (length == (int32_t)(sizeof(vectorMask) - 1) && !strncmp(name, vectorMask, length))
+        return true;
+
+    return length == (int32_t)(sizeof(vectorShuffle) - 1) && !strncmp(name, vectorShuffle, length);
+}
+
+bool TR_J9InlinerPolicy::isVectorAPIWrapper(TR_ResolvedMethod *method)
+{
+    static const bool disabled = feGetEnv("TR_DisableVectorWrapperInlining") != NULL;
+    static const char vectorPackage[] = "jdk/incubator/vector/";
+    static const int32_t vectorPackageLength = sizeof(vectorPackage) - 1;
+    static const char internalVectorPackage[] = "jdk/internal/vm/vector/";
+    static const int32_t internalVectorPackageLength = sizeof(internalVectorPackage) - 1;
+
+    if (disabled)
+        return false;
+
+    // Methods in the Vector API itself are handled by the @ForceInline logic.
+    // Methods in jdk/internal/vm/vector are handled the same way.
+    int32_t classNameLength = method->classNameLength();
+    const char *className = method->classNameChars();
+    if ((classNameLength >= vectorPackageLength && !strncmp(className, vectorPackage, vectorPackageLength))
+        || (classNameLength >= internalVectorPackageLength
+            && !strncmp(className, internalVectorPackage, internalVectorPackageLength)))
+        return false;
+
+    int32_t length = method->signatureLength();
+    const char *signature = method->signatureChars();
+
+    // Walk the descriptor of the form "(<param-types>)<return-type>".
+    // A JVM method descriptor encodes each parameter type followed by the return type after ')'.
+    // We scan for reference types ("Lfully/qualified/Name;") and check whether they are Vector API
+    // object types in jdk/incubator/vector. Array types ("[L...;") are skipped because the Vector
+    // API does not use array-of-Vector arguments; matching them would be a false positive.
+    for (int32_t i = 0; i < length;) {
+        // Skip leading '[' characters that mark an array type, e.g. "[LFoo;" -> isArray = true.
+        bool isArray = false;
+        while (i < length && signature[i] == '[') {
+            isArray = true;
+            i++;
+        }
+
+        if (i >= length)
+            break;
+
+        if (signature[i] != 'L') {
+            // '(' opens the parameter list, ')' closes it, primitive types (B C D F I J S Z V)
+            // and '[' (already consumed above) are all single characters we can skip.
+            i++;
+            continue;
+        }
+
+        // We are at 'L': the reference type starts at the next character and ends at ';'.
+        // e.g. for "Ljdk/incubator/vector/FloatVector;" at position i:
+        //   type     -> "jdk/incubator/vector/FloatVector;"  (points past 'L')
+        //   remaining -> number of characters from type to end of signature
+        //   end      -> pointer to the ';' terminator
+        //   typeLength -> length of "jdk/incubator/vector/FloatVector" (without 'L' and ';')
+        const char *type = signature + i + 1;
+        int32_t remaining = length - i - 1;
+        const char *end = (const char *)memchr(type, ';', remaining);
+        if (!end)
+            break;
+
+        int32_t typeLength = (int32_t)(end - type);
+        // Check: non-array, long enough to contain the package prefix, starts with vectorPackage,
+        // and the simple class name (after the package) is a Vector API object type.
+        if (!isArray && typeLength > vectorPackageLength && !strncmp(type, vectorPackage, vectorPackageLength)
+            && isVectorAPIObjectClassName(type + vectorPackageLength, typeLength - vectorPackageLength))
+            return true;
+
+        // Advance past 'L', the class name, and ';' to the next type in the descriptor.
+        i += 1 + typeLength + 1;
+    }
+
+    return false;
+}
+
+// End Assisted-by: IBM Bob
 
 void TR_J9InlinerUtil::adjustCallerWeightLimit(TR::ResolvedMethodSymbol *callerSymbol, int &callerWeightLimit)
 {
