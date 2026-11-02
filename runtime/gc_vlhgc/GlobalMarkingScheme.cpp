@@ -1392,9 +1392,11 @@ private:
 			if (NULL != dataAddr) {
 				const uintptr_t regionSize = _extensions->heapRegionManager->getRegionSize();
 				uintptr_t dataSize = _extensions->indexableObjectModel.getDataSizeInBytes((J9IndexableObject *)objectPtr);
+				/* rounds dataSize to objectAlignmentInBytes to match reservedDataSize during getSparseAddressAndDecommitLeaves(). */
+				uintptr_t reservedDataSize = _extensions->objectModel.adjustSizeInBytes(dataSize);
 
-				uintptr_t reservedRegionCount = dataSize / regionSize;
-				uintptr_t fraction = dataSize % regionSize;
+				uintptr_t reservedRegionCount = reservedDataSize / regionSize;
+				uintptr_t fraction = reservedDataSize % regionSize;
 
 				MM_SparseVirtualMemory *largeObjectVirtualMemory = _extensions->largeObjectVirtualMemory;
 				/* recycle Reserved Regions */
