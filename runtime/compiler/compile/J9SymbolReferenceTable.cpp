@@ -253,16 +253,16 @@ TR::SymbolReference *J9::SymbolReferenceTable::findOrCreateGetFlattenableFieldSy
     return findOrCreateRuntimeHelper(TR_getFlattenableField, true, true, true);
 }
 
-TR::SymbolReference *J9::SymbolReferenceTable::findOrCreateWithFlattenableFieldSymbolRef(
-    TR::ResolvedMethodSymbol *owningMethodSymbol)
-{
-    return findOrCreateRuntimeHelper(TR_withFlattenableField, true, true, true);
-}
-
 TR::SymbolReference *J9::SymbolReferenceTable::findOrCreatePutFlattenableFieldSymbolRef(
     TR::ResolvedMethodSymbol *owningMethodSymbol)
 {
     return findOrCreateRuntimeHelper(TR_putFlattenableField, true, true, true);
+}
+
+TR::SymbolReference *J9::SymbolReferenceTable::findOrCreateResolveFlattenableFieldSymbolRef(
+    TR::ResolvedMethodSymbol *owningMethodSymbol)
+{
+    return findOrCreateRuntimeHelper(TR_resolveFlattenableField, true, true, true);
 }
 
 TR::SymbolReference *J9::SymbolReferenceTable::findOrCreateGetFlattenableStaticFieldSymbolRef(
