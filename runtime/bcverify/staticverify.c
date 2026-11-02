@@ -1423,7 +1423,7 @@ checkUnsetFields(J9CfrClassFile *classfile, U_16 numberOfUnsetFields, U_8 *unset
 		U_16 cpIndex;
 		NEXT_U16(cpIndex, unsetFields);
 		/* Check for valid constant pool index. */
-		if ((0 == cpIndex) || (cpIndex > cpCount)) {
+		if ((0 == cpIndex) || (cpIndex >= cpCount)) {
 			exceptionDetails->errorType = J9NLS_CFR_ERR_INVALID_EARLY_LARVAL_CP_INDEX__ID;
 			return FALLBACK_VERIFY_ERROR;
 		}
@@ -1490,7 +1490,7 @@ checkStackMapEntries (J9CfrClassFile* classfile, J9CfrAttributeCode * code, U_8 
 			}
 			NEXT_U16(cpIndex, entry);
 			/* Check index is in range */
-			if ((!cpIndex) || (cpIndex > cpCount)) {
+			if ((!cpIndex) || (cpIndex >= cpCount)) {
 				return FATAL_CLASS_FORMAT_ERROR;
 			}
 			/* Check index points to the right type of thing */
