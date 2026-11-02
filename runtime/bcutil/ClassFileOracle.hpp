@@ -1058,6 +1058,14 @@ class RecordComponentIterator
 	bool isSealed() const { return _isSealed; }
 	U_16 getPermittedSubclassesClassCount() const { return _isSealed ? _permittedSubclassesAttribute->numberOfClasses : 0; }
 	bool isValueBased() const { return _isClassValueBased; }
+	bool isValueType() const
+	{
+#if defined(J9VM_OPT_VALHALLA_VALUE_TYPES)
+		return J9_IS_CLASSFILE_VALUETYPE(_classFile);
+#else /* defined(J9VM_OPT_VALHALLA_VALUE_TYPES) */
+		return false;
+#endif /* defined(J9VM_OPT_VALHALLA_VALUE_TYPES) */
+	}
 #if defined(J9VM_OPT_VALHALLA_VALUE_TYPES)
 	bool hasLoadableDescriptors() const { return NULL != _loadableDescriptorsAttribute; }
 	U_16 getLoadableDescriptorsCount() const { return  hasLoadableDescriptors() ? _loadableDescriptorsAttribute->numberOfDescriptors : 0; }
