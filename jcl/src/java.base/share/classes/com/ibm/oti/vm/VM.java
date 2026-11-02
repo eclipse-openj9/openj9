@@ -616,6 +616,15 @@ public static native boolean isJVMInSingleThreadedMode();
 public static native boolean isRCPRestoreRun();
 /*[ENDIF] RAM_CLASS_CACHE_SUPPORT */
 
+/*[IF RAM_CLASS_CACHE_SUPPORT] */
+/**
+ * Queries whether RCP is enabled in JVM.
+ *
+ * @return true if RCP is enabled in JVM, false otherwise
+ */
+public static native boolean isRCPEnabled();
+/*[ENDIF] RAM_CLASS_CACHE_SUPPORT */
+
 /**
  * A J9ConstantPool* is appended to anntation parameter byte arrays
  * so it will be consistent with annotation data if the class is redefined.
