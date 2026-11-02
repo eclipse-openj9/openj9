@@ -563,6 +563,342 @@ TR::Register *J9::Z::TreeEvaluator::inlineStringLatin1Inflate(TR::Node *node, TR
     return charArrayReferenceRegister;
 }
 
+TR::Register *J9::Z::TreeEvaluator::inlineStringLatin1CompareToUTF16Values(TR::Node *node, TR::CodeGenerator *cg)
+{
+    // inlinesprivate static int compareToUTF16Values(byte[] value, byte[] other, int len1, int len2)
+    // Returns: c1 - c2 if characters differ, or len1 - len2 if all compared characters are equal
+    TR::Node *latin1ArrayNode = node->getChild(0);
+    TR::Node *utf16ArrayNode = node->getChild(1);
+    TR::Node *len1Node = node->getChild(2);
+    TR::Node *len2Node = node->getChild(3);
+
+    // Evaluate all child nodes
+    TR::Register *latin1ArrayReg = cg->gprClobberEvaluate(latin1ArrayNode);
+    TR::Register *utf16ArrayReg = cg->gprClobberEvaluate(utf16ArrayNode);
+    TR::Register *len1Reg = cg->evaluate(len1Node);
+    TR::Register *len2Reg = cg->evaluate(len2Node);
+
+    // Allocate 5 GPRs (reuse limReg for len2 zero-extension at returnLenDiffLabel)
+    TR::Register *limReg = cg->allocateRegister();
+    TR::Register *indexReg = cg->allocateRegister();
+    TR::Register *resultReg = cg->allocateRegister();
+    TR::Register *tempReg = cg->allocateRegister();
+
+    // Allocate all 3 VRFs BEFORE ICF region to avoid allocation inside ICF
+    TR::Register *vLatin1 = cg->allocateRegister(TR_VRF);
+    TR::Register *vLatin1Expanded = cg->allocateRegister(TR_VRF);
+    TR::Register *vUTF16 = cg->allocateRegister(TR_VRF);
+
+    // Array header offset
+    int32_t offsetToDataElements = TR::Compiler->om.contiguousArrayHeaderSizeInBytes();
+
+#ifdef J9VM_GC_SPARSE_HEAP_ALLOCATION
+    if (TR::Compiler->om.isOffHeapAllocationEnabled()) {
+        // Load first data element address for Latin1 array
+        generateRXInstruction(cg, TR::InstOpCode::getLoadOpCode(), node, latin1ArrayReg,
+            generateS390MemoryReference(latin1ArrayReg, cg->comp()->fej9()->getOffsetOfContiguousDataAddrField(), cg));
+
+        // Load first data element address for UTF16 array
+        generateRXInstruction(cg, TR::InstOpCode::getLoadOpCode(), node, utf16ArrayReg,
+            generateS390MemoryReference(utf16ArrayReg, cg->comp()->fej9()->getOffsetOfContiguousDataAddrField(), cg));
+
+        offsetToDataElements = 0;
+    }
+#endif /* J9VM_GC_SPARSE_HEAP_ALLOCATION */
+
+    TR::LabelSymbol *cFlowRegionStart = generateLabelSymbol(cg);
+    TR::LabelSymbol *cFlowRegionEnd = generateLabelSymbol(cg);
+    TR::LabelSymbol *vectorLoopLabel = generateLabelSymbol(cg);
+    TR::LabelSymbol *residualLabel = generateLabelSymbol(cg);
+    TR::LabelSymbol *smallResidualLabel = generateLabelSymbol(cg);
+    TR::LabelSymbol *returnLenDiffLabel = generateLabelSymbol(cg);
+    TR::LabelSymbol *foundDifferenceLabel = generateLabelSymbol(cg);
+    TR::LabelSymbol *foundDifferenceBLabel = generateLabelSymbol(cg);
+    TR::LabelSymbol *minDoneLabel = generateLabelSymbol(cg);
+    TR::LabelSymbol *gprFastPathLabel = generateLabelSymbol(cg);
+    TR::LabelSymbol *gprDiffLabel = generateLabelSymbol(cg);
+    TR::LabelSymbol *zeroLenExitLabel = generateLabelSymbol(cg);
+
+    cFlowRegionStart->setStartInternalControlFlow();
+    cFlowRegionEnd->setEndInternalControlFlow();
+
+    generateS390LabelInstruction(cg, TR::InstOpCode::label, node, cFlowRegionStart);
+
+    // Early exit for lim=0: if either nonnegative length is 0, their bitwise AND is 0.
+    // Check before the min() block and both LA pointer advances to skip all of that overhead.
+    generateRRFInstruction(cg, TR::InstOpCode::NRK, node, limReg, len1Reg, len2Reg);
+    generateS390BranchInstruction(cg, TR::InstOpCode::BRC, TR::InstOpCode::COND_BZ, node, zeroLenExitLabel);
+
+    // Calculate lim = min(len1, len2)
+    // Pre-load limReg with len1 (zero-extended); overwrite with len2 only if len2 < len1.
+    // CRJ fuses the compare and conditional branch into one instruction.
+    generateRRInstruction(cg, TR::InstOpCode::LLGFR, node, limReg, len1Reg);
+    generateS390CompareAndBranchInstruction(cg, TR::InstOpCode::CR, node, len1Reg, len2Reg, TR::InstOpCode::COND_BL,
+        minDoneLabel, false, false);
+    generateRRInstruction(cg, TR::InstOpCode::LLGFR, node, limReg, len2Reg);
+    generateS390LabelInstruction(cg, TR::InstOpCode::label, node, minDoneLabel);
+
+    // Advance array pointers past the header. After each loop iteration latin1ArrayReg and
+    // utf16ArrayReg are bumped in lock-step with indexReg, so at any point after the loop:
+    //   latin1ArrayReg == original_base + offsetToDataElements + indexReg
+    //   utf16ArrayReg  == original_base + offsetToDataElements + indexReg * 2
+    // This invariant lets the residual and diff paths use the working pointers directly,
+    // avoiding the need for dedicated Orig save registers.
+    generateRXInstruction(cg, TR::InstOpCode::getLoadAddressOpCode(), node, latin1ArrayReg,
+        generateS390MemoryReference(latin1ArrayReg, offsetToDataElements, cg));
+    generateRXInstruction(cg, TR::InstOpCode::getLoadAddressOpCode(), node, utf16ArrayReg,
+        generateS390MemoryReference(utf16ArrayReg, offsetToDataElements, cg));
+
+    // GPR fast path for lim in [1,7]: skip all vector setup overhead (~17 instructions).
+    // latin1ArrayReg and utf16ArrayReg already point past the header at this point.
+    // lim=0 was already caught above; CGIJ with COND_BL catches lim in [1,7].
+    generateRIEInstruction(cg, TR::InstOpCode::CGIJ, node, limReg, (int8_t)8, gprFastPathLabel,
+        TR::InstOpCode::COND_BL);
+
+    // Initialize index to 0 (use 64-bit XOR to clear all bits)
+    generateRRInstruction(cg, TR::InstOpCode::XGR, node, indexReg, indexReg);
+
+    // Calculate loop limit (aligned down to 16 characters for 2x unrolled loop).
+    // resultReg is idle until it receives its final value at one of the two exits;
+    // use it as scratch here to avoid a dedicated loopLimitReg.
+    // NILF is safe here: limReg was zero-extended from a 32-bit int via LLGFR, so its
+    // high 32 bits are zero; LGR preserves that, meaning resultReg's high bits are
+    // already zero before NILF executes.
+    generateRRInstruction(cg, TR::InstOpCode::LGR, node, resultReg, limReg);
+    generateRILInstruction(cg, TR::InstOpCode::NILF, node, resultReg, 0xFFFFFFF0);
+
+    // Check if we have at least 16 characters to process
+    generateS390CompareAndBranchInstruction(cg, TR::InstOpCode::CGR, node, indexReg, resultReg,
+        TR::InstOpCode::COND_BNL, residualLabel, false, false);
+
+    // Main loop - Process 16 characters per iteration (2x unrolled).
+    generateS390LabelInstruction(cg, TR::InstOpCode::label, node, vectorLoopLabel);
+
+    // Load chunk A (chars [index, index+8)).
+    generateVRXInstruction(cg, TR::InstOpCode::VL, node, vLatin1, generateS390MemoryReference(latin1ArrayReg, 0, cg));
+    generateVRXInstruction(cg, TR::InstOpCode::VL, node, vUTF16, generateS390MemoryReference(utf16ArrayReg, 0, cg));
+
+    // Expand and compare chunk A
+    generateVRRaInstruction(cg, TR::InstOpCode::VUPLH, node, vLatin1Expanded, vLatin1, 0, 0, 0, 0);
+    // vLatin1 is not read after VUPLH; reuse as VCEQ destination (value discarded)
+    generateVRRbInstruction(cg, TR::InstOpCode::VCEQ, node, vLatin1, vLatin1Expanded, vUTF16, 1, 1);
+    generateS390BranchInstruction(cg, TR::InstOpCode::BRC, TR::InstOpCode::COND_CC1, node, foundDifferenceLabel);
+
+    // Load, expand, and compare chunk B using the registers released by chunk A.
+    generateVRXInstruction(cg, TR::InstOpCode::VL, node, vLatin1, generateS390MemoryReference(latin1ArrayReg, 8, cg));
+    generateVRXInstruction(cg, TR::InstOpCode::VL, node, vUTF16, generateS390MemoryReference(utf16ArrayReg, 16, cg));
+    generateVRRaInstruction(cg, TR::InstOpCode::VUPLH, node, vLatin1Expanded, vLatin1, 0, 0, 0, 0);
+    // vLatin1 is not read after VUPLH; reuse as VCEQ destination (value discarded).
+    generateVRRbInstruction(cg, TR::InstOpCode::VCEQ, node, vLatin1, vLatin1Expanded, vUTF16, 1, 1);
+    generateS390BranchInstruction(cg, TR::InstOpCode::BRC, TR::InstOpCode::COND_CC1, node, foundDifferenceBLabel);
+
+    // Advance index and pointers by 16 chars / 32 UTF-16 bytes
+    generateRILInstruction(cg, TR::InstOpCode::AGFI, node, indexReg, 16);
+    generateRXInstruction(cg, TR::InstOpCode::getLoadAddressOpCode(), node, latin1ArrayReg,
+        generateS390MemoryReference(latin1ArrayReg, 16, cg));
+    generateRXInstruction(cg, TR::InstOpCode::getLoadAddressOpCode(), node, utf16ArrayReg,
+        generateS390MemoryReference(utf16ArrayReg, 32, cg));
+    generateS390CompareAndBranchInstruction(cg, TR::InstOpCode::CGR, node, indexReg, resultReg, TR::InstOpCode::COND_BL,
+        vectorLoopLabel, false, false);
+
+    // Two-stage residual: handle 0-15 remaining characters after the 16-char loop.
+    generateS390LabelInstruction(cg, TR::InstOpCode::label, node, residualLabel);
+
+    // Calculate residual length
+    generateRRInstruction(cg, TR::InstOpCode::LGR, node, tempReg, limReg);
+    generateRRInstruction(cg, TR::InstOpCode::SGR, node, tempReg, indexReg);
+
+    // No residual — all done
+    generateS390CompareAndBranchInstruction(cg, TR::InstOpCode::CG, node, tempReg, 0, TR::InstOpCode::COND_BE,
+        returnLenDiffLabel, false, false);
+
+    // If residual < 8, use the existing GPR path.
+    generateS390CompareAndBranchInstruction(cg, TR::InstOpCode::CG, node, tempReg, 8, TR::InstOpCode::COND_BL,
+        smallResidualLabel, false, false);
+
+    // First residual stage: process the first 8 of 8–15 remaining characters with a full VL.
+    generateVRXInstruction(cg, TR::InstOpCode::VL, node, vLatin1, generateS390MemoryReference(latin1ArrayReg, 0, cg));
+    generateVRRaInstruction(cg, TR::InstOpCode::VUPLH, node, vLatin1Expanded, vLatin1, 0, 0, 0, 0);
+    generateVRXInstruction(cg, TR::InstOpCode::VL, node, vUTF16, generateS390MemoryReference(utf16ArrayReg, 0, cg));
+    generateVRRbInstruction(cg, TR::InstOpCode::VCEQ, node, vLatin1, vLatin1Expanded, vUTF16, 1, 1);
+    generateS390BranchInstruction(cg, TR::InstOpCode::BRC, TR::InstOpCode::COND_CC1, node, foundDifferenceLabel);
+    generateRILInstruction(cg, TR::InstOpCode::AGFI, node, indexReg, 8);
+    generateRXInstruction(cg, TR::InstOpCode::getLoadAddressOpCode(), node, latin1ArrayReg,
+        generateS390MemoryReference(latin1ArrayReg, 8, cg));
+    generateRXInstruction(cg, TR::InstOpCode::getLoadAddressOpCode(), node, utf16ArrayReg,
+        generateS390MemoryReference(utf16ArrayReg, 16, cg));
+
+    // Reuse the existing GPR path for the remaining 0–7 characters.
+    generateS390LabelInstruction(cg, TR::InstOpCode::label, node, smallResidualLabel);
+    generateRRInstruction(cg, TR::InstOpCode::LGR, node, tempReg, limReg);
+    generateRRInstruction(cg, TR::InstOpCode::SGR, node, tempReg, indexReg);
+    generateS390CompareAndBranchInstruction(cg, TR::InstOpCode::CG, node, tempReg, 0, TR::InstOpCode::COND_BE,
+        returnLenDiffLabel, false, false);
+    generateRRInstruction(cg, TR::InstOpCode::LGR, node, limReg, tempReg);
+    generateS390BranchInstruction(cg, TR::InstOpCode::BRC, TR::InstOpCode::COND_BRC, node, gprFastPathLabel);
+
+    // GPR fast path block (out-of-line, reached when lim in [1,7]).
+    // latin1ArrayReg / utf16ArrayReg point past the header; lim in [1,7].
+    // Each character is loaded with LLC (zero-extend byte) and LLH (zero-extend halfword).
+    // On mismatch tempReg holds c1-c2 already; fall through to gprDiffLabel.
+    // On equality after the last character jump to returnLenDiffLabel.
+    generateS390LabelInstruction(cg, TR::InstOpCode::label, node, gprFastPathLabel);
+
+    // char 0 — always present (lim >= 1)
+    generateRXInstruction(cg, TR::InstOpCode::LLGC, node, tempReg, generateS390MemoryReference(latin1ArrayReg, 0, cg));
+    generateRXInstruction(cg, TR::InstOpCode::LLGH, node, resultReg, generateS390MemoryReference(utf16ArrayReg, 0, cg));
+    generateRRInstruction(cg, TR::InstOpCode::SGR, node, tempReg, resultReg);
+    generateRIEInstruction(cg, TR::InstOpCode::CGIJ, node, tempReg, (int8_t)0, gprDiffLabel, TR::InstOpCode::COND_BNE);
+    generateRIEInstruction(cg, TR::InstOpCode::CGIJ, node, limReg, (int8_t)1, returnLenDiffLabel,
+        TR::InstOpCode::COND_BNH);
+
+    // char 1
+    generateRXInstruction(cg, TR::InstOpCode::LLGC, node, tempReg, generateS390MemoryReference(latin1ArrayReg, 1, cg));
+    generateRXInstruction(cg, TR::InstOpCode::LLGH, node, resultReg, generateS390MemoryReference(utf16ArrayReg, 2, cg));
+    generateRRInstruction(cg, TR::InstOpCode::SGR, node, tempReg, resultReg);
+    generateRIEInstruction(cg, TR::InstOpCode::CGIJ, node, tempReg, (int8_t)0, gprDiffLabel, TR::InstOpCode::COND_BNE);
+    generateRIEInstruction(cg, TR::InstOpCode::CGIJ, node, limReg, (int8_t)2, returnLenDiffLabel,
+        TR::InstOpCode::COND_BNH);
+
+    // char 2
+    generateRXInstruction(cg, TR::InstOpCode::LLGC, node, tempReg, generateS390MemoryReference(latin1ArrayReg, 2, cg));
+    generateRXInstruction(cg, TR::InstOpCode::LLGH, node, resultReg, generateS390MemoryReference(utf16ArrayReg, 4, cg));
+    generateRRInstruction(cg, TR::InstOpCode::SGR, node, tempReg, resultReg);
+    generateRIEInstruction(cg, TR::InstOpCode::CGIJ, node, tempReg, (int8_t)0, gprDiffLabel, TR::InstOpCode::COND_BNE);
+    generateRIEInstruction(cg, TR::InstOpCode::CGIJ, node, limReg, (int8_t)3, returnLenDiffLabel,
+        TR::InstOpCode::COND_BNH);
+
+    // char 3
+    generateRXInstruction(cg, TR::InstOpCode::LLGC, node, tempReg, generateS390MemoryReference(latin1ArrayReg, 3, cg));
+    generateRXInstruction(cg, TR::InstOpCode::LLGH, node, resultReg, generateS390MemoryReference(utf16ArrayReg, 6, cg));
+    generateRRInstruction(cg, TR::InstOpCode::SGR, node, tempReg, resultReg);
+    generateRIEInstruction(cg, TR::InstOpCode::CGIJ, node, tempReg, (int8_t)0, gprDiffLabel, TR::InstOpCode::COND_BNE);
+    generateRIEInstruction(cg, TR::InstOpCode::CGIJ, node, limReg, (int8_t)4, returnLenDiffLabel,
+        TR::InstOpCode::COND_BNH);
+
+    // char 4
+    generateRXInstruction(cg, TR::InstOpCode::LLGC, node, tempReg, generateS390MemoryReference(latin1ArrayReg, 4, cg));
+    generateRXInstruction(cg, TR::InstOpCode::LLGH, node, resultReg, generateS390MemoryReference(utf16ArrayReg, 8, cg));
+    generateRRInstruction(cg, TR::InstOpCode::SGR, node, tempReg, resultReg);
+    generateRIEInstruction(cg, TR::InstOpCode::CGIJ, node, tempReg, (int8_t)0, gprDiffLabel, TR::InstOpCode::COND_BNE);
+    generateRIEInstruction(cg, TR::InstOpCode::CGIJ, node, limReg, (int8_t)5, returnLenDiffLabel,
+        TR::InstOpCode::COND_BNH);
+
+    // char 5
+    generateRXInstruction(cg, TR::InstOpCode::LLGC, node, tempReg, generateS390MemoryReference(latin1ArrayReg, 5, cg));
+    generateRXInstruction(cg, TR::InstOpCode::LLGH, node, resultReg,
+        generateS390MemoryReference(utf16ArrayReg, 10, cg));
+    generateRRInstruction(cg, TR::InstOpCode::SGR, node, tempReg, resultReg);
+    generateRIEInstruction(cg, TR::InstOpCode::CGIJ, node, tempReg, (int8_t)0, gprDiffLabel, TR::InstOpCode::COND_BNE);
+    generateRIEInstruction(cg, TR::InstOpCode::CGIJ, node, limReg, (int8_t)6, returnLenDiffLabel,
+        TR::InstOpCode::COND_BNH);
+
+    // char 6 — last possible (lim <= 7, so lim==7 means indices 0..6)
+    generateRXInstruction(cg, TR::InstOpCode::LLGC, node, tempReg, generateS390MemoryReference(latin1ArrayReg, 6, cg));
+    generateRXInstruction(cg, TR::InstOpCode::LLGH, node, resultReg,
+        generateS390MemoryReference(utf16ArrayReg, 12, cg));
+    generateRRInstruction(cg, TR::InstOpCode::SGR, node, tempReg, resultReg);
+    generateRIEInstruction(cg, TR::InstOpCode::CGIJ, node, tempReg, (int8_t)0, gprDiffLabel, TR::InstOpCode::COND_BNE);
+    // lim must be 7 here (only value left); no CGIJ needed — fall through to returnLenDiffLabel
+    generateS390BranchInstruction(cg, TR::InstOpCode::BRC, TR::InstOpCode::COND_BRC, node, returnLenDiffLabel);
+
+    // GPR difference found: tempReg already holds c1-c2
+    generateS390LabelInstruction(cg, TR::InstOpCode::label, node, gprDiffLabel);
+    generateRRInstruction(cg, TR::InstOpCode::LGR, node, resultReg, tempReg);
+    generateS390BranchInstruction(cg, TR::InstOpCode::BRC, TR::InstOpCode::COND_BRC, node, cFlowRegionEnd);
+
+    // Early lim=0 exit and all-equal path both return len1 - len2.
+    // zeroLenExitLabel falls through into returnLenDiffLabel — same code, no duplication.
+    generateS390LabelInstruction(cg, TR::InstOpCode::label, node, zeroLenExitLabel);
+    // All chars equal (or lim=0): return len1 - len2
+    // Use LLGFR to zero-extend 32-bit int parameters to 64-bit
+    // Reuse limReg for len2 zero-extension
+    generateS390LabelInstruction(cg, TR::InstOpCode::label, node, returnLenDiffLabel);
+    generateRRInstruction(cg, TR::InstOpCode::LLGFR, node, resultReg, len1Reg);
+    generateRRInstruction(cg, TR::InstOpCode::LLGFR, node, limReg, len2Reg);
+    generateRRInstruction(cg, TR::InstOpCode::SGR, node, resultReg, limReg);
+    generateS390BranchInstruction(cg, TR::InstOpCode::BRC, TR::InstOpCode::COND_BRC, node, cFlowRegionEnd);
+
+    // FOUND DIFFERENCE (chunk B): adjust index and array pointers to match
+    // chunk A layout, then fall through to the shared diff-extraction path below.
+    // The pointer-bump invariant (latin1ArrayReg = base + indexReg) requires all three
+    // to be advanced together; the diff-extraction path relies on this to address correctly.
+    generateS390LabelInstruction(cg, TR::InstOpCode::label, node, foundDifferenceBLabel);
+    generateRILInstruction(cg, TR::InstOpCode::AGFI, node, indexReg, 8);
+    generateRXInstruction(cg, TR::InstOpCode::getLoadAddressOpCode(), node, latin1ArrayReg,
+        generateS390MemoryReference(latin1ArrayReg, 8, cg));
+    generateRXInstruction(cg, TR::InstOpCode::getLoadAddressOpCode(), node, utf16ArrayReg,
+        generateS390MemoryReference(utf16ArrayReg, 16, cg));
+
+    // FOUND DIFFERENCE (chunk A, or chunk B via fall-through above):
+    // vLatin1Expanded and vUTF16 are set correctly for whichever chunk mismatched.
+    generateS390LabelInstruction(cg, TR::InstOpCode::label, node, foundDifferenceLabel);
+
+    // vLatin1 is no longer needed as an input; reuse it for VFENE's result.
+    generateVRRbInstruction(cg, TR::InstOpCode::VFENE, node, vLatin1, vLatin1Expanded, vUTF16, 0, 1);
+
+    // Extract byte index from vector element 7
+    generateVRScInstruction(cg, TR::InstOpCode::VLGV, node, tempReg, vLatin1, generateS390MemoryReference(7, cg), 0);
+
+    // Convert byte index to character index (divide by 2)
+    generateRSInstruction(cg, TR::InstOpCode::SRLG, node, tempReg, tempReg, 1);
+
+    // Add base index to get absolute character position (use 64-bit add)
+    generateRRInstruction(cg, TR::InstOpCode::AGR, node, tempReg, indexReg);
+
+    // Compute within-chunk offset: tempReg (absolute index) - indexReg (chunk base) = offset from
+    // latin1ArrayReg / utf16ArrayReg to the differing character
+    generateRRInstruction(cg, TR::InstOpCode::LGR, node, resultReg, tempReg);
+    generateRRInstruction(cg, TR::InstOpCode::SGR, node, resultReg, indexReg);
+
+    // Load c1: LLC tempReg, (latin1ArrayReg + within-chunk offset)
+    generateRXInstruction(cg, TR::InstOpCode::LLC, node, tempReg,
+        generateS390MemoryReference(latin1ArrayReg, resultReg, 0, cg));
+
+    // Load c2: LLH resultReg, (utf16ArrayReg + within-chunk offset * 2)
+    generateRSInstruction(cg, TR::InstOpCode::SLLG, node, resultReg, resultReg, 1);
+    generateRXInstruction(cg, TR::InstOpCode::LLH, node, resultReg,
+        generateS390MemoryReference(utf16ArrayReg, resultReg, 0, cg));
+
+    // Compute difference: c1 - c2
+    generateRRInstruction(cg, TR::InstOpCode::SGR, node, tempReg, resultReg);
+    generateRRInstruction(cg, TR::InstOpCode::LGR, node, resultReg, tempReg);
+
+    // END LOOP
+    TR::RegisterDependencyConditions *dependencies
+        = new (cg->trHeapMemory()) TR::RegisterDependencyConditions(0, 11, cg);
+    dependencies->addPostConditionIfNotAlreadyInserted(latin1ArrayReg, TR::RealRegister::AssignAny);
+    dependencies->addPostConditionIfNotAlreadyInserted(utf16ArrayReg, TR::RealRegister::AssignAny);
+    dependencies->addPostConditionIfNotAlreadyInserted(len1Reg, TR::RealRegister::AssignAny);
+    dependencies->addPostConditionIfNotAlreadyInserted(len2Reg, TR::RealRegister::AssignAny);
+    dependencies->addPostConditionIfNotAlreadyInserted(limReg, TR::RealRegister::AssignAny);
+    dependencies->addPostConditionIfNotAlreadyInserted(indexReg, TR::RealRegister::AssignAny);
+    dependencies->addPostConditionIfNotAlreadyInserted(resultReg, TR::RealRegister::AssignAny);
+    dependencies->addPostConditionIfNotAlreadyInserted(tempReg, TR::RealRegister::AssignAny);
+    dependencies->addPostConditionIfNotAlreadyInserted(vLatin1, TR::RealRegister::AssignAny);
+    dependencies->addPostConditionIfNotAlreadyInserted(vLatin1Expanded, TR::RealRegister::AssignAny);
+    dependencies->addPostConditionIfNotAlreadyInserted(vUTF16, TR::RealRegister::AssignAny);
+
+    generateS390LabelInstruction(cg, TR::InstOpCode::label, node, cFlowRegionEnd, dependencies);
+
+    // Decrement reference counts for child nodes
+    cg->decReferenceCount(latin1ArrayNode);
+    cg->decReferenceCount(utf16ArrayNode);
+    cg->decReferenceCount(len1Node);
+    cg->decReferenceCount(len2Node);
+
+    // Stop using temporary registers
+    cg->stopUsingRegister(limReg);
+    cg->stopUsingRegister(indexReg);
+    cg->stopUsingRegister(tempReg);
+    cg->stopUsingRegister(vLatin1);
+    cg->stopUsingRegister(vLatin1Expanded);
+    cg->stopUsingRegister(vUTF16);
+    node->setRegister(resultReg);
+
+    return resultReg;
+}
+
 TR::Register *J9::Z::TreeEvaluator::zdloadEvaluator(TR::Node *node, TR::CodeGenerator *cg)
 {
     return TR::TreeEvaluator::pdloadEvaluator(node, cg);
