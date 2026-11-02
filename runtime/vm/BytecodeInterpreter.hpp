@@ -7650,7 +7650,6 @@ done:
 	VMINLINE VM_BytecodeAction
 	ldc(REGISTER_ARGS_LIST, UDATA parmSize)
 	{
-retry:
 		VM_BytecodeAction rc = EXECUTE_BYTECODE;
 		U_16 index = 0;
 		if (1 == parmSize) {
@@ -7700,12 +7699,10 @@ retry:
 			restoreGenericSpecialStackFrame(REGISTER_ARGS);
 			if (immediateAsyncPending()) {
 				rc = GOTO_ASYNC_CHECK;
-				goto done;
 			} else if (VM_VMHelpers::exceptionPending(_currentThread)) {
 				rc = GOTO_THROW_CURRENT_EXCEPTION;
-				goto done;
 			}
-			goto retry;
+			goto done;
 		}
 resolved:
 		_pc += (1 + parmSize);
@@ -7758,7 +7755,6 @@ done:
 	VMINLINE VM_BytecodeAction
 	getstatic(REGISTER_ARGS_LIST)
 	{
-retry:
 		VM_BytecodeAction rc = EXECUTE_BYTECODE;
 		U_16 index = *(U_16*)(_pc + 1);
 		J9ConstantPool *ramConstantPool = J9_CP_FROM_METHOD(_literals);
@@ -7783,7 +7779,7 @@ retry:
 				goto done;
 			}
 			if ((void*)-1 != resolveResult) {
-				goto retry;
+				goto done;
 			}
 			ramStaticFieldRef = (J9RAMStaticFieldRef*)&_currentThread->floatTemp1;
 			valueOffset = ramStaticFieldRef->valueOffset;
@@ -7988,7 +7984,6 @@ done:
 	VMINLINE VM_BytecodeAction
 	getfieldLogic(REGISTER_ARGS_LIST, UDATA indexOffset, j9object_t *objectLocation, UDATA slotsToPop)
 	{
-retry:
 		VM_BytecodeAction rc = EXECUTE_BYTECODE;
 		U_16 index = *(U_16*)(_pc + indexOffset);
 		J9ConstantPool *ramConstantPool = J9_CP_FROM_METHOD(_literals);
@@ -8005,12 +8000,10 @@ retry:
 			restoreGenericSpecialStackFrame(REGISTER_ARGS);
 			if (immediateAsyncPending()) {
 				rc = GOTO_ASYNC_CHECK;
-				goto done;
 			} else if (VM_VMHelpers::exceptionPending(_currentThread)) {
 				rc = GOTO_THROW_CURRENT_EXCEPTION;
-				goto done;
 			}
-			goto retry;
+			goto done;
 		}
 		{
 			j9object_t objectref = *objectLocation;
@@ -8408,12 +8401,11 @@ resolve:
 				restoreGenericSpecialStackFrame(REGISTER_ARGS);
 				if (immediateAsyncPending()) {
 					rc = GOTO_ASYNC_CHECK;
-					goto done;
 				} else if (VM_VMHelpers::exceptionPending(_currentThread)) {
 					rc = GOTO_THROW_CURRENT_EXCEPTION;
-					goto done;
+				} else {
+					rc = EXECUTE_BYTECODE;
 				}
-				rc = EXECUTE_BYTECODE;
 				goto done;
 			}
 			rc = THROW_NPE;
@@ -8919,10 +8911,10 @@ done:
 		return GOTO_BRANCH_WITH_ASYNC_CHECK;
 	}
 
+	/* Assume *success = false on entry */
 	VMINLINE VM_BytecodeAction
-	newLogic(REGISTER_ARGS_LIST, j9object_t *newObject)
+	newLogic(REGISTER_ARGS_LIST, j9object_t *newObject, bool *success)
 	{
-retry:
 		VM_BytecodeAction rc = EXECUTE_BYTECODE;
 		U_16 index = *(U_16*)(_pc + 1);
 		J9ConstantPool *ramConstantPool = J9_CP_FROM_METHOD(_literals);
@@ -8942,6 +8934,7 @@ retry:
 					}
 				}
 				*newObject = instance;
+				*success = true;
 				goto done;
 			}
 			/* Class requires initialization */
@@ -8952,12 +8945,10 @@ retry:
 			restoreGenericSpecialStackFrame(REGISTER_ARGS);
 			if (immediateAsyncPending()) {
 				rc = GOTO_ASYNC_CHECK;
-				goto done;
 			} else if (VM_VMHelpers::exceptionPending(_currentThread)) {
 				rc = GOTO_THROW_CURRENT_EXCEPTION;
-				goto done;
 			}
-			goto retry;
+			goto done;
 		}
 		/* Unresolved */
 		buildGenericSpecialStackFrame(REGISTER_ARGS, 0);
@@ -8967,12 +8958,9 @@ retry:
 		restoreGenericSpecialStackFrame(REGISTER_ARGS);
 		if (immediateAsyncPending()) {
 			rc = GOTO_ASYNC_CHECK;
-			goto done;
 		} else if (VM_VMHelpers::exceptionPending(_currentThread)) {
 			rc = GOTO_THROW_CURRENT_EXCEPTION;
-			goto done;
 		}
-		goto retry;
 done:
 		return rc;
 	}
@@ -8982,8 +8970,9 @@ done:
 	newImpl(REGISTER_ARGS_LIST)
 	{
 		j9object_t newObject = NULL;
-		VM_BytecodeAction rc = newLogic(REGISTER_ARGS, &newObject);
-		if (EXECUTE_BYTECODE == rc) {
+		bool success = false;
+		VM_BytecodeAction rc = newLogic(REGISTER_ARGS, &newObject, &success);
+		if (success) {
 			_pc += 3;
 			*(j9object_t*)--_sp = newObject;
 		}
@@ -8995,8 +8984,9 @@ done:
 	newdup(REGISTER_ARGS_LIST)
 	{
 		j9object_t newObject = NULL;
-		VM_BytecodeAction rc = newLogic(REGISTER_ARGS, &newObject);
-		if (EXECUTE_BYTECODE == rc) {
+		bool success = false;
+		VM_BytecodeAction rc = newLogic(REGISTER_ARGS, &newObject, &success);
+		if (success) {
 			_pc += 4;
 			*(j9object_t*)--_sp = newObject;
 			*(j9object_t*)--_sp = newObject;
@@ -9037,7 +9027,6 @@ done:
 	VMINLINE VM_BytecodeAction
 	anewarray(REGISTER_ARGS_LIST)
 	{
-retry:
 		VM_BytecodeAction rc = EXECUTE_BYTECODE;
 		U_16 index = *(U_16*)(_pc + 1);
 		J9ConstantPool *ramConstantPool = J9_CP_FROM_METHOD(_literals);
@@ -9077,9 +9066,8 @@ retry:
 			restoreGenericSpecialStackFrame(REGISTER_ARGS);
 			if (VM_VMHelpers::exceptionPending(_currentThread) ) {
 				rc = GOTO_THROW_CURRENT_EXCEPTION;
-				goto done;
 			}
-			goto retry;
+			goto done;
 		}
 		/* Unresolved */
 		buildGenericSpecialStackFrame(REGISTER_ARGS, 0);
@@ -9089,12 +9077,9 @@ retry:
 		restoreGenericSpecialStackFrame(REGISTER_ARGS);
 		if (immediateAsyncPending()) {
 			rc = GOTO_ASYNC_CHECK;
-			goto done;
 		} else if (VM_VMHelpers::exceptionPending(_currentThread)) {
 			rc = GOTO_THROW_CURRENT_EXCEPTION;
-			goto done;
 		}
-		goto retry;
 done:
 		return rc;
 	}
@@ -9103,7 +9088,6 @@ done:
 	VMINLINE VM_BytecodeAction
 	checkcast(REGISTER_ARGS_LIST)
 	{
-retry:
 		VM_BytecodeAction rc = EXECUTE_BYTECODE;
 		U_16 index = *(U_16*)(_pc + 1);
 		J9ConstantPool *ramConstantPool = J9_CP_FROM_METHOD(_literals);
@@ -9131,12 +9115,10 @@ retry:
 				restoreGenericSpecialStackFrame(REGISTER_ARGS);
 				if (immediateAsyncPending()) {
 					rc = GOTO_ASYNC_CHECK;
-					goto done;
 				} else if (VM_VMHelpers::exceptionPending(_currentThread)) {
 					rc = GOTO_THROW_CURRENT_EXCEPTION;
-					goto done;
 				}
-				goto retry;
+				goto done;
 			}
 		}
 
@@ -9154,7 +9136,6 @@ done:
 	VMINLINE VM_BytecodeAction
 	instanceof(REGISTER_ARGS_LIST)
 	{
-retry:
 		VM_BytecodeAction rc = EXECUTE_BYTECODE;
 		j9object_t obj = *(j9object_t*)_sp;
 		if (NULL != obj) {
@@ -9175,12 +9156,10 @@ retry:
 				restoreGenericSpecialStackFrame(REGISTER_ARGS);
 				if (immediateAsyncPending()) {
 					rc = GOTO_ASYNC_CHECK;
-					goto done;
 				} else if (VM_VMHelpers::exceptionPending(_currentThread)) {
 					rc = GOTO_THROW_CURRENT_EXCEPTION;
-					goto done;
 				}
-				goto retry;
+				goto done;
 			}
 		} else {
 			*(I_32*)_sp = 0;
@@ -9275,7 +9254,6 @@ done:
 	VMINLINE VM_BytecodeAction
 	multianewarray(REGISTER_ARGS_LIST)
 	{
-retry:
 		VM_BytecodeAction rc = EXECUTE_BYTECODE;
 		U_16 index = *(U_16*)(_pc + 1);
 		UDATA dimensions = _pc[3];
@@ -9312,12 +9290,9 @@ retry:
 			restoreGenericSpecialStackFrame(REGISTER_ARGS);
 			if (immediateAsyncPending()) {
 				rc = GOTO_ASYNC_CHECK;
-				goto done;
 			} else if (VM_VMHelpers::exceptionPending(_currentThread)) {
 				rc = GOTO_THROW_CURRENT_EXCEPTION;
-				goto done;
 			}
-			goto retry;
 		}
 done:
 		return rc;
@@ -9520,7 +9495,6 @@ done:
 	VMINLINE VM_BytecodeAction
 	invokedynamic(REGISTER_ARGS_LIST)
 	{
-retry:
 		VM_BytecodeAction rc = GOTO_RUN_METHODHANDLE;
 		U_16 index = *(U_16 *)(_pc + 1);
 
@@ -9548,7 +9522,7 @@ retry:
 			} else if (VM_VMHelpers::exceptionPending(_currentThread)) {
 				rc = GOTO_THROW_CURRENT_EXCEPTION;
 			} else {
-				goto retry;
+				rc = EXECUTE_BYTECODE;
 			}
 		}
 
@@ -9558,7 +9532,6 @@ retry:
 	VMINLINE VM_BytecodeAction
 	invokedynamic(REGISTER_ARGS_LIST)
 	{
-retry:
 		VM_BytecodeAction rc = GOTO_RUN_METHOD;
 		U_16 index = *(U_16 *)(_pc + 1);
 
@@ -9599,7 +9572,7 @@ retry:
 			} else if (VM_VMHelpers::exceptionPending(_currentThread)) {
 				rc = GOTO_THROW_CURRENT_EXCEPTION;
 			} else {
-				goto retry;
+				rc = EXECUTE_BYTECODE;
 			}
 		}
 
@@ -9618,7 +9591,6 @@ retry:
 	VMINLINE VM_BytecodeAction
 	invokehandle(REGISTER_ARGS_LIST)
 	{
-retry:
 		/* An invokevirtual MethodHandle.invokeExact() becomes invokehandle.
 		 * The resolved MethodType and MethodHandle.type() must be equal or
 		 * an exception will be thrown.
@@ -9657,7 +9629,7 @@ retry:
 			} else if (VM_VMHelpers::exceptionPending(_currentThread)) {
 				rc = GOTO_THROW_CURRENT_EXCEPTION;
 			} else {
-				goto retry;
+				rc = EXECUTE_BYTECODE;
 			}
 		}
 done:
@@ -9667,7 +9639,6 @@ done:
 	VMINLINE VM_BytecodeAction
 	invokehandle(REGISTER_ARGS_LIST)
 	{
-retry:
 		VM_BytecodeAction rc = GOTO_RUN_METHOD;
 		U_16 index = *(U_16 *)(_pc + 1);
 
@@ -9700,7 +9671,7 @@ retry:
 			} else if (VM_VMHelpers::exceptionPending(_currentThread)) {
 				rc = GOTO_THROW_CURRENT_EXCEPTION;
 			} else {
-				goto retry;
+				rc = EXECUTE_BYTECODE;
 			}
 		}
 
@@ -9720,7 +9691,6 @@ retry:
 	{
 #if defined(J9VM_OPT_METHOD_HANDLE)
 		/* MH.invoke is translated to invokehandlegeneric. */
-retry:
 		VM_BytecodeAction rc = GOTO_RUN_METHODHANDLE;
 		U_16 index = *(U_16 *)(_pc + 1);
 
@@ -9774,7 +9744,7 @@ retry:
 			} else if (VM_VMHelpers::exceptionPending(_currentThread)) {
 				rc = GOTO_THROW_CURRENT_EXCEPTION;
 			} else {
-				goto retry;
+				rc = EXECUTE_BYTECODE;
 			}
 		}
 done:
