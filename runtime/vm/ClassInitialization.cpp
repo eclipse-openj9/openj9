@@ -271,7 +271,12 @@ performVerification(J9VMThread *currentThread, J9Class *clazz)
 		}
 	}
 done:
+
+/* Uncomment the following line and rebuild VM if the verification exit tracepoint is desired for balance with the entry tracepoint */
+/* #define J9VM_OPT_INCLUDE_CLASSVERIFY_EXIT_TRACEPOINT */
+#if defined(J9VM_OPT_INCLUDE_CLASSVERIFY_EXIT_TRACEPOINT) /* Don't build into VM by default to avoid start-up performance regressions. */
 	Trc_VM_performVerification_Exit(currentThread);
+#endif /* defined(J9VM_OPT_INCLUDE_CLASSVERIFY_EXIT_TRACEPOINT) */
 	return;
 }
 
