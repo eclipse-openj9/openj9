@@ -9567,8 +9567,11 @@ TR_MethodMetaData *TR::CompilationInfoPerThreadBase::compile(J9VMThread *vmThrea
         // As the body is finished, mark its profile info as active so that the JProfiler thread will inspect it
         if (compiler->getRecompilationInfo()) {
             TR_PersistentJittedBodyInfo *bodyInfo = compiler->getRecompilationInfo()->getJittedBodyInfo();
-            if (bodyInfo && bodyInfo->getProfileInfo()) {
-                bodyInfo->getProfileInfo()->setActive();
+            if (bodyInfo) {
+                bodyInfo->setTotalBytecodeSize(TR::CompilationInfoPerThreadBase::computeTotalBytecodeSize(compiler));
+                if (bodyInfo->getProfileInfo()) {
+                    bodyInfo->getProfileInfo()->setActive();
+                }
             }
         }
 
