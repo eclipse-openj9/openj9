@@ -10439,7 +10439,10 @@ void TR::CompilationInfoPerThreadBase::logCompilationSuccess(J9VMThread *vmThrea
                 || (compiler->getOption(TR_CountOptTransformations)
                     && compiler->getVerboseOptTransformationCount() >= 1)) {
                 const uint32_t bytecodeSize = TR::CompilationInfo::getMethodBytecodeSize(method);
-                const uint32_t totalBytecodeSize = TR::CompilationInfoPerThreadBase::computeTotalBytecodeSize(compiler);
+                const uint32_t totalBytecodeSize
+                    = (compiler->getRecompilationInfo() && compiler->getRecompilationInfo()->getJittedBodyInfo())
+                    ? compiler->getRecompilationInfo()->getJittedBodyInfo()->getTotalBytecodeSize()
+                    : TR::CompilationInfoPerThreadBase::computeTotalBytecodeSize(compiler);
                 const bool isJniNative = compilee->isJNINative();
                 TR_VerboseLog::CriticalSection vlogLock;
                 TR_VerboseLog::write(TR_Vlog_COMP, "(%s%s) %s @ " POINTER_PRINTF_FORMAT "-" POINTER_PRINTF_FORMAT,
