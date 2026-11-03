@@ -6542,6 +6542,8 @@ bool TR_J9VMBase::isGetImplAndRefersToInliningSupported()
  */
 bool TR_J9VMBase::javaLangClassGetModifiersImpl(TR_OpaqueClassBlock *clazzPointer, int32_t &result)
 {
+    // This mimics the code in inlClassGetModifiersImpl() and Fast_java_lang_Class_getModifiersImpl().
+    // Keep them consistent with each other.
     J9ROMClass *romClass = NULL;
 
     bool isArray = isClassArray(clazzPointer);
@@ -6562,16 +6564,15 @@ bool TR_J9VMBase::javaLangClassGetModifiersImpl(TR_OpaqueClassBlock *clazzPointe
     if (isArray) {
         // OR in the required Sun bits
         result |= (J9AccAbstract | J9AccFinal);
-#if defined(J9VM_OPT_VALHALLA_VALUE_TYPES)
-        if (J9_IS_CLASSFILE_OR_ROMCLASS_VALUETYPE_VERSION(romClass)) {
-            if (TR::Compiler->om.areValueTypesEnabled()) {
-                result |= J9AccClassHasIdentity;
-            }
-        }
-#endif /* defined(J9VM_OPT_VALHALLA_VALUE_TYPES) */
     }
 #if defined(J9VM_OPT_VALHALLA_VALUE_TYPES)
-    if (!TR::Compiler->om.areValueTypesEnabled()) {
+    if (TR::Compiler->om.areValueTypesEnabled()) {
+        if (isArray
+            || (!TR::Compiler->cls.isValueTypeClass(clazzPointer) && !J9ROMCLASS_IS_INTERFACE(romClass)
+                && !J9ROMCLASS_IS_PRIMITIVE_TYPE(romClass))) {
+            result |= J9AccClassHasIdentity;
+        }
+    } else {
         result &= ~J9AccClassHasIdentity;
     }
 #endif /* defined(J9VM_OPT_VALHALLA_VALUE_TYPES) */
