@@ -38,6 +38,7 @@
 #include "objhelp.h"
 #include "ut_j9vm.h"
 #include "vm_api.h"
+#include "suballocator.hpp"
 
 /* TODO: Add descriptive doc-comments to the functions herein. */
 class VMSnapshotImpl
@@ -51,21 +52,21 @@ private:
 	J9Heap *_heap32;
 	J9ITable *_invalidITable;
 	const char *_vmSnapshotFilePath;
-	omrthread_monitor_t _vmSnapshotImplMonitor;
 	VMSnapshotImplPortLibrary *_vmSnapshotImplPortLibrary;
+	Suballocator *_allocator;
+	Suballocator *_allocator4G;
 
 public:
 	/* TODO: Reallocation will fail, so initial heap size is large (Should be PAGE_SIZE aligned). */
 	/* TODO: This initial heap size restriction will be removed once MMAP MAP_FIXED removed (See @ref VMSnapshotImpl::readSnapshotFromFile) */
-	static const UDATA GENERAL_MEMORY_SECTION_SIZE = 512 * 1024 * 1024;
-	static const UDATA SUB4G_MEMORY_SECTION_SIZE = 100 * 1024 * 1024;
+	UDATA GENERAL_MEMORY_SECTION_SIZE = 600 * 1024 * 1024;
+	UDATA SUB4G_MEMORY_SECTION_SIZE = 200 * 1024 * 1024;
 	/* Corresponds to the number of J9Class* members refering to primitive
 	 * and array classes persisted from the J9JavaVM struct (see SnapshotFileFormat.h).
 	 */
 	static const UDATA PRIMITIVE_AND_ARRAY_CLASS_COUNT = 17;
 
 private:
-	bool initializeMonitor();
 	bool initializeInvalidITable();
 
 	void *allocateSnapshotMemory();
@@ -138,6 +139,11 @@ public:
 
 	J9ITable *getInvalidITable() { return _invalidITable; }
 	void initBaseClasses();
+
+	void setSuballocator(Suballocator *allocator);
+	void setSuballocator4G(Suballocator *allocator);
+	void setGeneralMemSize(UDATA size);
+	void setSub4GMemSize(UDATA size);
 };
 
 #endif /* defined(J9VM_OPT_SNAPSHOTS) */
