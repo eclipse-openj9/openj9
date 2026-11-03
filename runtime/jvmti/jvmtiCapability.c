@@ -103,6 +103,10 @@ dumpCapabilities(J9JavaVM * vm, const jvmtiCapabilities *capabilities, const cha
 #if JAVA_SPEC_VERSION >= 19
 	PRINT_CAPABILITY(can_support_virtual_threads);
 #endif /* JAVA_SPEC_VERSION >= 19 */
+
+#if defined(J9VM_OPT_VALHALLA_VALUE_TYPES)
+	PRINT_CAPABILITY(can_support_value_objects);
+#endif /* defined(J9VM_OPT_VALHALLA_VALUE_TYPES) */
 #undef PRINT_CAPABILITY
 }
 
@@ -194,6 +198,10 @@ jvmtiGetPotentialCapabilities(jvmtiEnv* env, jvmtiCapabilities* capabilities_ptr
 		rv_capabilities.can_support_virtual_threads = 1;
 	}
 #endif /* JAVA_SPEC_VERSION >= 19 */
+
+#if defined(J9VM_OPT_VALHALLA_VALUE_TYPES)
+	rv_capabilities.can_support_value_objects = 1;
+#endif /* defined(J9VM_OPT_VALHALLA_VALUE_TYPES) */
 
 	if (isEventHookable(j9env, JVMTI_EVENT_NATIVE_METHOD_BIND)) {
 		rv_capabilities.can_generate_native_method_bind_events = 1;
