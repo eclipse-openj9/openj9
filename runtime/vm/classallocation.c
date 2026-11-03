@@ -223,6 +223,9 @@ allocateClassLoader(J9JavaVM *javaVM)
 				classLoader->flags |= J9CLASSLOADER_SHARED_CLASSES_ENABLED;
 				Trc_VM_allocateClassLoader_SetFlag(classLoader);
 			}
+#if defined(J9VM_OPT_JFR)
+			classLoader->classLoaderID = javaVM->classLoaderCount++;
+#endif /* defined(J9VM_OPT_JFR) */
 			TRIGGER_J9HOOK_VM_CLASS_LOADER_CREATED(javaVM->hookInterface, javaVM, classLoader);
 		}
 	}
