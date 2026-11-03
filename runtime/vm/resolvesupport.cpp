@@ -609,8 +609,17 @@ incompat:
 					method = NULL;
 					goto done;
 				}
+
 				if (preCount != vmStruct->javaVM->hotSwapCount) {
 					goto tryAgain;
+				}
+				/* virtual thread class init unmount */
+				initStatus = methodClass->initializeStatus;
+				if (0 != (initStatus & (~J9ClassInitStatusMask))
+					&& J9ClassInitNotInitialized == (initStatus & J9ClassInitStatusMask)
+				) {
+					ramCPEntry->method = NULL;
+					goto done;
 				}
 			} else {
 				/* Can't initialize the class, so fail the resolve */
@@ -646,7 +655,7 @@ resolveStaticMethodRef(J9VMThread *vmStruct, J9ConstantPool *ramCP, UDATA cpInde
 			&& (J9_CLASS_FROM_METHOD(method)->initializeStatus == (UDATA)vmStruct)
 		) {
 			return (J9Method *) -1;
-		} else if (J9_ARE_NO_BITS_SET(resolveFlags, J9_RESOLVE_FLAG_NO_CP_UPDATE)) {
+		} else if (J9_ARE_NO_BITS_SET(resolveFlags, J9_RESOLVE_FLAG_NO_CP_UPDATE) && ramStaticMethodRef->method) {
 			((J9RAMStaticMethodRef *)&ramCP[cpIndex])->method = ramStaticMethodRef->method;
 		}
 	}
