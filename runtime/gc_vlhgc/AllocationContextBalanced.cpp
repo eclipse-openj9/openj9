@@ -1184,13 +1184,10 @@ MM_AllocationContextBalanced::allocateFromSharedReservedRegionForNode(MM_Environ
 	*reservedAddressLow = NULL;
 
 	lockCommon();
-	if (0 == _sharedArrayReservedRegionsBytesUsed) {
-		shouldAllocateNewSharedRegion = true;
-	}
-	uintptr_t wholeRegionsBefore = _sharedArrayReservedRegionsBytesUsed / regionSize;
-	uintptr_t wholeRegionsAfter = (_sharedArrayReservedRegionsBytesUsed + fraction) / regionSize;
+	uintptr_t regionsBefore = MM_Math::roundToCeiling(regionSize, _sharedArrayReservedRegionsBytesUsed) / regionSize;
+	uintptr_t regionsAfter = MM_Math::roundToCeiling(regionSize, _sharedArrayReservedRegionsBytesUsed + fraction) / regionSize;
 
-	if (!shouldAllocateNewSharedRegion && (wholeRegionsBefore < wholeRegionsAfter)) {
+	if (regionsBefore < regionsAfter) {
 		shouldAllocateNewSharedRegion = true;
 	}
 
@@ -1243,7 +1240,6 @@ MM_AllocationContextBalanced::recycleToSharedArrayReservedRegion(MM_EnvironmentB
 {
 	const uintptr_t regionSize = _heapRegionManager->getRegionSize();
 	Assert_MM_true((regionSize > fraction) && (0 != fraction));
-	Assert_MM_true(_sharedArrayReservedRegionsBytesUsed >= fraction);
 
 	bool shouldReleaseCurrentSharedRegion = false;
 
@@ -1251,11 +1247,12 @@ MM_AllocationContextBalanced::recycleToSharedArrayReservedRegion(MM_EnvironmentB
 		lockCommon();
 	}
 
-	uintptr_t wholeRegionsBefore = _sharedArrayReservedRegionsBytesUsed / regionSize;
+	Assert_MM_true(_sharedArrayReservedRegionsBytesUsed >= fraction);
+	uintptr_t regionsBefore = MM_Math::roundToCeiling(regionSize, _sharedArrayReservedRegionsBytesUsed) / regionSize;
 	_sharedArrayReservedRegionsBytesUsed -= fraction;
-	uintptr_t wholeRegionsAfter = _sharedArrayReservedRegionsBytesUsed / regionSize;
+	uintptr_t regionsAfter = MM_Math::roundToCeiling(regionSize, _sharedArrayReservedRegionsBytesUsed) / regionSize;
 
-	if ((0 == _sharedArrayReservedRegionsBytesUsed) || (wholeRegionsBefore > wholeRegionsAfter)) {
+	if (regionsBefore > regionsAfter) {
 		shouldReleaseCurrentSharedRegion = true;
 	}
 
