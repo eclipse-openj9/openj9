@@ -112,6 +112,7 @@ private:
         bool dontAddCalls = false);
 
     bool callTargetIsGeneratedReflectionMethod(TR_CallTarget *calltarget);
+    uint32_t getPreviouslyCompiledBodyTotalBytecodeSize(TR_CallTarget *calltarget);
     int32_t estimateCallTargetSize(TR_CallTarget *calltarget, TR_CallStack *callStack, TR::Node *callNode,
         TR::TreeTop *callNodeTreeTop, TR_EstimateCodeSize *ecs, bool currentBlockHasExceptionSuccessors,
         bool &inlineit);
@@ -130,6 +131,11 @@ private:
     void recordWarmCallGraphTooBig(TR::Node *callNode, TR_CallTarget *calltarget, int32_t size, int32_t sizeThreshold);
     void rejectCallTargetDueToSize(TR_CallSite *callsite, int32_t &targetIndex, TR::Node *callNode,
         TR::TreeTop *callNodeTreeTop, TR_CallTarget *calltarget, int32_t size, int32_t sizeThreshold);
+    void handleEstimationFailed(TR::Node *callNode, TR::TreeTop *callNodeTreeTop, TR_CallTarget *calltarget,
+        TR_CallStack *callStack, int32_t size, int32_t sizeThreshold);
+    bool performSizeEstimation(TR_CallTarget *calltarget, TR_CallStack *callStack, TR::Node *callNode,
+        TR::TreeTop *callNodeTreeTop, TR_EstimateCodeSize *ecs, bool currentBlockHasExceptionSuccessors,
+        bool wouldBenefitFromInlining, int32_t &size);
     /* \brief
      *    This API processes the call targets got chopped off from \ref _calltargets
      *
