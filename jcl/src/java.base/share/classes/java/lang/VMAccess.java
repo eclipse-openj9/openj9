@@ -302,10 +302,7 @@ final class VMAccess implements VMLangAccess {
 	}
 
 	/**
-	 * Invoke jdk.jfr.internal.dcmd.DCmdStart.execute().
-	 *
-	 * @param execArgs The string arguments separated by a delimiter
-	 * @return A string array returned from DCmdStart.execute()
+	 * {@inheritDoc}
 	 */
 	@Override
 	public String[] doJFRDCmdStartExecute(String execArgs) {
@@ -313,10 +310,7 @@ final class VMAccess implements VMLangAccess {
 	}
 
 	/**
-	 * Invoke jdk.jfr.internal.dcmd.DCmdStop.execute().
-	 *
-	 * @param execArgs The string arguments separated by a delimiter
-	 * @return A string array returned from DCmdStop.execute()
+	 * {@inheritDoc}
 	 */
 	@Override
 	public String[] doJFRDCmdStopExecute(String execArgs) {
@@ -356,14 +350,19 @@ final class VMAccess implements VMLangAccess {
 	}
 
 	/**
-	 * Invoke jdk.jfr.internal.dcmd.DCmdDump.execute().
-	 *
-	 * @param execArgs The string arguments separated by a delimiter
-	 * @return A string array returned from DCmdDump.execute()
+	 * {@inheritDoc}
 	 */
 	@Override
 	public String[] doJFRDCmdDumpExecute(String execArgs) {
 		return JFRHelpers.doJFRDCmdDumpExecute(execArgs);
+	}
+
+	/**
+	 * {@inheritDoc}
+	 */
+	@Override
+	public String[] doJFRDCmdCheckExecute(String execArgs) {
+		return JFRHelpers.doJFRDCmdCheckExecute(execArgs);
 	}
 	/*[ENDIF] JAVA_SPEC_VERSION == 17 */
 }

@@ -559,6 +559,52 @@ public class TestJcmd extends AttachApiTest {
 		}
 	}
 
+	@Test
+	public void testJFRCheck() throws IOException {
+		if (VersionCheck.major() != 17) {
+			log("Skip JFR V2 test for non JDK17");
+			return;
+		}
+		TargetManager tgt = new TargetManager(TestConstants.TARGET_VM_CLASS, null,
+				TEST_JFR_VM_ARGS, Collections.emptyList());
+		tgt.syncWithTarget();
+		String targetId = tgt.targetId;
+		assertNotNull(targetId, ERROR_TARGET_NOT_LAUNCH);
+		try {
+			List<String> args = new ArrayList<>();
+			args.add(targetId);
+			String command = "JFR.check";
+			log("testJFRCheck() command = " + command);
+			args.add(command);
+			List<String> jcmdOutput = runCommandAndLogOutput(args);
+			log("testJFRCheck() jcmdOutput = " + jcmdOutput);
+			Optional<String> searchResult = StringUtilities.searchSubstring("No available recordings", jcmdOutput);
+			assertTrue(searchResult.isPresent(), "Unpexpected jcmd output: " + jcmdOutput);
+
+			args.clear();
+			args.add(targetId);
+			command = "JFR.start";
+			log("testJFRCheck() command = " + command);
+			args.add(command);
+			jcmdOutput = runCommandAndLogOutput(args);
+			log("testJFRCheck() jcmdOutput (JFR.start) = " + jcmdOutput);
+			searchResult = StringUtilities.searchSubstring("Started recording", jcmdOutput);
+			assertTrue(searchResult.isPresent(), "Unpexpected jcmd output: " + jcmdOutput);
+
+			args.clear();
+			args.add(targetId);
+			command = "JFR.check" + DIAGNOSTICS_OPTION_SEPARATOR + "name=1";
+			log("testJFRCheck() command = " + command);
+			args.add(command);
+			jcmdOutput = runCommandAndLogOutput(args);
+			log("testJFRCheck() jcmdOutput (JFR.check) = " + jcmdOutput);
+			searchResult = StringUtilities.searchSubstring("Recording 1: name=1", jcmdOutput);
+			assertTrue(searchResult.isPresent(), "Unpexpected jcmd output: " + jcmdOutput);
+		} finally {
+			tgt.terminateTarget();
+		}
+	}
+
 	@BeforeMethod
 	protected void setUp(Method testMethod) {
 		testName = testMethod.getName();

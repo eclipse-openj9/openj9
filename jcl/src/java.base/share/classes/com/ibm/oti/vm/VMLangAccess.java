@@ -233,7 +233,7 @@ public interface VMLangAccess {
 	/**
 	 * Invoke jdk.jfr.internal.dcmd.DCmdStart.execute().
 	 *
-	 * @param execArgs The string arguments separated by a delimiter
+	 * @param execArgs arguments separated by ','
 	 * @return A string array returned from DCmdStart.execute()
 	 */
 	public String[] doJFRDCmdStartExecute(String execArgs);
@@ -241,7 +241,7 @@ public interface VMLangAccess {
 	/**
 	 * Invoke jdk.jfr.internal.dcmd.DCmdStop.execute().
 	 *
-	 * @param execArgs The string arguments separated by a delimiter
+	 * @param execArgs arguments separated by ','
 	 * @return A string array returned from DCmdStop.execute()
 	 */
 	public String[] doJFRDCmdStopExecute(String execArgs);
@@ -268,9 +268,17 @@ public interface VMLangAccess {
 	/**
 	 * Invoke jdk.jfr.internal.dcmd.DCmdDump.execute().
 	 *
-	 * @param execArgs The string arguments separated by a delimiter
+	 * @param execArgs arguments separated by ','
 	 * @return A string array returned from DCmdDump.execute()
 	 */
 	public String[] doJFRDCmdDumpExecute(String execArgs);
+
+	/**
+	 * Invoke jdk.jfr.internal.dcmd.DCmdCheck.execute().
+	 *
+	 * @param execArgs arguments separated by ','
+	 * @return A string array returned from DCmdCheck.execute()
+	 */
+	public String[] doJFRDCmdCheckExecute(String execArgs);
 	/*[ENDIF] JAVA_SPEC_VERSION == 17 */
 }
