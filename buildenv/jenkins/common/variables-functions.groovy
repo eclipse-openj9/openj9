@@ -20,6 +20,9 @@
  * SPDX-License-Identifier: EPL-2.0 OR Apache-2.0 OR GPL-2.0-only WITH Classpath-exception-2.0 OR GPL-2.0-only WITH OpenJDK-assembly-exception-1.0
  *******************************************************************************/
 
+import java.util.regex.Matcher
+import java.util.regex.Pattern
+
 /*
  * Represents a single build spec ie. platform it
  */
@@ -686,49 +689,78 @@ def set_sdk_variables() {
 
 def set_sdk_versions() {
     /*
-     * Get full version from tag and replace + with _
-     * Eg. JDK8
+     * Get full version from tag.
+     * E.g. JDK8
      * OPENJDK_TAG := jdk8u272-b08
      * FULL_SDK_VERSION = jdk8u272-b08
-     * JAVA_RELEASE = 8
-     * JAVS_SUB_RELEASE = 8u272
+     * JAVA_RELEASE     = 8
+     * JAVA_SUB_RELEASE = 8u272
      *
-     * Eg. JDK11
+     * E.g. JDK11
      * OPENJDK_TAG := jdk-11.0.8+10
-     * FULL_SDK_VERSION = jdk-11.0.8_10
-     * JAVA_RELEASE = 11.0
-     * JAVS_SUB_RELEASE = 11.0.8
+     * FULL_SDK_VERSION = jdk-11.0.8+10
+     * JAVA_RELEASE     = 11.0
+     * JAVA_SUB_RELEASE = 11.0.8
      *
-     * Eg. Initial feature release
+     * E.g. Initial feature release
      * OPENJDK_TAG := jdk-15+36
-     * FULL_SDK_VERSION = jdk-15_36
-     * JAVA_RELEASE = 15.0
+     * FULL_SDK_VERSION = jdk-15+36
+     * JAVA_RELEASE     = 15.0
      * JAVA_SUB_RELEASE = 15.0.0
+     *
+     * E.g. tag with 3 or more components
+     * OPENJDK_TAG := jdk-17.0.20.1+1
+     * FULL_SDK_VERSION = jdk-17.0.20.1+1
+     * JAVA_RELEASE     = 17.0
+     * JAVA_SUB_RELEASE = 17.0.20.1
      */
 
     FULL_SDK_VERSION = sh (
-        script: "sed -n -e 's/+/_/g; s/^OPENJDK_TAG := //p' < closed/openjdk-tag.gmk",
+        script: "sed -n -e 's/^OPENJDK_TAG := //p' < closed/openjdk-tag.gmk",
         returnStdout: true
     ).trim()
-    def subReleaseStartIndexChar = 'jdk-'
-    def subReleaseEndIndexChar = '_'
-    def releaseEndIndexChar = '.'
+
     if (SDK_VERSION.equals('8')) {
-        subReleaseStartIndexChar = 'jdk'
-        subReleaseEndIndexChar = '-'
-        releaseEndIndexChar = 'u'
-    }
-    JAVA_SUB_RELEASE = FULL_SDK_VERSION.substring(FULL_SDK_VERSION.indexOf(subReleaseStartIndexChar) + subReleaseStartIndexChar.length(), FULL_SDK_VERSION.lastIndexOf(subReleaseEndIndexChar))
+        /*
+         * FULL_SDK_VERSION = jdk8u272-b08
+         * JAVA_RELEASE     = 8
+         * JAVA_SUB_RELEASE = 8u272
+         */
+        Pattern pattern = Pattern.compile('jdk(8u\\d+)-b\\d+')
+        Matcher matcher = pattern.matcher(FULL_SDK_VERSION)
+        if (!matcher.matches()) {
+            error("Unexpected OPENJDK_TAG: ${FULL_SDK_VERSION}")
+        } else {
+            JAVA_RELEASE     = '8'
+            JAVA_SUB_RELEASE = matcher.group(1)
+        }
+    } else {
+        /*
+         * FULL_SDK_VERSION = jdk-17.0.20.1+1
+         * JAVA_RELEASE     = 17.0
+         * JAVA_SUB_RELEASE = 17.0.20.1
+         */
 
-    if (!JAVA_SUB_RELEASE.contains('.') && !SDK_VERSION.equals('8')) {
-        // Must be the initial
-        JAVA_SUB_RELEASE += ".0.0"
+        Pattern pattern = Pattern.compile('jdk-((\\d+(\\.\\d+)?)(\\.\\d+)*)\\+\\d+')
+        Matcher matcher = pattern.matcher(FULL_SDK_VERSION)
+        if (!matcher.matches()) {
+            error("Unexpected OPENJDK_TAG: ${FULL_SDK_VERSION}")
+        } else {
+            // For JDK11+, JAVA_RELEASE is always <major>.<minor> (first two dot-separated components),
+            // even if the version has 3 or more components (e.g. like 17.0.20.1).
+            JAVA_RELEASE     = matcher.group(2) // first one or two components
+            JAVA_SUB_RELEASE = matcher.group(1) // all components
+            if (!JAVA_RELEASE.contains('.')) {
+                // An initial release.
+                JAVA_RELEASE     += '.0'
+                JAVA_SUB_RELEASE += '.0.0'
+            }
+        }
     }
-    JAVA_RELEASE = JAVA_SUB_RELEASE.substring(0,JAVA_SUB_RELEASE.lastIndexOf(releaseEndIndexChar))
 
-    echo "FULL_SDK_VERSION:'${FULL_SDK_VERSION}'"
-    echo "JAVA_RELEASE:'${JAVA_RELEASE}'"
-    echo "JAVA_SUB_RELEASE:'${JAVA_SUB_RELEASE}'"
+    echo "FULL_SDK_VERSION: '${FULL_SDK_VERSION}'"
+    echo "JAVA_RELEASE:     '${JAVA_RELEASE}'"
+    echo "JAVA_SUB_RELEASE: '${JAVA_SUB_RELEASE}'"
 }
 
 def get_date() {
