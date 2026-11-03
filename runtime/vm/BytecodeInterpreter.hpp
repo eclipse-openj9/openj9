@@ -8905,13 +8905,12 @@ done:
 		I_32 key = *(I_32*)_sp;
 		profileSwitch(REGISTER_ARGS, key);
 		_sp += 1;
-		while (nPairs != 0) {
-			I_32 matchKey = *data++;
-			I_32 matchOffset = *data++;
-			if (key == matchKey) {
-				_pc += matchOffset;
+		while (0 != nPairs) {
+			if (key == data[0]) {
+				_pc += data[1];
 				goto done;
 			}
+			data += 2;
 			nPairs -= 1;
 		}
 		_pc += defaultValue;
