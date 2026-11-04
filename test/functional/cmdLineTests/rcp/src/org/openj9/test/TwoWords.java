@@ -17,7 +17,7 @@
  * [1] https://www.gnu.org/software/classpath/license.html
  * [2] https://openjdk.org/legal/assembly-exception.html
  *
- * SPDX-License-Identifier: EPL-2.0 OR Apache-2.0 OR GPL-2.0-only WITH Classpath-exception-2.0 OR GPL-2.0-only WITH OpenJDK-assem bly-exception-1.0
+ * SPDX-License-Identifier: EPL-2.0 OR Apache-2.0 OR GPL-2.0-only WITH Classpath-exception-2.0 OR GPL-2.0-only WITH OpenJDK-assembly-exception-1.0
  */
 package org.openj9.test;
 
@@ -26,16 +26,17 @@ public class TwoWords {
 	String word2;
 	static int n = 1000;
 
-	TwoWords(String greeting1, String greeting2)
-	{
+	TwoWords(String greeting1, String greeting2) {
 		word1 = greeting1;
 		word2 = greeting2;
 	}
 	void verify(String greeting1, String greeting2) {
-		if (!word1.equals(greeting1))
+		if (!word1.equals(greeting1)) {
 			throw new RuntimeException(greeting1 + "!=" + word1);
-		if (!word2.equals(greeting2))
+		}
+		if (!word2.equals(greeting2)) {
 			throw new RuntimeException(greeting2 + "!=" + word2);
+		}
     }
 	public static void main(String[] args) {
 		TwoWords[] arr = new TwoWords[n];

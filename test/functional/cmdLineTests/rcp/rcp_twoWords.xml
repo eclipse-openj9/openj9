@@ -32,15 +32,15 @@
     <output type="success" caseSensitive="yes" regex="no">Success</output>
     <output type="failure" caseSensitive="yes" regex="yes">Test failed:.+</output>
     <output type="failure" caseSensitive="yes" regex="yes">java.lang.RuntimeException:.+</output>
-	<output type="required" caseSensitive="yes" regex="yes">j9vm.163.+resolveInstanceFieldRef.+result=4, field=word1</output>
-	<output type="required" caseSensitive="yes" regex="yes">j9vm.163.+resolveInstanceFieldRef.+result=8, field=word2</output>
+	<output type="required" caseSensitive="yes" regex="yes">j9vm.862.+resolveInstanceFieldRef.+result=4, field=word1</output>
+	<output type="required" caseSensitive="yes" regex="yes">j9vm.862.+resolveInstanceFieldRef.+result=8, field=word2</output>
   </test>
   <test id="Restore RCP cache once">
     <command>bash $SCRIPPATH$ $TEST_RESROOT$ $JAVA_COMMAND$ '$JVM_OPTIONS$' $MAINCLASS_SIMPLE$ 100 </command>
     <output type="success" caseSensitive="yes" regex="no">Success</output>
     <output type="failure" caseSensitive="yes" regex="yes">Test failed:.+</output>
     <output type="failure" caseSensitive="yes" regex="yes">java.lang.RuntimeException:.+</output>
-	<output type="failure" caseSensitive="yes" regex="yes">j9vm.163.+resolveInstanceFieldRef.+field=word1</output>
-	<output type="failure" caseSensitive="yes" regex="yes">j9vm.163.+resolveInstanceFieldRef.+field=word2</output>
+	<output type="failure" caseSensitive="yes" regex="yes">j9vm.862.+resolveInstanceFieldRef.+field=word1</output>
+	<output type="failure" caseSensitive="yes" regex="yes">j9vm.862.+resolveInstanceFieldRef.+field=word2</output>
   </test>
 </suite>
