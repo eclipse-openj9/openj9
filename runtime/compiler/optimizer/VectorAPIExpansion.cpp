@@ -857,10 +857,61 @@ TR_OpaqueClassBlock *TR_VectorAPIExpansion::getOpaqueClassBlockFromClassNode(TR:
 TR::DataType TR_VectorAPIExpansion::getDataTypeFromNode(TR::Compilation *comp, TR::Node *elementTypeNode)
 {
 #if JAVA_SPEC_VERSION >= 27
-    if (elementTypeNode->getOpCodeValue() != TR::iconst)
-        return TR::NoType;
+    int32_t elementType = -1;
 
-    switch (elementTypeNode->getConstValue()) {
+    if (elementTypeNode->getOpCodeValue() == TR::iconst) {
+        // CASE 1: Element type is passed in as constant integer value
+
+        elementType = elementTypeNode->getConstValue();
+    } else if (elementTypeNode->getOpCodeValue() == TR::icall || elementTypeNode->getOpCodeValue() == TR::iloadi) {
+        // CASE 2: Element type is passed in as call to Enum.ordinal()/field access of Enum.ordinal
+
+        TR::RecognizedMethod method = TR::unknownMethod;
+        char *fieldName = NULL;
+        int32_t fieldLen = 0;
+
+        if (elementTypeNode->getOpCodeValue() == TR::icall)
+            method = elementTypeNode->getSymbolReference()->getSymbol()->castToMethodSymbol()->getRecognizedMethod();
+        else // if elementTypeNode->getOpCodeValue() == TR::iloadi
+            fieldName = elementTypeNode->getSymbolReference()->getOwningMethod(comp)->fieldName(
+                elementTypeNode->getSymbolReference()->getCPIndex(), fieldLen, comp->trMemory());
+
+        // Exit if the element type node isn't Enum.ordinal (either function call or field access)
+        if (method != TR::java_lang_Enum_ordinal && (!fieldName || strncmp("java/lang/Enum.ordinal", fieldName, 22)))
+            return TR::NoType;
+
+        TR::Node *laneTypeEnumNode = elementTypeNode->getFirstChild();
+        TR::SymbolReference *symRef
+            = laneTypeEnumNode->getOpCode().hasSymbolReference() ? laneTypeEnumNode->getSymbolReference() : NULL;
+
+        TR::KnownObjectTable::Index knownObjectIndex
+            = symRef ? symRef->getKnownObjectIndex() : TR::KnownObjectTable::UNKNOWN;
+
+        // Exit if the LaneType Enum isn't a known object
+        if (knownObjectIndex == TR::KnownObjectTable::UNKNOWN)
+            return TR::NoType;
+
+        TR::KnownObjectTable *knownObjectTable = comp->getKnownObjectTable();
+        int32_t offset = comp->fej9()->getInstanceFieldOffset(knownObjectTable->getObjectInfo(knownObjectIndex)._clazz,
+            "ordinal", "I");
+
+#if defined(J9VM_OPT_JITSERVER)
+        if (comp->isOutOfProcessCompilation()) // in server mode
+        {
+            auto stream = comp->getStream();
+            stream->write(JITServer::MessageType::KnownObjectTable_getFieldAddressData, knownObjectIndex,
+                (intptr_t)(offset + comp->fej9()->getObjectHeaderSizeInBytes()));
+            J9::TransformUtil::value laneTypeValue = std::get<0>(stream->read<J9::TransformUtil::value>());
+            elementType = laneTypeValue.i;
+        } else
+#endif /* defined(J9VM_OPT_JITSERVER) */
+        {
+            uintptr_t objPtr = comp->getKnownObjectTable()->getPointer(knownObjectIndex);
+            elementType = comp->fej9()->getInt32FieldAt(objPtr, offset);
+        }
+    }
+
+    switch (elementType) {
         case LT_FLOAT:
             return TR::Float;
         case LT_DOUBLE:
