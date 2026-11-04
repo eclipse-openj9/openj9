@@ -2976,6 +2976,10 @@ void TR_ResolvedJ9Method::construct()
                                     "()Ljdk/internal/reflect/FieldAccessor;") },
         { TR::unknownMethod } };
 
+    static X IntVectorMethods[] = { { x(TR::jdk_incubator_vector_IntVector_opKind, "opKind",
+                                        "(Ljdk/incubator/vector/VectorOperators$Operator;I)Z") },
+        { TR::unknownMethod } };
+
     static X MethodMethods[] = {
         { TR::java_lang_reflect_Method_invoke, 6, "invoke", (int16_t)-1, "*" },
         { x(TR::java_lang_reflect_Method_acquireMethodAccessor, "acquireMethodAccessor",
@@ -4088,6 +4092,7 @@ void TR_ResolvedJ9Method::construct()
         { "com/ibm/dataaccess/DecimalData", DataAccessDecimalDataMethods },
         { "sun/nio/cs/ext/IBM1388$Encoder", IBM1388EncoderMethods },
         { "java/util/HashMap$HashIterator", HashMapHashIteratorMethods },
+        { "jdk/incubator/vector/IntVector", IntVectorMethods },
         { 0 }
     };
 
