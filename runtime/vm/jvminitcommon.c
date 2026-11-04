@@ -158,6 +158,9 @@ jniVersionIsValid(UDATA jniVersion)
 #if JAVA_SPEC_VERSION >= 24
 	case JNI_VERSION_24:
 #endif /* JAVA_SPEC_VERSION >= 24 */
+#if JAVA_SPEC_VERSION >= 28
+	case JNI_VERSION_28:
+#endif /* JAVA_SPEC_VERSION >= 28 */
 		return JNI_TRUE;
 	default:
 		return JNI_FALSE;
