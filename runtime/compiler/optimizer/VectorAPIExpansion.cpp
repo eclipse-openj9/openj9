@@ -857,26 +857,53 @@ TR_OpaqueClassBlock *TR_VectorAPIExpansion::getOpaqueClassBlockFromClassNode(TR:
 TR::DataType TR_VectorAPIExpansion::getDataTypeFromNode(TR::Compilation *comp, TR::Node *elementTypeNode)
 {
 #if JAVA_SPEC_VERSION >= 27
-    if (elementTypeNode->getOpCodeValue() != TR::iconst)
-        return TR::NoType;
+    int32_t elementType = -1;
 
-    switch (elementTypeNode->getConstValue()) {
-        case LT_FLOAT:
-            return TR::Float;
-        case LT_DOUBLE:
-            return TR::Double;
-        case LT_BYTE:
-            return TR::Int8;
-        case LT_SHORT:
-            return TR::Int16;
-        case LT_INT:
-            return TR::Int32;
-        case LT_LONG:
-            return TR::Int64;
-        case LT_FLOAT16: // TODO: add support for Float16
-        default:
+    if (elementTypeNode->getOpCodeValue() == TR::iconst) {
+        // CASE 1: Element type is passed in as constant integer value
+
+        elementType = elementTypeNode->getConstValue();
+    } else if (elementTypeNode->getOpCode().isFunctionCall()
+        && elementTypeNode->getSymbolReference()->getSymbol()->castToMethodSymbol()->getRecognizedMethod()
+            == TR::java_lang_Enum_ordinal) {
+        // CASE 2: Element type is passed in as call to Enum.ordinal()
+
+        TR::Node *laneTypeEnumNode = elementTypeNode->getFirstChild();
+        TR::SymbolReference *symRef
+            = laneTypeEnumNode->getOpCode().hasSymbolReference() ? laneTypeEnumNode->getSymbolReference() : NULL;
+
+        TR::KnownObjectTable::Index knownObjectIndex
+            = symRef ? symRef->getKnownObjectIndex() : TR::KnownObjectTable::UNKNOWN;
+
+        if (knownObjectIndex == TR::KnownObjectTable::UNKNOWN)
             return TR::NoType;
+
+        TR::KnownObjectTable *knownObjectTable = comp->getKnownObjectTable();
+
+        uintptr_t objPtr = comp->getKnownObjectTable()->getPointer(knownObjectIndex);
+        int32_t offset = comp->fej9()->getInstanceFieldOffset(knownObjectTable->getObjectInfo(knownObjectIndex)._clazz,
+            "ordinal", "I");
+
+        elementType = comp->fej9()->getInt32FieldAt(objPtr, offset);
     }
+
+    switch (elementType) {
+            case LT_FLOAT:
+                return TR::Float;
+            case LT_DOUBLE:
+                return TR::Double;
+            case LT_BYTE:
+                return TR::Int8;
+            case LT_SHORT:
+                return TR::Int16;
+            case LT_INT:
+                return TR::Int32;
+            case LT_LONG:
+                return TR::Int64;
+            case LT_FLOAT16: // TODO: add support for Float16
+            default:
+                return TR::NoType;
+        }
 #else /* JAVA_SPEC_VERSION >= 27 */
     TR_OpaqueClassBlock *clazz = getOpaqueClassBlockFromClassNode(comp, elementTypeNode);
 
