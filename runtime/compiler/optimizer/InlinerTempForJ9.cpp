@@ -5455,6 +5455,7 @@ bool TR_J9InlinerPolicy::suppressInliningRecognizedInitialCallee(TR_CallSite *ca
             break;
         }
         case TR::java_lang_StringLatin1_compareTo_BBII:
+        case TR::java_lang_StringUTF16_compareValues:
             if (cg->getSupportsArrayCmpLen()) {
                 return true;
             }
