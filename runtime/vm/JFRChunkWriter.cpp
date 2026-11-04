@@ -255,8 +255,7 @@ VM_JFRChunkWriter::writeJFRMetadata()
 	_bufferWriter->writeLEB128((U_64)0);
 
 	/* metadata ID */
-	_bufferWriter->writeLEB128((U_64)METADATA_ID);
-
+	_bufferWriter->writeLEB128((U_64)_vm->jfrState.metadataID);
 
 	U_8 *blobStart = _bufferWriter->getCursor();
 	if (_debug) {

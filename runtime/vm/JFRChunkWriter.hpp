@@ -254,8 +254,6 @@ private:
 	static constexpr int GC_SURVIVOR_CONFIGURATION_EVENT_SIZE = (2 * LEB128_64_SIZE) + (3 * LEB128_32_SIZE);
 	static constexpr int GC_TLAB_CONFIGURATION_EVENT_SIZE = sizeof(U_8) + (4 * LEB128_64_SIZE) + LEB128_32_SIZE;
 
-	static constexpr int METADATA_ID = 1;
-
 	const EventIds * const events;
 
 	static const EventIds v1Events;

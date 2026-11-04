@@ -1222,6 +1222,7 @@ initializeJavaVM(void * osMainThread, J9JavaVM ** vmPtr, J9CreateJavaVMParams *c
 	vm->loadedClassCount = 0;
 	vm->classLoaderCount = 0;
 	vm->moduleCount = 0;
+	vm->jfrState.metadataID = 0;
 	vm->jfrState.blobFileDescriptor = -1;
 	vm->jfrState.isCreated = FALSE;
 	vm->jfrState.isStarted = FALSE;
