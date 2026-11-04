@@ -73,7 +73,7 @@
  * To catch cases that we miss, we define global operator new and delete here.
  * (xlC won't link statically with the -noe flag when we override these.)
  */
-bool firstCompileStarted = false;
+static bool firstCompileStarted = false;
 
 // JITSERVER_TODO: disabled to allow for JITServer
 #if !defined(J9VM_OPT_JITSERVER)
@@ -93,16 +93,22 @@ void *operator new(size_t size)
     return malloc(size);
 }
 
-// Avoid -Wimplicit-exception-spec-mismatch error on platforms that specify the global delete operator with throw()
-#ifndef _NOEXCEPT
-#define _NOEXCEPT
-#endif
+// Avoid -Wimplicit-exception-spec-mismatch error on platforms that specify the global delete operator with throw().
+#if defined(_NOEXCEPT)
+#define J9_NOEXCEPT _NOEXCEPT
+#elif defined(AIXPPC) || defined(OSX) || (defined(J9ZOS390) && !defined(__open_xl__))
+#define J9_NOEXCEPT
+#elif __cplusplus < 201103L /* defined(AIXPPC) || defined(OSX) || (defined(J9ZOS390) && !defined(__open_xl__)) */
+#define J9_NOEXCEPT throw()
+#else /* __cplusplus < 201103L */
+#define J9_NOEXCEPT noexcept
+#endif /* defined(_NOEXCEPT) */
 
 /**
  * Since we are using arena allocation, heap deletions must be a no-op, and
  * can't be used by JIT code, so we inject an assertion here.
  */
-void operator delete(void *) _NOEXCEPT { TR_ASSERT(0, "Invalid use of global operator delete"); }
+void operator delete(void *) J9_NOEXCEPT { TR_ASSERT(0, "Invalid use of global operator delete"); }
 #endif /* !defined(J9VM_OPT_JITSERVER) */
 
 uint64_t J9::Compilation::_maxYieldIntervalS = 0;
