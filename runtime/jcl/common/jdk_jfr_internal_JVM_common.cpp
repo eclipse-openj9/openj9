@@ -785,6 +785,7 @@ Java_jdk_jfr_internal_JVM_storeMetadataDescriptor(JNIEnv *env, jobject obj, jbyt
 	VM_ArrayCopyHelpers::memcpyFromArray(
 			currentThread, J9_JNI_UNWRAP_REFERENCE(bytes), 0, len, vm->jfrState.metaDataBlobFile);
 	vm->jfrState.metaDataBlobFileSize = (UDATA)len;
+	vm->jfrState.metadataID += 1;
 
 done:
 	vmFuncs->internalExitVMToJNI(currentThread);
