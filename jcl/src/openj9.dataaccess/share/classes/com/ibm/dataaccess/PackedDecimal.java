@@ -396,50 +396,59 @@ public final class PackedDecimal {
 			boolean checkOverflow)
 			throws ArithmeticException {
 
+		final byte[] sumArray = sum.byteArray;
+		final byte[] op1Array = op1.byteArray;
+		final byte[] op2Array = op2.byteArray;
+		final int sumOffset = sum.offset;
+		final int op1Offset = op1.offset;
+		final int op2Offset = op2.offset;
+		int sumCurrentOffset = sum.currentOffset;
+		int op1CurrentOffset = op1.currentOffset;
+		int op2CurrentOffset = op2.currentOffset;
+
 		boolean carry;// add op2 sign digit to op1 sign digit
-		sum.indexValue = ((op1.signDigit + op2.signDigit) << 1) & 0x3FF;
-		sum.byteValue = CommonData.getPackedSumValues(sum.indexValue);
-		carry = sum.byteValue < op1.signDigit;
-		sum.byteArray[sum.signOffset] = (byte) (sum.byteValue | (op1.sign & CommonData.LOWER_NIBBLE_MASK));
+		int sumIndex = ((op1.signDigit + op2.signDigit) << 1) & 0x3FF;
+		int sumByte = CommonData.getPackedSumValues(sumIndex);
+		carry = sumByte < op1.signDigit;
+		sumArray[sum.signOffset] = (byte) (sumByte | (op1.sign & CommonData.LOWER_NIBBLE_MASK));
 
 		// add op2 digits to op1 digits
-		for (; op2.currentOffset >= op2.offset
-				&& sum.currentOffset >= sum.offset; op2.currentOffset -= 1, op1.currentOffset -= 1, sum.currentOffset -= 1) {
-			if (checkOverflow && sum.currentOffset < sum.offset) {
+		for (; op2CurrentOffset >= op2Offset
+				&& sumCurrentOffset >= sumOffset; op2CurrentOffset -= 1, op1CurrentOffset -= 1, sumCurrentOffset -= 1) {
+			if (checkOverflow && sumCurrentOffset < sumOffset) {
 				throw new ArithmeticException(
 						"Decimal overflow in addPackedDecimal.");
 			}
 			;
-			op1.byteValue = op1.byteArray[op1.currentOffset]
-					& CommonData.INTEGER_MASK;
-			op2.byteValue = op2.byteArray[op2.currentOffset]
-					& CommonData.INTEGER_MASK;
-			op1.indexValue = op1.byteValue
-					+ (op1.byteValue & CommonData.HIGHER_NIBBLE_MASK);
-			op2.indexValue = op2.byteValue
-					+ (op2.byteValue & CommonData.HIGHER_NIBBLE_MASK);
-			sum.indexValue = op1.indexValue + op2.indexValue;
+			int op1Byte = op1Array[op1CurrentOffset] & CommonData.INTEGER_MASK;
+			int op2Byte = op2Array[op2CurrentOffset] & CommonData.INTEGER_MASK;
+			int op1Index = op1Byte + (op1Byte & CommonData.HIGHER_NIBBLE_MASK);
+			int op2Index = op2Byte + (op2Byte & CommonData.HIGHER_NIBBLE_MASK);
+			sumIndex = op1Index + op2Index;
 			if (carry)
-				sum.byteValue = CommonData
-						.getPackedSumPlusOneValues(sum.indexValue);
+				sumByte = CommonData.getPackedSumPlusOneValues(sumIndex);
 			else
-				sum.byteValue = CommonData.getPackedSumValues(sum.indexValue);
-			carry = (sum.byteValue & CommonData.INTEGER_MASK) < ((op1.byteValue & CommonData.INTEGER_MASK) + (op2.byteValue & CommonData.INTEGER_MASK));
-			sum.byteArray[sum.currentOffset] = (byte) (sum.byteValue);
+				sumByte = CommonData.getPackedSumValues(sumIndex);
+			carry = (sumByte & CommonData.INTEGER_MASK) < ((op1Byte & CommonData.INTEGER_MASK) + (op2Byte & CommonData.INTEGER_MASK));
+			sumArray[sumCurrentOffset] = (byte) (sumByte);
 		}
 		// if carry, add one to remaining high order digits from op1
-		for (; carry && op1.currentOffset >= op1.offset
-				&& sum.currentOffset >= sum.offset; op1.currentOffset -= 1, sum.currentOffset -= 1) {
-			if (checkOverflow && sum.currentOffset < sum.offset) {
+		for (; carry && op1CurrentOffset >= op1Offset
+				&& sumCurrentOffset >= sumOffset; op1CurrentOffset -= 1, sumCurrentOffset -= 1) {
+			if (checkOverflow && sumCurrentOffset < sumOffset) {
 				throw new ArithmeticException(
 						"Decimal overflow in addPackedDecimal");
 			}
-			sum.byteValue = CommonData
-					.getPackedAddOneValues(op1.byteArray[op1.currentOffset])
+			sumByte = CommonData
+					.getPackedAddOneValues(op1Array[op1CurrentOffset])
 					& CommonData.INTEGER_MASK;
-			carry = (sum.byteValue == 0x00);
-			sum.byteArray[sum.currentOffset] = (byte) (sum.byteValue);
+			carry = (sumByte == 0x00);
+			sumArray[sumCurrentOffset] = (byte) (sumByte);
 		}
+		sum.currentOffset = sumCurrentOffset;
+		op1.currentOffset = op1CurrentOffset;
+		op2.currentOffset = op2CurrentOffset;
+
 		if (sum.currentOffset < sum.offset) // reached the end
 		{
 			if ((carry && checkOverflow)
@@ -461,7 +470,7 @@ public final class PackedDecimal {
 			sum.currentOffset -= 1;
 		}
 		// copy any remaining digits
-		copyRemainingDigits(sum, op1, op2, checkOverflow);
+		copyRemainingDigits(sum, op1, checkOverflow);
 	}
 
 	private static void computeDifference(PackedDecimalOperand sum,
@@ -469,57 +478,65 @@ public final class PackedDecimal {
 			boolean checkOverflow)
 			throws ArithmeticException {
 
+		final byte[] sumArray = sum.byteArray;
+		final byte[] op1Array = op1.byteArray;
+		final byte[] op2Array = op2.byteArray;
+		final int sumOffset = sum.offset;
+		final int op1Offset = op1.offset;
+		final int op2Offset = op2.offset;
+
 		boolean borrow;
 		// compute difference from sign byte
 		borrow = op1.signDigit < op2.signDigit;
 
-		sum.byteValue = Math.abs((op1.signDigit >> 4) - (op2.signDigit >> 4)
+		int sumByte = Math.abs((op1.signDigit >> 4) - (op2.signDigit >> 4)
 				+ 10) % 10;
-		sum.byteArray[sum.signOffset] = (byte) ((sum.byteValue << 4) | (op1.sign & CommonData.LOWER_NIBBLE_MASK));
+		sumArray[sum.signOffset] = (byte) ((sumByte << 4) | (op1.sign & CommonData.LOWER_NIBBLE_MASK));
 
+		int sumCurrentOffset = sum.currentOffset;
+		int op1CurrentOffset = op1.signOffset - 1;
+		int op2CurrentOffset = op2.signOffset - 1;
 		// compute op1 digit values - op2 digit values ;
-		for (op2.currentOffset = op2.signOffset - 1, op1.currentOffset = op1.signOffset - 1; op2.currentOffset >= op2.offset
-				&& sum.currentOffset >= sum.offset; op2.currentOffset -= 1, op1.currentOffset -= 1, sum.currentOffset -= 1) {
-			if (checkOverflow && sum.currentOffset < sum.offset) {
+		for (; op2CurrentOffset >= op2Offset
+				&& sumCurrentOffset >= sumOffset; op2CurrentOffset -= 1, op1CurrentOffset -= 1, sumCurrentOffset -= 1) {
+			if (checkOverflow && sumCurrentOffset < sumOffset) {
 				throw new ArithmeticException(
 						"Decimal overflow in subtractPackedDecimal");
 			}
 
-			op1.byteValue = op1.byteArray[op1.currentOffset]
-					& CommonData.INTEGER_MASK;
-			op2.byteValue = op2.byteArray[op2.currentOffset]
-					& CommonData.INTEGER_MASK;
-			op1.indexValue = op1.byteValue
-					+ (op1.byteValue & CommonData.HIGHER_NIBBLE_MASK);
-			op2.indexValue = op2.byteValue
-					+ (op2.byteValue & CommonData.HIGHER_NIBBLE_MASK);
-			sum.indexValue = (op1.indexValue - op2.indexValue) & 0x3FF;
+			int op1Byte = op1Array[op1CurrentOffset] & CommonData.INTEGER_MASK;
+			int op2Byte = op2Array[op2CurrentOffset] & CommonData.INTEGER_MASK;
+			int op1Index = op1Byte + (op1Byte & CommonData.HIGHER_NIBBLE_MASK);
+			int op2Index = op2Byte + (op2Byte & CommonData.HIGHER_NIBBLE_MASK);
+			int sumIndex = (op1Index - op2Index) & 0x3FF;
 			if (borrow)
-				sum.byteValue = CommonData
-						.getPackedDifferenceMinusOneValues(sum.indexValue);
+				sumByte = CommonData
+						.getPackedDifferenceMinusOneValues(sumIndex);
 			else
-				sum.byteValue = CommonData
-						.getPackedDifferenceValues(sum.indexValue);
-			borrow = (sum.byteValue & CommonData.INTEGER_MASK) > ((op1.byteValue & CommonData.INTEGER_MASK) - (op2.byteValue & CommonData.INTEGER_MASK));
-			if (sum.currentOffset >= sum.offset)
-				sum.byteArray[sum.currentOffset] = (byte) (sum.byteValue);
+				sumByte = CommonData
+						.getPackedDifferenceValues(sumIndex);
+			borrow = (sumByte & CommonData.INTEGER_MASK) > ((op1Byte & CommonData.INTEGER_MASK) - (op2Byte & CommonData.INTEGER_MASK));
+			if (sumCurrentOffset >= sumOffset)
+				sumArray[sumCurrentOffset] = (byte) (sumByte);
 		}
+
 		// if borrow, subtract one from remaining high order digits
-		for (; borrow && op1.currentOffset >= op1.offset
-				&& sum.currentOffset >= sum.offset; op1.currentOffset -= 1, sum.currentOffset -= 1) {
-			if (checkOverflow && sum.currentOffset < sum.offset) {
+		for (; borrow && op1CurrentOffset >= op1Offset
+				&& sumCurrentOffset >= sumOffset; op1CurrentOffset -= 1, sumCurrentOffset -= 1) {
+			if (checkOverflow && sumCurrentOffset < sumOffset) {
 				throw new ArithmeticException(
 						"Decimal overflow in subtractPackedDecimal");
 			}
-			sum.byteValue = CommonData
-					.getPackedBorrowOneValues(op1.byteArray[op1.currentOffset])
-					& CommonData.INTEGER_MASK;
-			borrow = (sum.byteValue == 0x99);
-			if (sum.currentOffset >= sum.offset)
-				sum.byteArray[sum.currentOffset] = (byte) (sum.byteValue);
+			sumByte = CommonData.getPackedBorrowOneValues(op1Array[op1CurrentOffset]) & CommonData.INTEGER_MASK;
+			borrow = (sumByte == 0x99);
+			if (sumCurrentOffset >= sumOffset)
+				sumArray[sumCurrentOffset] = (byte) (sumByte);
 		}
 
-		copyRemainingDigits(sum, op1, op2, checkOverflow);
+		sum.currentOffset = sumCurrentOffset;
+		op1.currentOffset = op1CurrentOffset;
+		op2.currentOffset = op2CurrentOffset;
+		copyRemainingDigits(sum, op1, checkOverflow);
 	}
 
 	private static void computeValue(PackedDecimalOperand sum,
@@ -1977,7 +1994,6 @@ public final class PackedDecimal {
 		int sign;
 		int signDigit;
 		int byteValue;
-		int indexValue;
 
 		/**
 		 * Sets up the attributes of a Packed Decimal operand. Truncates leading zeros. Captures the sign value.
