@@ -2882,7 +2882,7 @@ public class ValueTypeTests {
 		
 	}
 
-	private static abstract class InvisibleAbstractClass {
+	private static abstract value class InvisibleAbstractClass {
 		
 	}
 	

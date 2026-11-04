@@ -1792,6 +1792,19 @@ loadSuperClassAndInterfaces(J9VMThread *vmThread, J9ClassLoader *classLoader, J9
 				return FALSE;
 			}
 
+#if defined(J9VM_OPT_VALHALLA_VALUE_TYPES)
+			/* A value class may only extend java.lang.Object or a value class. */
+			if (J9ROMCLASS_IS_VALUE(romClass)
+				&& !J9_IS_J9CLASS_VALUETYPE(superclass)
+				&& !J9UTF8_LITERAL_EQUALS(J9UTF8_DATA(superclassName), J9UTF8_LENGTH(superclassName), "java/lang/Object")
+			) {
+				setCurrentExceptionNLSWithArgs(vmThread, J9NLS_VM_VALUETYPE_HAS_WRONG_SUPERCLASS,
+						J9VMCONSTANTPOOL_JAVALANGINCOMPATIBLECLASSCHANGEERROR, J9UTF8_LENGTH(className),
+						J9UTF8_DATA(className), J9UTF8_LENGTH(superclassName), J9UTF8_DATA(superclassName));
+				return FALSE;
+			}
+#endif /* defined(J9VM_OPT_VALHALLA_VALUE_TYPES) */
+
 			/* JEP 360 sealed classes: if superclass is sealed it must contain the romClass's name in its PermittedSubclasses attribute */
 			if (! isClassPermittedBySealedSuper(superclass->romClass, J9UTF8_DATA(className), J9UTF8_LENGTH(className))) {
 				Trc_VM_CreateRAMClassFromROMClass_classIsNotPermittedBySealedSuperclass(vmThread, superclass, J9UTF8_LENGTH(className), J9UTF8_DATA(className));
@@ -2437,17 +2450,6 @@ nativeOOM:
 
 		if (J9ROMCLASS_IS_VALUE(romClass)) {
 			classFlags |= J9ClassIsValueType;
-#if defined(J9VM_OPT_VALHALLA_VALUE_TYPES)
-			/* superclass can be NULL since primitive classes are value types. */
-			if ((NULL != superclass) && !J9_IS_J9CLASS_VALUETYPE(superclass)) {
-				J9UTF8 *superclassName = J9ROMCLASS_SUPERCLASSNAME(romClass);
-				if (!J9UTF8_LITERAL_EQUALS(J9UTF8_DATA(superclassName), J9UTF8_LENGTH(superclassName), "java/lang/Object")) {
-					J9UTF8* className = J9ROMCLASS_CLASSNAME(romClass);
-					setCurrentExceptionNLSWithArgs(vmThread, J9NLS_VM_VALUETYPE_HAS_WRONG_SUPERCLASS,
-							J9VMCONSTANTPOOL_JAVALANGINCOMPATIBLECLASSCHANGEERROR, J9UTF8_LENGTH(className),
-							J9UTF8_DATA(className), J9UTF8_LENGTH(superclassName), J9UTF8_DATA(superclassName));
-				}
-			}
 #if defined(J9VM_OPT_VALHALLA_FLATTENABLE_VALUE_TYPES)
 			/* totalInstanceSize reflects the unflattened value size. Use this to be consistent
 			 * with the information given to the user through Unsafe.getObjectSize().
@@ -2477,7 +2479,6 @@ nativeOOM:
 				classFlags |= J9ClassRequiresPrePadding;
 			}
 #endif /* defined(J9VM_OPT_VALHALLA_FLATTENABLE_VALUE_TYPES) */
-#endif /* defined(J9VM_OPT_VALHALLA_VALUE_TYPES) */
 		} else if (!J9ROMCLASS_IS_VALUE(romClass) && !J9ROMCLASS_IS_INTERFACE(romClass)
 				&& !J9ROMCLASS_IS_PRIMITIVE_TYPE(romClass)) {
 			/* All classes which are not value classes,interfaces or classes of primitive types are identity types. */
