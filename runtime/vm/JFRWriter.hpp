@@ -175,10 +175,10 @@ public:
 	}
 
 	static bool
-	flushJFRDataToFile(J9VMThread *currentThread, bool finalWrite)
+	flushJFRDataToFile(J9VMThread *currentThread, bool newChunk, bool finalWrite)
 	{
 		bool result = true;
-		VM_JFRChunkWriter chunkWriter(currentThread, finalWrite);
+		VM_JFRChunkWriter chunkWriter(currentThread, newChunk, finalWrite);
 
 		if (!chunkWriter.isOkay()) {
 			result = false;
