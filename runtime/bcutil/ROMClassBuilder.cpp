@@ -1367,7 +1367,10 @@ ROMClassBuilder::computeExtraModifiers(ClassFileOracle *classFileOracle, ROMClas
 		if ( classFileOracle->hasEmptyFinalizeMethod() ) {
 			/* If finalize() is empty, mark this class so it does not inherit CFR_ACC_FINALIZE_NEEDED from its superclass */
 			modifiers |= J9AccClassHasEmptyFinalize;
-		} else {
+		} else if (!classFileOracle->isValueType()) {
+			/* Value classes cannot override Object::finalize()
+			 * so do not set J9AccClassFinalizeNeeded.
+			 */
 			modifiers |= J9AccClassFinalizeNeeded;
 		}
 	}
