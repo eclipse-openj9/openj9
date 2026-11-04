@@ -180,7 +180,7 @@ VM_JFRChunkWriter::writeJFRHeader(U_8 *headerStart)
 	_bufferWriter->writeU64(_vm->jfrState.chunkStartTime); // 32
 
 	/* duration in nanos */
-	_bufferWriter->writeU64(j9time_nano_time() - _vm->jfrState.chunkStartTicks); // 40
+	_bufferWriter->writeU64(_chunkDuration); // 40
 
 	/* start ticks */
 	_bufferWriter->writeU64(_vm->jfrState.chunkStartTicks); // 48
@@ -189,7 +189,7 @@ VM_JFRChunkWriter::writeJFRHeader(U_8 *headerStart)
 	_bufferWriter->writeU64(1000000000); // 56
 
 	/* file state or generation */
-	_bufferWriter->writeU8(_finalWrite ? 0 : _vm->jfrState.chunkGeneration); // 64
+	_bufferWriter->writeU8(_newChunk ? 0 : _vm->jfrState.chunkGeneration); // 64
 
 	/* pad */
 	_bufferWriter->writeU16(0); // 65

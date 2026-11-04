@@ -5768,7 +5768,7 @@ typedef struct J9InternalVMFunctions {
 	jboolean (*isJFRV2SupportEnabled)(struct J9JavaVM *vm);
 	jboolean (*isJFRRecordingStarted)(struct J9JavaVM *vm);
 	jboolean (*isJFRCreated)(struct J9JavaVM *vm);
-	void (*jfrDump)(struct J9VMThread *currentThread, BOOLEAN finalWrite);
+	void (*jfrDump)(struct J9VMThread *currentThread, BOOLEAN newChunk);
 	void (*enableJFRRecordingOnThread)(struct J9VMThread *currentThread, j9object_t threadObject);
 	void (*disableJFRRecordingOnThread)(struct J9VMThread *currentThread, j9object_t threadObject);
 	BOOLEAN (*isJFRRecordingDisabledOnThread)(struct J9VMThread *currentThread, struct J9VMThread *sampleThread);

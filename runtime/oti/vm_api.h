@@ -5872,12 +5872,12 @@ isJFRCreated(J9JavaVM *vm);
  * Flush all the thread buffers and write out the global buffer.
  *
  * @param currentThread[in] the current J9VMThread
- * @param finalWrite[in] if true then a full checkpoint write is being performed, if
+ * @param newChunk[in] if true then a full checkpoint write is being performed, if
  * false a partial write is done keeping the checkpoint open for
  * more writes (only available in JFRv2).
  */
 void
-jfrDump(J9VMThread *currentThread, BOOLEAN finalWrite);
+jfrDump(J9VMThread *currentThread, BOOLEAN newChunk);
 
 void
 enableJFRRecordingOnThread(J9VMThread *currentThread, j9object_t threadObject);
