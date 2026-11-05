@@ -21,7 +21,17 @@
 ###############################################################################
 
 # Compiler
-/runtime/compiler/control/ @dsouzai
-/runtime/compiler/env/ @dsouzai
-/runtime/compiler/exceptions/ @dsouzai
-/runtime/compiler/runtime/ @dsouzai
+/runtime/compiler/ @0xdaryl
+/runtime/compiler/control/ @mpirvu
+/runtime/compiler/net/ @mpirvu
+/runtime/compiler/env/ @mpirvu
+/runtime/compiler/runtime/ @mpirvu
+/runtime/compiler/optimizer/ @hzongaro
+/runtime/compiler/il/ @0xdaryl
+/runtime/compiler/x/ @0xdaryl
+/runtime/compiler/aarch64/ @knn-k
+/runtime/compiler/p/ @zl-wang
+/runtime/compiler/z/ @r30shah
+
+# GC
+/runtime/gc*/ @amicic @dmitripivkine @hzongaro
