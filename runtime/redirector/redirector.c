@@ -942,6 +942,9 @@ JNI_GetDefaultJavaVMInitArgs(void *vm_args)
 #if JAVA_SPEC_VERSION >= 24
 		case JNI_VERSION_24:
 #endif /* JAVA_SPEC_VERSION >= 24 */
+#if JAVA_SPEC_VERSION >= 28
+		case JNI_VERSION_28:
+#endif /* JAVA_SPEC_VERSION >= 28 */
 			return JNI_OK;
 		default:
 			break;

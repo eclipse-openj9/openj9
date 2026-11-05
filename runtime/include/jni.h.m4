@@ -59,6 +59,7 @@ ifelse(eval(JAVA_SPEC_VERSION >= 19), 1, `#define JNI_VERSION_19 0x00130000', `d
 ifelse(eval(JAVA_SPEC_VERSION >= 20), 1, `#define JNI_VERSION_20 0x00140000', `dnl')
 ifelse(eval(JAVA_SPEC_VERSION >= 21), 1, `#define JNI_VERSION_21 0x00150000', `dnl')
 ifelse(eval(JAVA_SPEC_VERSION >= 24), 1, `#define JNI_VERSION_24 0x00180000', `dnl')
+ifelse(eval(JAVA_SPEC_VERSION >= 28), 1, `#define JNI_VERSION_28 0x001C0000', `dnl')
 
 #define JVMEXT_VERSION_1_1 0x7E010001
 

@@ -34,24 +34,78 @@ import com.ibm.dtfj.image.DataUnavailable;
 public interface JavaVMInitArgs {
 
 	/**
-	 * The JNI specified version constant for the Java 1.1 version of JNI
+	 * The JNI specified version constant for the Java 1.1 version of JNI.
 	 */
 	public static final int JNI_VERSION_1_1 = 0x00010001;
 
 	/**
-	 * The JNI specified version constant for the Java 1.2 version of JNI
+	 * The JNI specified version constant for the Java 1.2 version of JNI.
 	 */
 	public static final int JNI_VERSION_1_2 = 0x00010002;
 
 	/**
-	 * The JNI specified version constant for the Java 1.4 version of JNI
+	 * The JNI specified version constant for the Java 1.4 version of JNI.
 	 */
 	public static final int JNI_VERSION_1_4 = 0x00010004;
 
 	/**
-	 * The JNI specified version constant for the Java 1.6 version of JNI
+	 * The JNI specified version constant for the Java 1.6 version of JNI.
 	 */
 	public static final int JNI_VERSION_1_6 = 0x00010006;
+
+	/**
+	 * The JNI specified version constant for the Java 1.8 version of JNI.
+	 */
+	public static final int JNI_VERSION_1_8 = 0x00010008;
+
+	/*[IF JAVA_SPEC_VERSION >= 9]*/
+	/**
+	 * The JNI specified version constant for the Java 9 version of JNI.
+	 */
+	public static final int JNI_VERSION_9 = 0x00090000;
+	/*[ENDIF] JAVA_SPEC_VERSION >= 9 */
+
+	/*[IF JAVA_SPEC_VERSION >= 10]*/
+	/**
+	 * The JNI specified version constant for the Java 10 version of JNI.
+	 */
+	public static final int JNI_VERSION_10 = 0x000A0000;
+	/*[ENDIF] JAVA_SPEC_VERSION >= 10 */
+
+	/*[IF JAVA_SPEC_VERSION >= 19]*/
+	/**
+	 * The JNI specified version constant for the Java 19 version of JNI.
+	 */
+	public static final int JNI_VERSION_19 = 0x00130000;
+	/*[ENDIF] JAVA_SPEC_VERSION >= 19 */
+
+	/*[IF JAVA_SPEC_VERSION >= 20]*/
+	/**
+	 * The JNI specified version constant for the Java 20 version of JNI.
+	 */
+	public static final int JNI_VERSION_20 = 0x00140000;
+	/*[ENDIF] JAVA_SPEC_VERSION >= 20 */
+
+	/*[IF JAVA_SPEC_VERSION >= 21]*/
+	/**
+	 * The JNI specified version constant for the Java 21 version of JNI.
+	 */
+	public static final int JNI_VERSION_21 = 0x00150000;
+	/*[ENDIF] JAVA_SPEC_VERSION >= 21 */
+
+	/*[IF JAVA_SPEC_VERSION >= 24]*/
+	/**
+	 * The JNI specified version constant for the Java 24 version of JNI.
+	 */
+	public static final int JNI_VERSION_24 = 0x00180000;
+	/*[ENDIF] JAVA_SPEC_VERSION >= 24 */
+
+	/*[IF JAVA_SPEC_VERSION >= 28]*/
+	/**
+	 * The JNI specified version constant for the Java 28 version of JNI.
+	 */
+	public static final int JNI_VERSION_28 = 0x001C0000;
+	/*[ENDIF] JAVA_SPEC_VERSION >= 28 */
 
 	/**
 	 * Fetch the JNI version from the JavaVMInitArgs structure used to create this VM.
