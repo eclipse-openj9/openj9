@@ -56,6 +56,7 @@ private:
 		/* Number of bytes hashed while processing current entry. */
 		U_32 numBytesHashed;
 
+		J9Class *currentClass;
 		/* Field iterator state of the current entry. */
 		J9ROMFieldOffsetWalkState walkState;
 		/* Next field to process wthin the current entry. */
@@ -121,6 +122,7 @@ private:
 			ValueTypeHashStackEntry *frame = &entries[newTop];
 			frame->objectPointer = objectPointer;
 			frame->clazz = clazz;
+			frame->currentClass = clazz;
 			frame->startOffset = startOffset;
 			frame->hashValue = 0;
 			frame->numBytesHashed = 0;
@@ -384,6 +386,7 @@ private:
 		hashValue = mix(hashValue, (U_32)(UDATA)clazz);
 		U_32 numBytesHashed = sizeof(UDATA);
 
+		J9Class *currentClass = clazz;
 		J9ROMFieldOffsetWalkState walkState;
 		J9ROMFieldOffsetWalkResult *result = vm->internalVMFunctions->fieldOffsetsStartDo(
 				vm,
@@ -396,7 +399,26 @@ private:
 #endif /* defined(J9VM_OPT_VALHALLA_FLATTENABLE_VALUE_TYPES) */
 				);
 
-		while (NULL != result->field) {
+		while (true) {
+			if (NULL == result->field) {
+				/* Walk superclass fields to include inherited fields in hash calculation. */
+				J9Class *superClazz = VM_VMHelpers::getSuperclass(currentClass);
+				if ((NULL == superClazz) || !J9_IS_J9CLASS_VALUETYPE(superClazz)) {
+					break;
+				}
+				currentClass = superClazz;
+				result = vm->internalVMFunctions->fieldOffsetsStartDo(
+						vm,
+						superClazz->romClass,
+						VM_VMHelpers::getSuperclass(superClazz),
+						&walkState,
+						J9VM_FIELD_OFFSET_WALK_INCLUDE_INSTANCE
+#if defined(J9VM_OPT_VALHALLA_FLATTENABLE_VALUE_TYPES)
+						, superClazz->flattenedClassCache
+#endif /* defined(J9VM_OPT_VALHALLA_FLATTENABLE_VALUE_TYPES) */
+						);
+				continue;
+			}
 			UDATA fieldOffset = startOffset + result->offset;
 			U_8 sigChar = *J9UTF8_DATA(J9ROMNAMEANDSIGNATURE_SIGNATURE(&result->field->nameAndSignature));
 
@@ -442,9 +464,9 @@ private:
 				U_32 datum = 0;
 #if defined(J9VM_OPT_VALHALLA_FLATTENABLE_VALUE_TYPES)
 				if (J9ROMFIELD_IS_NULL_RESTRICTED(result->field)) {
-					if (vm->internalVMFunctions->isFlattenableFieldFlattened(clazz, result->field)) {
+					if (vm->internalVMFunctions->isFlattenableFieldFlattened(currentClass, result->field)) {
 						/* Null-restricted flattened field. */
-						J9Class *flatClazz = vm->internalVMFunctions->getFlattenableFieldType(clazz, result->field);
+						J9Class *flatClazz = vm->internalVMFunctions->getFlattenableFieldType(currentClass, result->field);
 						datum = (U_32)recursiveValueObjectHash(vm, currentThread, objectPointer, flatClazz, fieldOffset, depth + 1, depthExceeded, oomOccurred);
 					} else {
 						/* Non-flattened null-restricted value object field. */
@@ -546,6 +568,22 @@ mixHash:
 
 			/* Once all the fields of the current entry are processed, finalize its hash and mix it into the parent entry's hash. */
 			if (NULL == entry->currentField->field) {
+				/* Walk superclass fields to include inherited fields in hash calculation. */
+				J9Class *superClazz = VM_VMHelpers::getSuperclass(entry->currentClass);
+				if ((NULL != superClazz) && J9_IS_J9CLASS_VALUETYPE(superClazz)) {
+					entry->currentClass = superClazz;
+					entry->currentField = vm->internalVMFunctions->fieldOffsetsStartDo(
+							vm,
+							superClazz->romClass,
+							VM_VMHelpers::getSuperclass(superClazz),
+							&entry->walkState,
+							J9VM_FIELD_OFFSET_WALK_INCLUDE_INSTANCE
+#if defined(J9VM_OPT_VALHALLA_FLATTENABLE_VALUE_TYPES)
+							, superClazz->flattenedClassCache
+#endif /* defined(J9VM_OPT_VALHALLA_FLATTENABLE_VALUE_TYPES) */
+							);
+					continue;
+				}
 				U_32 finalHash = finalizeMurmur3Hash(entry->hashValue, entry->numBytesHashed);
 				if (0 == finalHash) {
 					/* Hash code for value types should not be zero. */
@@ -609,9 +647,9 @@ mixHash:
 			case 'L': {
 #if defined(J9VM_OPT_VALHALLA_FLATTENABLE_VALUE_TYPES)
 				if (J9ROMFIELD_IS_NULL_RESTRICTED(result->field)) {
-					if (vm->internalVMFunctions->isFlattenableFieldFlattened(entry->clazz, result->field)) {
+					if (vm->internalVMFunctions->isFlattenableFieldFlattened(entry->currentClass, result->field)) {
 						/* Null-restricted non-flattened field. */
-						J9Class *flatClazz = vm->internalVMFunctions->getFlattenableFieldType(entry->clazz, result->field);
+						J9Class *flatClazz = vm->internalVMFunctions->getFlattenableFieldType(entry->currentClass, result->field);
 						if (!pushChildFrame(vm, currentThread, &stack, entry, entry->objectPointer, flatClazz, fieldOffset)) {
 							goto oom;
 						}
