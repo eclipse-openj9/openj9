@@ -146,6 +146,8 @@ freeThreadIDs(J9VMThread *currentThread)
 	J9HashTableState hashTableState = {0};
 	J9JFRThreadObject *entry = (J9JFRThreadObject *)hashTableStartDo(vm->jfrState.threadObjectJNIRefTable, &hashTableState);
 
+	omrthread_monitor_enter(vm->jfrState.threadObjectsMutex);
+
 	while (NULL != entry) {
 		vmFuncs->j9jni_deleteGlobalRef((JNIEnv *)currentThread, entry->threadObject, false);
 		entry = (J9JFRThreadObject *)hashTableNextDo(&hashTableState);
@@ -153,6 +155,8 @@ freeThreadIDs(J9VMThread *currentThread)
 
 	hashTableFree(vm->jfrState.threadObjectJNIRefTable);
 	vm->jfrState.threadObjectJNIRefTable = NULL;
+
+	omrthread_monitor_exit(vm->jfrState.threadObjectsMutex);
 }
 
 static UDATA
@@ -1600,9 +1604,8 @@ tearDownJFR(J9JavaVM *vm)
 		stopJFRRecording(vm);
 	}
 	vm->jfrState.isCreated = FALSE;
+	issueWriteBarrier();
 	VM_JFRWriter::teardownJFRWriter(vm);
-
-	freeThreadIDs(currentThread);
 
 	/* Free global data */
 	VM_JFRConstantPoolTypes::freeJFRConstantEvents(vm);
@@ -1644,6 +1647,8 @@ tearDownJFR(J9JavaVM *vm)
 #endif /* JAVA_SPEC_VERSION >= 17 */
 	omrthread_monitor_destroy(vm->jfrSamplerMutex);
 	vm->jfrSamplerMutex = NULL;
+
+	freeThreadIDs(currentThread);
 }
 
 I_64
@@ -1669,6 +1674,10 @@ getThreadTID(J9VMThread *currentThread, J9VMThread *vmThread)
 	threadEntry->javaTID = J9VMJAVALANGTHREAD_TID(currentThread, vmThread->threadObject);
 
 	omrthread_monitor_enter(vm->jfrState.threadObjectsMutex);
+
+	if (NULL == vm->jfrState.threadObjectJNIRefTable) {
+		goto doneWithMutex;
+	}
 
 	threadEntry = (J9JFRThreadObject *)hashTableFind(vm->jfrState.threadObjectJNIRefTable, threadEntry);
 
