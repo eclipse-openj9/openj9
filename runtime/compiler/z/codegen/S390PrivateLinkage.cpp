@@ -1456,6 +1456,11 @@ TR::Instruction *generateLastITableAndITableInstructions(TR::CodeGenerator *cg, 
     TR::Register *vftReg, TR::Register *entryPointRegister, TR::Register *vTableIndexRegister,
     TR::Register *lastIpicMethodRegister, TR::RegisterDependencyConditions *postDeps, TR::Instruction *cursor)
 {
+    static const bool disableLastITableAndITableInstructions
+        = feGetEnv("TR_DisableLastITableAndITableInstructions") != NULL;
+    if (disableLastITableAndITableInstructions)
+        return cursor;
+
     TR::Compilation *comp = cg->comp();
     TR_J9VMBase *fej9 = reinterpret_cast<TR_J9VMBase *>(comp->fe());
     uintptr_t itableIndex;
