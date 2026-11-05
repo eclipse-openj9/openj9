@@ -71,6 +71,7 @@ J9_DECLARE_CONSTANT_NAS(onRetransformNAS, onRetransformUTF8, onRetransformSigUTF
 // TODO: allow configureable values
 #define J9JFR_THREAD_BUFFER_SIZE (128 * 1024)
 #define J9JFR_GLOBAL_BUFFER_SIZE (10 * J9JFR_THREAD_BUFFER_SIZE)
+#define J9JFR_THREAD_DUMP_BUFFER_SIZE (200 * 10 * 1024)
 #define J9JFR_SAMPLING_RATE 10
 #define J9JFR_CLASSNAME_BUFFER_SIZE 128
 #define J9TIME_MICROSECONDS_PER_SECOND	(1000000ULL)
@@ -242,7 +243,7 @@ jfrEventSize(J9JFREvent *jfrEvent)
 		size = sizeof(J9JFRDataLoss);
 		break;
 	case J9JFR_EVENT_TYPE_THREAD_DUMP:
-		size = sizeof(J9JFRThreadDump) + (((J9JFRThreadDump *)jfrEvent)->bufferSize * sizeof(U_8));
+		size = sizeof(J9JFRThreadDump);
 		break;
 	case J9JFR_EVENT_TYPE_THREAD_ALLOCATION_STATISTICS:
 		size = sizeof(J9JFRThreadAllocationStatistics);
@@ -362,6 +363,8 @@ writeOutGlobalBuffer(J9VMThread *currentThread, bool finalWrite)
 		/* Reset the buffer */
 		vm->jfrBuffer.bufferRemaining = vm->jfrBuffer.bufferSize;
 		vm->jfrBuffer.bufferCurrent = vm->jfrBuffer.bufferStart;
+		vm->jfrThreadDumpBuffer.bufferRemaining = vm->jfrThreadDumpBuffer.bufferSize;
+		vm->jfrThreadDumpBuffer.bufferCurrent = vm->jfrThreadDumpBuffer.bufferStart;
 
 #if defined(DEBUG)
 		memset(vm->jfrBuffer.bufferStart, 0, J9JFR_GLOBAL_BUFFER_SIZE);
@@ -1333,6 +1336,7 @@ initializeJFR(J9JavaVM *vm)
 	jint rc = JNI_ERR;
 
 	U_8 *buffer = NULL;
+	U_8 *threadDumpBuffer = NULL;
 	UDATA timeSuccess = 0;
 	J9VMThread *currentThread = currentVMThread(vm);
 	Trc_VM_initializeJFR(currentThread, vm);
@@ -1373,6 +1377,12 @@ initializeJFR(J9JavaVM *vm)
 		goto fail;
 	}
 
+	/* Allocate thread dump buffer. */
+	threadDumpBuffer = (U_8 *)j9mem_allocate_memory(J9JFR_THREAD_DUMP_BUFFER_SIZE, J9MEM_CATEGORY_JFR);
+	if (NULL == threadDumpBuffer) {
+		goto fail;
+	}
+
 	vm->jfrState.threadObjectJNIRefTable = hashTableNew(OMRPORT_FROM_J9PORT(privatePortLibrary), J9_GET_CALLSITE(), 0, sizeof(J9JFRThreadObject), sizeof(U_64), 0, J9MEM_CATEGORY_JFR, jfrThreadObjectHashFn, jfrThreadObjectEqualFn, NULL, NULL);
 	if (NULL == vm->jfrState.threadObjectJNIRefTable) {
 		goto fail;
@@ -1386,6 +1396,12 @@ initializeJFR(J9JavaVM *vm)
 	vm->jfrBuffer.bufferCurrent = buffer;
 	vm->jfrBuffer.bufferSize = J9JFR_GLOBAL_BUFFER_SIZE;
 	vm->jfrBuffer.bufferRemaining = J9JFR_GLOBAL_BUFFER_SIZE;
+
+	vm->jfrThreadDumpBuffer.bufferStart = threadDumpBuffer;
+	vm->jfrThreadDumpBuffer.bufferCurrent = threadDumpBuffer;
+	vm->jfrThreadDumpBuffer.bufferSize = J9JFR_THREAD_DUMP_BUFFER_SIZE;
+	vm->jfrThreadDumpBuffer.bufferRemaining = J9JFR_THREAD_DUMP_BUFFER_SIZE;
+
 	vm->jfrState.jfrChunkCount = 0;
 	vm->jfrState.isConstantEventsInitialized = FALSE;
 
@@ -1609,6 +1625,8 @@ tearDownJFR(J9JavaVM *vm)
 
 	j9mem_free_memory((void *)vm->jfrBuffer.bufferStart);
 	memset(&vm->jfrBuffer, 0, sizeof(vm->jfrBuffer));
+	j9mem_free_memory((void *)vm->jfrThreadDumpBuffer.bufferStart);
+	memset(&vm->jfrThreadDumpBuffer, 0, sizeof(vm->jfrThreadDumpBuffer));
 	if (NULL != vm->jfrBufferMutex) {
 		omrthread_monitor_destroy(vm->jfrBufferMutex);
 		vm->jfrBufferMutex = NULL;
@@ -3407,28 +3425,31 @@ void
 JfrPeriodicEventSet::requestThreadDump(J9VMThread *currentThread)
 {
 	J9JavaVM *vm = currentThread->javaVM;
+	J9JFRBuffer *threadDumpBuffer = &vm->jfrThreadDumpBuffer;
 
 	if (!isJFREventEnabled(vm, JfrThreadDumpEvent)) {
 		return;
 	}
 
-	const U_64 bufferSize = VM_JFRUtils::THREAD_DUMP_EVENT_SIZE_PER_THREAD * vm->peakThreadCount;
-	const UDATA eventSize = bufferSize + sizeof(J9JFRThreadDump);
-	J9JFRThreadDump *jfrEvent = (J9JFRThreadDump *)reserveBuffer(currentThread, currentThread, eventSize);
-
-	if (NULL == jfrEvent) {
+	// TODO: should we check enablement of JFR thread as well?
+	if (NULL == threadDumpBuffer->bufferStart
+		|| threadDumpBuffer->bufferRemaining < sizeof(J9JFRThreadDump)) {
 		return;
 	}
 
-	U_8 *buffer = NULL;
-	UDATA length = 0;
-	buffer = (U_8 *)(jfrEvent + 1);
-	length = getThreadDump(currentThread, buffer, bufferSize);
+	const U_64 bufferSize = threadDumpBuffer->bufferRemaining - sizeof(J9JFRThreadDump);
+	J9JFRThreadDump *jfrEvent = (J9JFRThreadDump *)reserveBuffer(currentThread, currentThread, sizeof(J9JFRThreadDump));
+
+
+	U_8 *buffer = threadDumpBuffer->bufferCurrent;
+	UDATA length = getThreadDump(currentThread, buffer, bufferSize);
 
 	initializeEventFields(currentThread, currentThread, (J9JFREvent *)jfrEvent, J9JFR_EVENT_TYPE_THREAD_DUMP);
-	jfrEvent->bufferSize = bufferSize;
 	jfrEvent->result = buffer;
 	jfrEvent->resultLength = length;
+
+	threadDumpBuffer->bufferCurrent += length;
+	threadDumpBuffer->bufferRemaining -= length;
 
 	return;
 }
