@@ -128,10 +128,10 @@ public class Jcmd {
 					} finally {
 						try {
 							diagProvider.detach();
-						} catch (SocketException se) {
-							IPC.logMessage("SocketException thrown at diagProvider.detach() vmid = " + vmid, se); //$NON-NLS-1$
+						} catch (IOException ioe) {
+							IPC.logMessage("Ignore IOException thrown at diagProvider.detach() vmid = " + vmid, ioe); //$NON-NLS-1$
 							break;
-							// ignore this SocketException since the attaching finished anyway
+							// Ignore this IOException since the attaching finished anyway.
 						}
 					}
 					break;
