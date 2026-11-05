@@ -442,20 +442,15 @@ void J9::Power::PrivateLinkage::mapStack(TR::ResolvedMethodSymbol *method)
 
     stackIndex -= numberOfLocalSlotsMapped * TR::Compiler->om.sizeofReferenceAddress();
 
-    if (comp()->useCompressedPointers()) {
-        // If we have any local objects we have to make sure they're aligned properly when compressed pointers are used,
-        // otherwise pointer compression may clobber part of the pointer.
-        // Each auto's GC index will have already been aligned, we just need to make sure
-        // we align the starting stack offset.
-        uint32_t unalignedStackIndex = stackIndex;
-        stackIndex &= ~(TR::Compiler->om.getObjectAlignmentInBytes() - 1);
-        uint32_t paddingBytes = unalignedStackIndex - stackIndex;
-        if (paddingBytes > 0) {
-            TR_ASSERT((paddingBytes & (TR::Compiler->om.sizeofReferenceAddress() - 1)) == 0,
-                "Padding bytes should be a multiple of the slot/pointer size");
-            uint32_t paddingSlots = paddingBytes / TR::Compiler->om.sizeofReferenceAddress();
-            atlas->setNumberOfSlotsMapped(atlas->getNumberOfSlotsMapped() + paddingSlots);
-        }
+    // align base of GC reference block to 16 bytes to account for VSX loads/stores
+    uint32_t unalignedStackIndex = stackIndex;
+    stackIndex &= ~0xFu;
+    uint32_t paddingBytes = unalignedStackIndex - stackIndex;
+    if (paddingBytes > 0) {
+        TR_ASSERT((paddingBytes & (TR::Compiler->om.sizeofReferenceAddress() - 1)) == 0,
+            "Padding bytes should be a multiple of the slot/pointer size");
+        atlas->setNumberOfSlotsMapped(
+            atlas->getNumberOfSlotsMapped() + paddingBytes / TR::Compiler->om.sizeofReferenceAddress());
     }
 
     // Map local references again to set the stack position correct according to
@@ -479,13 +474,16 @@ void J9::Power::PrivateLinkage::mapStack(TR::ResolvedMethodSymbol *method)
     automaticIterator.reset();
     localCursor = automaticIterator.getFirst();
 
+    // Map locals with no additional alignment requirements
     while (localCursor != NULL) {
         if (comp()->target().is64Bit()) {
-            if (localCursor->getGCMapIndex() < 0 && localCursor->getSize() != 8) {
+            if (localCursor->getGCMapIndex() < 0 && localCursor->getSize() != 8
+                && (localCursor->getSize() != 16 || localCursor->getDataType() != TR::NoType)) {
                 mapSingleAutomatic(localCursor, stackIndex);
             }
         } else {
-            if (localCursor->getGCMapIndex() < 0 && localCursor->getDataType() != TR::Double) {
+            if (localCursor->getGCMapIndex() < 0 && localCursor->getDataType() != TR::Double
+                && (localCursor->getSize() != 16 || localCursor->getDataType() != TR::NoType)) {
                 mapSingleAutomatic(localCursor, stackIndex);
             }
         }
@@ -495,6 +493,7 @@ void J9::Power::PrivateLinkage::mapStack(TR::ResolvedMethodSymbol *method)
     automaticIterator.reset();
     localCursor = automaticIterator.getFirst();
 
+    // Map locals that require 8-byte alignment
     while (localCursor != NULL) {
         if (comp()->target().is64Bit()) {
             if (localCursor->getGCMapIndex() < 0 && localCursor->getSize() == 8) {
@@ -506,6 +505,19 @@ void J9::Power::PrivateLinkage::mapStack(TR::ResolvedMethodSymbol *method)
                 stackIndex -= (stackIndex & 0x4) ? 4 : 0;
                 mapSingleAutomatic(localCursor, stackIndex);
             }
+        }
+        localCursor = automaticIterator.getNext();
+    }
+
+    automaticIterator.reset();
+    localCursor = automaticIterator.getFirst();
+
+    // Map locals that require 16-byte alignment (i.e.: vector objects)
+    while (localCursor != NULL) {
+        if (localCursor->getGCMapIndex() < 0 && localCursor->getSize() == 16
+            && localCursor->getDataType() == TR::NoType) {
+            stackIndex -= (stackIndex & 0x8) ? 8 : 0;
+            mapSingleAutomatic(localCursor, stackIndex);
         }
         localCursor = automaticIterator.getNext();
     }
