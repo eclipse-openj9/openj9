@@ -1782,8 +1782,8 @@ bool CISCTransform2FindBytes(TR_CISCTransformer *trans)
         //   PassThrough
         //      baseNode
         //
-        /// TR_CISCNode *nullNode = listT->getListHead()->getData();
-        /// TR::Node *nullRepNode = nullNode->getHeadOfTrNodeInfo()->_node;
+        // TR_CISCNode *nullNode = listT->getListHead()->getData();
+        // TR::Node *nullRepNode = nullNode->getHeadOfTrNodeInfo()->_node;
         TR::Node *dupNullRepNode = baseNode->duplicateTree();
         dupNullRepNode = TR::Node::create(TR::PassThrough, 1, dupNullRepNode);
         dupNullRepNode = TR::Node::createWithSymRef(TR::NULLCHK, 1, 1, dupNullRepNode,
@@ -2301,8 +2301,8 @@ bool CISCTransform2NestedArrayFindBytes(TR_CISCTransformer *trans)
         //   PassThrough
         //      baseNode
         //
-        /// TR_CISCNode *nullNode = listT->getListHead()->getData();
-        /// TR::Node *nullRepNode = nullNode->getHeadOfTrNodeInfo()->_node;
+        // TR_CISCNode *nullNode = listT->getListHead()->getData();
+        // TR::Node *nullRepNode = nullNode->getHeadOfTrNodeInfo()->_node;
         TR::Node *dupNullRepNode = baseNode->duplicateTree();
         dupNullRepNode = TR::Node::create(TR::PassThrough, 1, dupNullRepNode);
         dupNullRepNode = TR::Node::createWithSymRef(TR::NULLCHK, 1, 1, dupNullRepNode,
@@ -5360,10 +5360,10 @@ bool CISCTransform2TRTOArray(TR_CISCTransformer *trans)
         // above.
         TR::Node *incIndex
             = createStoreOP2(comp, indexVarSymRef, TR::iadd, indexVarSymRef, lengthTRxx->getChild(1), indexRepNode);
-        /// TR::Node *icmpeqNode = TR::Node::create(TR::icmpeq, 2, TR::Node::createLoad(indexNode, statusCheckTemp),
-        /// TR::Node::iconst(indexNode, 0)); TR::Node *incNode = TR::Node::create(TR::iadd, 2,
-        /// TR::Node::createLoad(indexNode, indexVarSymRef), icmpeqNode); TR::Node *incIndex =
-        /// TR::Node::createStore(indexVarSymRef, incNode);
+        // TR::Node *icmpeqNode = TR::Node::create(TR::icmpeq, 2, TR::Node::createLoad(indexNode, statusCheckTemp),
+        // TR::Node::iconst(indexNode, 0)); TR::Node *incNode = TR::Node::create(TR::iadd, 2,
+        // TR::Node::createLoad(indexNode, indexVarSymRef), icmpeqNode); TR::Node *incIndex =
+        // TR::Node::createStore(indexVarSymRef, incNode);
         TR::TreeTop *incIndexTTop = TR::TreeTop::create(comp, incIndex);
 
         TR::TreeTop *last = block->getLastRealTreeTop();
@@ -6664,7 +6664,7 @@ bool CISCTransform2ArrayCopyB2CorC2B(TR_CISCTransformer *trans)
       }
    else
       {
-      ///TR::Node * div2 = TR::Node::create(TR::idiv, 2, lengthNode, c2);
+      //TR::Node * div2 = TR::Node::create(TR::idiv, 2, lengthNode, c2);
       lengthNode = TR::Node::create(TR::idiv, 2, lengthNode, c2);
       ///lengthNode = TR::Node::create(TR::imul, 2, div2, c2); // to make the length even
       // lengthNode has the byte size, and div2 has the char-based size (that is, lengthNode = div2 * 2)

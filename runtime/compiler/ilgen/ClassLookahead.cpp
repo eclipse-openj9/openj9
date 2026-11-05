@@ -332,8 +332,8 @@ void TR_ClassLookahead::findInitializerMethods(List<TR_ResolvedMethod> *resolved
                 // if (!initializerMethodsInClass->find(initializerMethodSymbol))
                 if (!findMethod(initializerMethodsInClass, initializerMethodSymbol))
                     initializerMethodsInClass->add(initializerMethodSymbol);
-                /// initializerMethodsInClass->addAfter(initializerMethodSymbol,
-                /// initializerMethodsInClass->getListHead());
+                // initializerMethodsInClass->addAfter(initializerMethodSymbol,
+                // initializerMethodsInClass->getListHead());
             }
         }
     }

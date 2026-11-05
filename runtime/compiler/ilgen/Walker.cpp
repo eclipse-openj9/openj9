@@ -4829,10 +4829,10 @@ TR::Node *TR_J9ByteCodeIlGenerator::genInvokeInner(TR::SymbolReference *symRef, 
         if (strstr(s, "java/lang/reflect/Array")
             && !strncmp(calledMethod->nameChars(), "getLength", calledMethod->nameLength()))
             isCallGetLength = true;
-        /// else if (strstr(s, "com/ibm/jit/JITHelpers") && resolvedMethodSymbol)
+        // else if (strstr(s, "com/ibm/jit/JITHelpers") && resolvedMethodSymbol)
         else if (resolvedMethodSymbol) {
-            ///         (!strncmp(calledMethod->nameChars(), "getAddressAsPrimitive32", calledMethod->nameLength()) ||
-            ///          !strncmp(calledMethod->nameChars(), "getAddressAsPrimitive64", calledMethod->nameLength())))
+            //         (!strncmp(calledMethod->nameChars(), "getAddressAsPrimitive32", calledMethod->nameLength()) ||
+            //          !strncmp(calledMethod->nameChars(), "getAddressAsPrimitive64", calledMethod->nameLength())))
             if (resolvedMethodSymbol->getRecognizedMethod() == TR::com_ibm_jit_JITHelpers_getAddressAsPrimitive32)
                 isCallAddressAsPrimitive32 = true;
             else if (resolvedMethodSymbol->getRecognizedMethod() == TR::com_ibm_jit_JITHelpers_getAddressAsPrimitive64)
@@ -6284,7 +6284,7 @@ void TR_J9ByteCodeIlGenerator::genMonitorExit(bool isReturn)
     TR::Node *node = pop();
 
     bool isStatic = (node->getOpCodeValue() == TR::loadaddr && node->getSymbol()->isClassObject());
-    /// bool isStatic = _methodSymbol->isStatic();
+    // bool isStatic = _methodSymbol->isStatic();
 
     if (isStatic)
         node = TR::Node::createWithSymRef(TR::aloadi, 1, 1, node,
