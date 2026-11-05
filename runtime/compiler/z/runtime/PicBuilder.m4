@@ -1374,8 +1374,7 @@ LABEL(LcontinueLookup)
 
     L_GPR   r3,eq_codeRA_inInterfaceSnippet(,r14) #Load code cache RA
 
-ZZ  # Load address of interface table & slot number
-    LA      r2,eq_intfAddr_inInterfaceSnippet(,r14)
+ZZ  # Load this pointer and receiver class
     L_GPR   r1,(2*PTR_SIZE)(,J9SP)  # Load this
 IfCompressedElse({dnl
     L       r1,J9TR_J9Object_class(,r1)
@@ -1386,47 +1385,22 @@ ZZ # Load lookup class offset
 ZZ # Load lookup class
 })dnl
     NILL    r1,HEX(10000)-J9TR_RequiredClassAlignment
+ifdef({NO_HELPER_LASTITABLE_CHECK},,{dnl
+    BRASL   r14, LiTableChecks
+})dnl
+
+LABEL(LcallHelper)
+    LR_GPR  r14,r0
+ZZ  # Load address of interface table & slot number
+    LA      r2,eq_intfAddr_inInterfaceSnippet(,r14)
 
 LOAD_ADDR_FROM_TOC(r14,TR_S390jitLookupInterfaceMethod)
 
     BASR    r14,r14                 # Call jitLookupInterfaceMethod
-
+    LR_GPR  rEP,r2                  # Store the interpVtable offset
     LR_GPR  r14,r0
-ZZ                                  # return interpVtable offset in r2
-    L_GPR   r1,(2*PTR_SIZE)(,J9SP)  # Load this
-IfCompressedElse({dnl
-    L       r3,J9TR_J9Object_class(,r1)
-ZZ # Load offset of the lookup class
-    LLGFR   r3,r3
-},{dnl
-    L_GPR   r3,J9TR_J9Object_class(,r1)
-ZZ # Load address of the lookup class
-})dnl
-    NILL    r3,HEX(10000)-J9TR_RequiredClassAlignment
-    L_GPR   r3,0(r2,r3)             # Load method pointer
-    L_GPR   r14,eq_codeRA_inInterfaceSnippet(,r14) # codecacheRA
-ZZ  32bit integer flag occupies 8byte on 64bit, so...
 
-LABEL(LcommonJitDispatch)         # interpVtable offset in r2
-
-    LNR_GPR r2,r2                 # negative the interpVtable offset
-    AHI_GPR r2,J9TR_InterpVTableOffset
-    LR_GPR  r0,r2                 # J9 requires the offset in R0
-IfCompressedElse({dnl
-    L       r3,J9TR_J9Object_class(,r1)
-ZZ # Load offset of the lookup class
-    LLGFR   r3,r3
-},{dnl
-    L_GPR   r3,J9TR_J9Object_class(,r1)
-ZZ # Load address of the lookup class
-})dnl
-    NILL    r3,HEX(10000)-J9TR_RequiredClassAlignment
-    L_GPR   rEP,0(r2,r3)
-    L_GPR   r1,(2*PTR_SIZE)(J9SP) # Restore "this"
-    L_GPR   r2,PTR_SIZE(J9SP)
-    L_GPR   r3,0(J9SP)
-    AHI_GPR J9SP,(3*PTR_SIZE)
-    BR      rEP                   # Call: does not return here
+    J       LcommonJitDispatch
 
     END_FUNC(_interfaceCallHelper,ifCH,6)
 
@@ -1476,8 +1450,7 @@ LABEL(ifCH1LcontinueLookup)
 
     L_GPR   r3,eq_codeRA_inInterfaceSnippet(,r14) #Load code cache RA
 
-ZZ  # Load address of interface table & slot number
-    LA      r2,eq_intfAddr_inInterfaceSnippet(,r14)
+ZZ  # Load this pointer and receiver class
     L_GPR   r1,(2*PTR_SIZE)(,J9SP)       # Load this
 IfCompressedElse({dnl
     L       r1,J9TR_J9Object_class(,r1)
@@ -1488,11 +1461,24 @@ ZZ # Load lookup class offset
 ZZ # Load lookup class
 })dnl
     NILL    r1,HEX(10000)-J9TR_RequiredClassAlignment
+ifdef({NO_HELPER_LASTITABLE_CHECK},,{dnl
+ZZ  Before iTable checks, make sure the IPIC slot is populated
+    L_GPR   r2, eq_implementerClass_inInterfaceSnippet(,r14)
+    CHI_GPR r2, 0
+    JZ      ifCH1LcallHelper    # Slot empty -> go to helper
+    BRASL   r14, LiTableChecks  # Slot populated -> try iTable
+})dnl
+
+LABEL(ifCH1LcallHelper)
+    LR_GPR  r14,r0
+ZZ  # Load address of interface table & slot number
+    LA      r2,eq_intfAddr_inInterfaceSnippet(,r14)
 
 LOAD_ADDR_FROM_TOC(r14,TR_S390jitLookupInterfaceMethod)
 
     BASR    r14,r14             # Call jitLookupInterfaceMethod and
     LR_GPR   rEP,r2             # Store the interpVtable offset
+    LR_GPR  r14,r0
 
 ZZ                                # return interpVtable offset in r2
     L_GPR   r1,(2*PTR_SIZE)(,J9SP)       # Load this
@@ -1507,7 +1493,7 @@ ZZ # Load the addr of the lookup class
     NILL    r3,HEX(10000)-J9TR_RequiredClassAlignment
     L_GPR   r3,0(r2,r3)           # Load method pointer
     TM   eq_methodCompiledFlagOffset(r3),J9TR_MethodNotCompiledBit
-    JNZ     ifCH1LcommonJitDispatch
+    JNZ     LcommonJitDispatch
 
 IfCompressedElse({dnl
     L       r2,J9TR_J9Object_class(,r1)
@@ -1550,7 +1536,7 @@ ZZ if yes, then no need to register again
 ZZ
 
     TM      eq_picreg_inInterfaceSnippetSingleDynamicSlot(r14),1
-    JNZ     ifCH1LcommonJitDispatch
+    JNZ     LcommonJitDispatch
 
 ZZ Clobberable volatile regs r1,r2,r3,r14
 ZZ Preserve r0,rEP,r5,r6,r7
@@ -1569,7 +1555,7 @@ ZZ  with the classloader of target class (CARG1)
 ZZ  If they are same, no need to register the pic site
 
     C_GPR  CARG2,J9TR_J9Class_classLoader(CARG1)
-    JZ      ifCH1LcommonJitDispatch
+    JZ      LcommonJitDispatch
 
 ZZ  Buy stack space and save regs that may be killed by the c call
 ZZ  No need to save the ones that we don't care about.
@@ -1659,28 +1645,7 @@ ZZ Mark the flag that indicates that this picSite
 ZZ has been already registered
     MVI     eq_picreg_inInterfaceSnippetSingleDynamicSlot(r14),1
 
-LABEL(ifCH1LcommonJitDispatch)      # interpVtable offset in rEP
-
-    LR_GPR  r14,r0
-    L_GPR   r14,eq_codeRA_inInterfaceSnippet(,r14) # Load codecacheRA
-    LNR_GPR rEP,rEP                 # negative the interpVtable offset
-    AHI_GPR rEP,J9TR_InterpVTableOffset
-    LR_GPR  r0,rEP                  # J9 requires the offset in R0
-    L_GPR   r1,(2*PTR_SIZE)(J9SP)   # Restore "this"
-IfCompressedElse({dnl
-    L       r3,J9TR_J9Object_class(,r1)
-ZZ # Load offset of lookup class
-    LLGFR   r3,r3
-},{dnl
-    L_GPR   r3,J9TR_J9Object_class(,r1)
-ZZ # Load the address of lookup class
-})dnl
-    NILL    r3,HEX(10000)-J9TR_RequiredClassAlignment
-    L_GPR   rEP,0(rEP,r3)
-    L_GPR   r2,PTR_SIZE(J9SP)
-    L_GPR   r3,0(J9SP)
-    AHI_GPR J9SP,(3*PTR_SIZE)
-    BR      rEP                     # Call: does not return here
+    J       LcommonJitDispatch
 
     END_FUNC(_interfaceCallHelperSingleDynamicSlot,ifCH1,7)
 
@@ -1731,8 +1696,7 @@ LABEL(ifCHMLcontinueLookup)
 
     L_GPR   r3,eq_codeRA_inInterfaceSnippet(,r14) #Load code cache RA
 
-ZZ  # Load address of interface table & slot number
-    LA      r2,eq_intfAddr_inInterfaceSnippet(,r14)
+ZZ  # Load this pointer and receiver class
     L_GPR   r1,(2*PTR_SIZE)(,J9SP)       # Load this
 IfCompressedElse({dnl
     L       r1,J9TR_J9Object_class(,r1)
@@ -1743,11 +1707,68 @@ ZZ # Load offset of lookup class
 ZZ # Load lookup class
 })dnl
     NILL    r1,HEX(10000)-J9TR_RequiredClassAlignment
+ifdef({NO_HELPER_LASTITABLE_CHECK},,{dnl
+
+ZZ  Before iTable checks, make sure IPIC slots are fully populated
+ZZ  If lastCachedSlot == lastSlot, slots are fully populated,
+ZZ  so proceed with iTable checks
+ZZ  Otherwise go to call helper
+    L_GPR   r2,eq_lastCachedSlotField_inInterfaceSnippet(r14)
+    C_GPR   r2,eq_lastSlotField_inInterfaceSnippet(r14)
+    JNZ     ifCHMLcallHelper
+    BRASL   r14, LiTableChecks
+    J       ifCHMLcallHelper
+
+LABEL(LiTableChecks)
+ZZ Before iTable walk or going to the VM helper, check
+ZZ if the receiver class lastITable matches the interface
+ZZ class of the method being called and if so, use it
+ZZ to quickly look up the vtable offset and make the call
+ZZ First load the interface class of the method from the snippet
+    LR_GPR  r2,r0
+    L_GPR   rEP,eq_intfAddr_inInterfaceSnippet(,r2)
+    L_GPR   r2,J9TR_J9Class_lastITable(r1)      # Load the cached last ITable
+    L_GPR   r3,J9TR_J9ITable_interfaceClass(r2) # Load the interface class whose ITable this is
+    CR_GPR  rEP,r3
+ifdef({NO_ITABLEWALK_CHECK},{dnl
+    JNZ     LmissITable
+},{dnl
+    JZ      LhitITable
+ZZ Before going to the VM helper, we will saturate iTable walking
+    L_GPR   r2,J9TR_J9Class_iTable(r1)          # Load the iTable pointer
+LABEL(LiTableLoop)
+    CHI_GPR r2,0                                # check iTable != null
+    JZ      LmissITable
+    L_GPR   r3,J9TR_J9ITable_interfaceClass(r2) # Load iTable class
+    CR_GPR  rEP,r3
+    JZ      LhitITable
+    L_GPR   r2,J9TR_J9ITable_next(r2)           # Load the next iTable pointer
+    J       LiTableLoop
+})dnl
+ZZ ITable entry is a match
+LABEL(LhitITable)
+ZZ Load the itable offset from the snippet
+    LR_GPR  r3,r0
+    L_GPR   rEP,eq_intfMethodIndex_inInterfaceSnippet(r3)
+    TMLL    rEP,J9TR_J9_ITABLE_OFFSET_TAG_BITS  # Call the helper if the itable offset is tagged
+    JNZ     LmissITable
+    L_GPR   rEP,0(rEP,r2)                       # Load the interpreter vft offset
+    LR_GPR  r14,r0                              # restore snippet base
+    J       LcommonJitDispatch
+LABEL(LmissITable)
+    BR      r14                                 # Return and go to call helper
+LABEL(ifCHMLcallHelper)
+})dnl
+
+    LR_GPR  r14,r0
+ZZ  # Load address of interface table & slot number
+    LA      r2,eq_intfAddr_inInterfaceSnippet(,r14)
 
 LOAD_ADDR_FROM_TOC(r14,TR_S390jitLookupInterfaceMethod)
 
     BASR    r14,r14         # Call jitLookupInterfaceMethod and
     LR_GPR  rEP,r2          # copy the returned interpVtable offset
+    LR_GPR  r14,r0
 
 ZZ                          # returned interpVtable offset in r2
     L_GPR   r1,(2*PTR_SIZE)(,J9SP)       # Load this
@@ -1762,8 +1783,7 @@ ZZ # Load the address of the lookup class
     NILL    r3,HEX(10000)-J9TR_RequiredClassAlignment
     L_GPR   r3,0(r2,r3)     # Load method pointer
     TM      eq_methodCompiledFlagOffset(r3),J9TR_MethodNotCompiledBit
-    LR_GPR  r14,r0
-    JNZ     ifCHMLcommonJitDispatch
+    JNZ     LcommonJitDispatch
 
 ZZ  #Load receiving object classPtr in R2
 IfCompressedElse({dnl
@@ -1800,7 +1820,7 @@ ZZ  if lastCachedSlot == lastSlot, no more slots left to cache,
 ZZ  so just dispatch
     L_GPR   r0,eq_lastCachedSlotField_inInterfaceSnippet(r14)
     C_GPR   r0,eq_lastSlotField_inInterfaceSnippet(r14)
-    JZ      ifCHMLcommonJitDispatch
+    JZ      LcommonJitDispatch
 
 ZZ Try to atomically update lastCachedSlot
 ZZ value to be stored(r1) beginning with firstSlot
@@ -1813,7 +1833,7 @@ LABEL(ifCHMCSLoopBegin)
 ZZ  if lastCachedSlot == lastSlot, no more slots left to cache,
 ZZ  so just dispatch
     C_GPR   r0,eq_lastSlotField_inInterfaceSnippet(r14)
-    JZ      ifCHMLcommonJitDispatch
+    JZ      LcommonJitDispatch
 
 ZZ Try to atomically update lastCachedSlot
 LABEL(ifCHMDoSwap)
@@ -1841,7 +1861,7 @@ ZZ # Read class offset
     NILL    r0,HEX(10000)-J9TR_RequiredClassAlignment
     CR_GPR  r2,r0
 })dnl
-    JZ      ifCHMLcommonJitDispatch ZZ same, so skip caching
+    JZ      LcommonJitDispatch ZZ same, so skip caching
 
 ZZ different than cached one, lets try to grab next free slot
 ZZ before jumping back, r0 should point to the
@@ -1878,7 +1898,7 @@ ZZ  with the classloader of target class (CARG1)
 ZZ  If they are same, no need to register the pic site
 
     C_GPR  r0,J9TR_J9Class_classLoader(CARG1)
-    JZ      ifCHMLcommonJitDispatch
+    JZ      LcommonJitDispatch
 
 ZZ Need to preserve r14,rEP,r5,r6,r7
 ZZ For linux r6 and r7 are not used or clobbered, hence not saved
@@ -1959,7 +1979,7 @@ ifdef({J9ZOS390},{dnl
     AHI_GPR J9SP,(2*PTR_SIZE)
 })dnl
 
-LABEL(ifCHMLcommonJitDispatch)    # interpVtable offset in rEP
+LABEL(LcommonJitDispatch)         # interpVtable offset in rEP
 
     L_GPR   r14,eq_codeRA_inInterfaceSnippet(,r14) # Load codecacheRA
     LNR_GPR rEP,rEP               # negative the interpVtable offset
