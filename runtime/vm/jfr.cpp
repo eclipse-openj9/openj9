@@ -343,14 +343,15 @@ areJFRBuffersReadyForWrite(J9VMThread *currentThread)
  * The current thread must hold the jfrBufferMutex or have exclusive VM access.
  *
  * @param currentThread[in] the current J9VMThread
- * @param finalWrite[in] if true then a full checkpoint write is being performed, if
+ * @param newChunk[in] if true then a full checkpoint write is being performed, if
  * false a partial write is done keeping the checkpoint open for
  * more writes (only available in JFRv2).
+ * @param finalWrite[in] if true this is the last chunk.
  *
  * @returns true on success, false on failure
  */
 static bool
-writeOutGlobalBuffer(J9VMThread *currentThread, bool finalWrite)
+writeOutGlobalBuffer(J9VMThread *currentThread, bool newChunk, bool finalWrite)
 {
 	J9JavaVM *vm = currentThread->javaVM;
 	Assert_VM_mustHaveVMAccess(currentThread);
@@ -361,7 +362,7 @@ writeOutGlobalBuffer(J9VMThread *currentThread, bool finalWrite)
 	Assert_VM_true((!finalWrite && isJFRV2SupportEnabled(vm)) || finalWrite);
 
 	if (vm->jfrState.isCreated && (NULL != vm->jfrBuffer.bufferCurrent)) {
-		VM_JFRWriter::flushJFRDataToFile(currentThread, finalWrite);
+		VM_JFRWriter::flushJFRDataToFile(currentThread, newChunk, finalWrite);
 
 		/* Reset the buffer */
 		vm->jfrBuffer.bufferRemaining = vm->jfrBuffer.bufferSize;
@@ -400,7 +401,7 @@ allocateMemFromGlobalBuffer(J9VMThread *currentThread, UDATA size, bool *hasExcl
 			if (!*hasExclusive) {
 				internalAcquireVMAccess(currentThread);
 			}
-			bool result = writeOutGlobalBuffer(currentThread, !isJFRV2SupportEnabled(vm));
+			bool result = writeOutGlobalBuffer(currentThread, !isJFRV2SupportEnabled(vm), false);
 			if (!*hasExclusive) {
 				internalReleaseVMAccess(currentThread);
 			}
@@ -682,7 +683,7 @@ jfrClassesUnload(J9HookInterface **hook, UDATA eventNum, void *eventData, void *
 	if (isJFRV2SupportEnabled(vm)) {
 		/* if there is an open JFR file write out the data, otherwise emit a data loss event. */
 		if (NULL != currentThread->javaVM->jfrState.jfrFileName) {
-			writeOutGlobalBuffer(currentThread, false);
+			writeOutGlobalBuffer(currentThread, false, false);
 		} else {
 			/* In JFRv2 we need to coordinate chunk rotation with the JCL. We can't block a GC for
 			 * this so for now just discard the data and emit a data loss event.
@@ -698,7 +699,7 @@ jfrClassesUnload(J9HookInterface **hook, UDATA eventNum, void *eventData, void *
 		/* Some class pointers in the thread and global buffers are about the become
 		 * invalid, so write out all of the available data now.
 		 */
-		writeOutGlobalBuffer(currentThread, true);
+		writeOutGlobalBuffer(currentThread, true, false);
 	}
 }
 
@@ -731,7 +732,7 @@ jfrVMShutdown(J9HookInterface **hook, UDATA eventNum, void *eventData, void *use
 
 	/* Flush and free all the thread buffers and write out the global buffer */
 	flushAllThreadBuffers(currentThread, true, false);
-	writeOutGlobalBuffer(currentThread, !isJFRV2SupportEnabled(currentThread->javaVM));
+	writeOutGlobalBuffer(currentThread, !isJFRV2SupportEnabled(currentThread->javaVM), true);
 
 	if (acquiredExclusive) {
 		releaseExclusiveVMAccess(currentThread);
@@ -2109,11 +2110,11 @@ setJFRRecordingFileName(J9JavaVM *vm, char *newFileName)
  * Must be holding on to exclusive VM access.
  */
 void
-jfrDump(J9VMThread *currentThread, BOOLEAN finalWrite)
+jfrDump(J9VMThread *currentThread, BOOLEAN newChunk)
 {
 	/* Flush all the thread buffers and write out the global buffer. */
 	flushAllThreadBuffers(currentThread, false, false);
-	writeOutGlobalBuffer(currentThread, finalWrite);
+	writeOutGlobalBuffer(currentThread, newChunk, false);
 }
 
 void

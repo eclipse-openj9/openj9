@@ -171,6 +171,7 @@ private:
 	JfrBuildResult _buildResult;
 	bool _debug;
 	J9PortLibrary *privatePortLibrary; //PORT_ACCESS_FROM...
+	bool _newChunk;
 	bool _finalWrite;
 
 	/* Constantpool types */
@@ -188,6 +189,7 @@ private:
 	/* Absolute file offset of the last checkpoint event written, or 0 if there is none. */
 	I_64 _lastDataStart;
 	U_8 *_checkpointHeaderStart;
+	I_64 _chunkDuration;
 	bool _isJFRv2;
 
 	static constexpr int STRING_BUFFER_LENGTH = 128;
@@ -251,8 +253,6 @@ private:
 	static constexpr int GC_CONFIGURATION_EVENT_SIZE = (3 * LEB128_64_SIZE) + (6 * LEB128_32_SIZE) + (3 * sizeof(U_8));
 	static constexpr int GC_SURVIVOR_CONFIGURATION_EVENT_SIZE = (2 * LEB128_64_SIZE) + (3 * LEB128_32_SIZE);
 	static constexpr int GC_TLAB_CONFIGURATION_EVENT_SIZE = sizeof(U_8) + (4 * LEB128_64_SIZE) + LEB128_32_SIZE;
-
-	static constexpr int METADATA_ID = 1;
 
 	const EventIds * const events;
 
@@ -487,14 +487,15 @@ private:
 protected:
 
 public:
-	VM_JFRChunkWriter(J9VMThread *currentThread, bool finalWrite)
+	VM_JFRChunkWriter(J9VMThread *currentThread, bool newChunk, bool finalWrite)
 		: _currentThread(currentThread)
 		, _vm(currentThread->javaVM)
 		, _buildResult(OK)
 		, _debug(false)
 		, privatePortLibrary(_vm->portLibrary)
+		, _newChunk(newChunk)
 		, _finalWrite(finalWrite)
-		, _constantPoolTypes(currentThread, finalWrite)
+		, _constantPoolTypes(currentThread, newChunk)
 		, _currentStackFrameBuffer(NULL)
 		, _previousStackTraceEntry(NULL)
 		, _firstStackTraceEntry(NULL)
@@ -505,6 +506,7 @@ public:
 		, _checkPointEventOffset(NULL)
 		, _lastDataStart(_vm->jfrState.lastCheckpointEvent)
 		, _checkpointHeaderStart(NULL)
+		, _chunkDuration(0)
 		, _isJFRv2(isJFRV2SupportEnabled(_vm))
 #if JAVA_SPEC_VERSION >= 17
 		, events(_isJFRv2 ? &v2Events : &v1Events)
@@ -587,8 +589,11 @@ done:
 
 			_bufferWriter = &writer;
 			if (_debug) {
-				j9tty_printf(PORTLIB, "writeJFRChunk _isJFRv2=%d finalWrite=%d generation=%u\n", (int)_isJFRv2, (int)_finalWrite, (U_32)_vm->jfrState.chunkGeneration);
+				j9tty_printf(PORTLIB, "writeJFRChunk _isJFRv2=%d finalWrite=%d generation=%u\n", (int)_isJFRv2, (int)_newChunk, (U_32)_vm->jfrState.chunkGeneration);
 			}
+			U_64 newChunkStartTime = VM_JFRUtils::getCurrentTimeNanos(privatePortLibrary, _buildResult);
+			_chunkDuration = newChunkStartTime - _vm->jfrState.chunkStartTime;
+
 			if (_isJFRv2) {
 				if (0 == _vm->jfrState.chunkGeneration) {
 					Assert_VM_true(0 == _vm->jfrState.lastGenerationFileCursor);
@@ -618,7 +623,7 @@ done:
 
 				writeCheckpointHeader();
 
-				if (_finalWrite) {
+				if (_newChunk) {
 					/* The chunk is complete, the next chunk starts from scratch. */
 					_vm->jfrState.lastGenerationFileCursor = 0;
 					_vm->jfrState.lastCheckpointEvent = 0;
@@ -654,9 +659,9 @@ done:
 
 			writeJFRChunkToFile();
 
-			if (_finalWrite) {
+			if (_newChunk) {
 				_vm->jfrState.jfrChunkCount += 1;
-				_vm->jfrState.chunkStartTime = VM_JFRUtils::getCurrentTimeNanos(privatePortLibrary, _buildResult);
+				_vm->jfrState.chunkStartTime = newChunkStartTime;
 				_vm->jfrState.chunkStartTicks = j9time_nano_time();
 			}
 
