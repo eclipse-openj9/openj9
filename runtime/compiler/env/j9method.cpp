@@ -9542,8 +9542,8 @@ bool TR_ResolvedJ9Method::isFieldFlattened(TR::Compilation *comp, int32_t cpInde
 
     // No lock is required here. Entries in J9Class::flattenedClassCache are only written during classload.
     // They are effectively read only when being exposed to the JIT.
-    return vmThread->javaVM->internalVMFunctions->isFlattenableFieldFlattened(
-        reinterpret_cast<J9Class *>(containingClass), fieldShape);
+    return vmThread->javaVM->internalVMFunctions->isFieldFlattened(reinterpret_cast<J9Class *>(containingClass),
+        fieldShape);
 }
 
 bool TR_ResolvedJ9Method::isDAAExternalDecimalWrapperMethod()
