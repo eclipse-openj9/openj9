@@ -69,8 +69,8 @@ J9_DECLARE_CONSTANT_UTF8(onRetransformSigUTF8, "(JZLjava/lang/Class;[B)[B");
 J9_DECLARE_CONSTANT_NAS(onRetransformNAS, onRetransformUTF8, onRetransformSigUTF8);
 
 // TODO: allow configureable values
-#define J9JFR_THREAD_BUFFER_SIZE (128 * 1024)
-#define J9JFR_GLOBAL_BUFFER_SIZE (10 * J9JFR_THREAD_BUFFER_SIZE)
+#define J9JFR_THREAD_BUFFER_SIZE (512 * 1024)
+#define J9JFR_GLOBAL_BUFFER_SIZE (50 * J9JFR_THREAD_BUFFER_SIZE)
 #define J9JFR_SAMPLING_RATE 10
 #define J9JFR_CLASSNAME_BUFFER_SIZE 128
 #define J9TIME_MICROSECONDS_PER_SECOND	(1000000ULL)
@@ -841,6 +841,9 @@ enableJFRObjectAllocationSample(J9VMThread *currentThread, BOOLEAN enable)
 	internalReleaseVMAccess(currentThread);
 	omrthread_monitor_enter(vm->jfrState.setObjectAllocationSampleIntervalMutex);
 
+	PORT_ACCESS_FROM_JAVAVM(vm);
+	j9tty_printf(PORTLIB, "enableJFRObjectAllocationSample enable=%zu\n", enable);
+
 	if (enable) {
 		/* Only enable sampling while recording is started: startJFRRecording() computes the
 		 * interval from the event enabled flag, and stopJFRRecording() disables sampling.
@@ -858,6 +861,7 @@ enableJFRObjectAllocationSample(J9VMThread *currentThread, BOOLEAN enable)
 		vm->memoryManagerFunctions->j9gc_set_internal_allocation_sampling_interval(vm, UDATA_MAX);
 	}
 
+	j9tty_printf(PORTLIB, "enableJFRObjectAllocationSample enable=%zu, vm->jfrState.objectAllocationSampleInterval=%zu\n", enable, vm->jfrState.objectAllocationSampleInterval);
 	omrthread_monitor_exit(vm->jfrState.setObjectAllocationSampleIntervalMutex);
 	internalAcquireVMAccess(currentThread);
 #endif /* JAVA_SPEC_VERSION >= 17 */
@@ -878,6 +882,12 @@ setJFRObjectAllocationSampleThrottle(J9VMThread *currentThread, U_64 eventSample
 		vm->jfrState.objectAllocationSampleThrottleRate = throttle;
 
 		UDATA oldSampleInterval = vm->jfrState.objectAllocationSampleInterval;
+
+		PORT_ACCESS_FROM_JAVAVM(vm);
+		j9tty_printf(PORTLIB, "setJFRObjectAllocationSampleThrottle eventSampleSize=%zu, periodMs=%zu, throttle=%zu, oldSampleInterval=%zu\n",
+				eventSampleSize, periodMs, throttle, oldSampleInterval);
+
+
 		if (vm->jfrState.isStarted
 			&& ((UDATA_MAX != oldSampleInterval) || isJFREventEnabled(vm, JfrObjectAllocationSampleEvent))) {
 			/* a throttle rate of 0 yields UDATA_MAX, which disables sampling. */
@@ -1450,6 +1460,9 @@ jfrObjectAllocationSample(J9HookInterface **hook, UDATA eventNum, void *eventDat
 		(MM_ObjectAllocationSamplingInternalEvent *)eventData;
 	J9VMThread *currentThread = data->currentThread;
 
+//	PORT_ACCESS_FROM_JAVAVM(currentThread->javaVM);
+//	j9tty_printf(PORTLIB, "jfrObjectAllocationSample start currentThread=%p\n", currentThread);
+
 #if JAVA_SPEC_VERSION >= 17
 	if (!isJFREventEnabled(currentThread->javaVM, JfrObjectAllocationSampleEvent)) {
 		return;
@@ -1463,6 +1476,9 @@ jfrObjectAllocationSample(J9HookInterface **hook, UDATA eventNum, void *eventDat
 		const J9ArrayClass *arrayClass = (J9ArrayClass *)data->clazz;
 		const U_8 *classLeafName = J9UTF8_DATA(J9ROMCLASS_CLASSNAME(arrayClass->leafComponentType->romClass));
 		const UDATA lenClassLeafName = J9UTF8_LENGTH(J9ROMCLASS_CLASSNAME(arrayClass->leafComponentType->romClass));
+
+//		j9tty_printf(PORTLIB, "jfrObjectAllocationSample currentThread=%p indexableObject\n", currentThread);
+
 		Trc_VM_jfrObjectAllocationSample_indexableObject(
 			currentThread,
 			lenClassName,
@@ -1472,6 +1488,9 @@ jfrObjectAllocationSample(J9HookInterface **hook, UDATA eventNum, void *eventDat
 			data->weight,
 			data->objectSize);
 	} else {
+
+//		j9tty_printf(PORTLIB, "jfrObjectAllocationSample currentThread=%p Object\n", currentThread);
+
 		Trc_VM_jfrObjectAllocationSample(
 			currentThread,
 			lenClassName,
@@ -1702,6 +1721,12 @@ startJFRRecording(J9JavaVM *vm)
 
 	omrthread_monitor_exit(vm->jfrState.setObjectAllocationSampleIntervalMutex);
 	internalAcquireVMAccess(currentThread);
+
+	{
+		PORT_ACCESS_FROM_JAVAVM(vm);
+		j9tty_printf(PORTLIB, "startJFRRecording initialize JFRObjectAllocationSample jfrState.objectAllocationSampleThrottleRate=%zu jfrState.objectAllocationSampleInterval=%zu\n",
+				vm->jfrState.objectAllocationSampleThrottleRate, vm->jfrState.objectAllocationSampleInterval);
+	}
 
 	if ((*gcHooks)->J9HookRegisterWithCallSite(gcHooks, J9HOOK_MM_OBJECT_ALLOCATION_SAMPLING_INTERNAL, jfrObjectAllocationSample, OMR_GET_CALLSITE(), NULL)) {
 		goto done;
