@@ -26,6 +26,9 @@
 #include "jvminit.h"
 #include "ut_j9jcl.h"
 
+#if JAVA_SPEC_VERSION >= 17
+#include "JFRTypeMappings.hpp"
+#endif /* JAVA_SPEC_VERSION >= 17 */
 #include "ObjectAccessBarrierAPI.hpp"
 #include "VMHelpers.hpp"
 
@@ -165,7 +168,9 @@ Java_jdk_jfr_internal_JVM_beginRecording(JNIEnv *env, jobject obj)
 	J9InternalVMFunctions *vmFuncs = vm->internalVMFunctions;
 
 	logJFRMessageHelper(currentThread, JFRCOMBINATION_JFR_SYSTEM, JFRLOG_LEVEL_TRACE, JFRLOG_STRING_START_RECORDING);
+	vmFuncs->internalEnterVMFromJNI(currentThread);
 	vmFuncs->startJFRRecording(vm);
+	vmFuncs->internalExitVMToJNI(currentThread);
 }
 
 jlong JNICALL
@@ -672,6 +677,14 @@ Java_jdk_jfr_internal_JVM_setEnabled(JNIEnv *env, jobject obj, jlong eventTypeId
 	) {
 		vm->jfrState.jfrEventEnabledFlags[(UDATA)eventTypeId] = enabled ? 1 : 0;
 	}
+#if JAVA_SPEC_VERSION >= 17
+	if (JfrObjectAllocationSampleEvent == eventTypeId) {
+		J9InternalVMFunctions *vmFuncs = vm->internalVMFunctions;
+		vmFuncs->internalEnterVMFromJNI(currentThread);
+		vmFuncs->enableJFRObjectAllocationSample(currentThread, JNI_TRUE == enabled);
+		vmFuncs->internalExitVMToJNI(currentThread);
+	}
+#endif /* JAVA_SPEC_VERSION >= 17 */
 }
 
 void JNICALL
