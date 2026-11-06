@@ -3924,6 +3924,11 @@ void TR_ResolvedJ9Method::construct()
             "(Ljava/lang/Object;IIII)I") },
         { TR::unknownMethod } };
 
+    static X EnumMethods[] = {
+        { x(TR::java_lang_Enum_ordinal, "ordinal", "()I") },
+        { TR::unknownMethod }
+    };
+
     struct Y {
         const char *_class;
         X *_methods;
@@ -3940,6 +3945,7 @@ void TR_ResolvedJ9Method::construct()
         { "java/lang/Long", LongMethods },
         { "java/lang/Byte", ByteMethods },
         { "java/io/Writer", WriterMethods },
+        { "java/lang/Enum", EnumMethods },
         { 0 }
     };
 

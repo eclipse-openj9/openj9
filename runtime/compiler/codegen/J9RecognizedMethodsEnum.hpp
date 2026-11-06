@@ -62,6 +62,7 @@ FirstJ9Method = LastOMRMethod + 1,
     java_lang_ScopedValue_runWith, java_lang_System_arraycopy, java_lang_System_currentTimeMillis,
     java_lang_System_nanoTime, java_lang_System_hiresClockImpl, java_lang_System_identityHashCode,
     sun_reflect_Reflection_getCallerClass, sun_reflect_Reflection_getClassAccessFlags,
+    java_lang_Enum_ordinal,
 
     // the following should match table in TR::SymbolReferenceTable::checkImmutable
     java_lang_Boolean_init, java_lang_Character_init, java_lang_Byte_init, java_lang_Short_init, java_lang_Integer_init,
