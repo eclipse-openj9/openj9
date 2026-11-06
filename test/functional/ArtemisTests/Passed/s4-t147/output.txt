@@ -1,0 +1,110 @@
+i i1 i30 = 220,1,113
+i31 i32 i33 = -11,45,-228
+i34 i35 i36 = 4,3070463,2
+i37 b1 by2 = -1369333860,0,0
+i38 bArr lArr2 = 62,25755,-6336087705
+Test.instanceCount Test.fFld Test.iFld = 1,1070973583,1479
+Test.bFld Test.iFld1 lFld = 1,3070463,-3597593350143631460
+sFld Test.iArrFld = 1868,48942
+bMeth_check_sum: -1425745727271517020
+iMeth_check_sum: -5285360159750
+vMeth_check_sum: 8593392517285166636
+i i1 i30 = 220,1,113
+i31 i32 i33 = -11,45,-228
+i34 i35 i36 = 4,3070463,2
+i37 b1 by2 = -1369061756,0,0
+i38 bArr lArr2 = 62,25755,-6336087705
+Test.instanceCount Test.fFld Test.iFld = 1,1070973583,-3337
+Test.bFld Test.iFld1 lFld = 1,3070463,-3597593350143359356
+sFld Test.iArrFld = 1868,48942
+bMeth_check_sum: -2851491454547756380
+iMeth_check_sum: -10570720319500
+vMeth_check_sum: -1259959039139218344
+i i1 i30 = 220,1,113
+i31 i32 i33 = -11,45,-228
+i34 i35 i36 = 4,3070463,2
+i37 b1 by2 = -1368789652,0,0
+i38 bArr lArr2 = 62,25755,-6336087705
+Test.instanceCount Test.fFld Test.iFld = 1,1070973583,-8153
+Test.bFld Test.iFld1 lFld = 1,3070463,-3597593350143087252
+sFld Test.iArrFld = 1868,48942
+bMeth_check_sum: -4277237181823995740
+iMeth_check_sum: -15856080479250
+vMeth_check_sum: 7333433478145948292
+i i1 i30 = 220,1,113
+i31 i32 i33 = -11,45,-228
+i34 i35 i36 = 4,3070463,2
+i37 b1 by2 = -1368517548,0,0
+i38 bArr lArr2 = 62,25755,-6336087705
+Test.instanceCount Test.fFld Test.iFld = 1,1070973583,-12969
+Test.bFld Test.iFld1 lFld = 1,3070463,-3597593350142815148
+sFld Test.iArrFld = 1868,48942
+bMeth_check_sum: -5702982909100235100
+iMeth_check_sum: -21141440639000
+vMeth_check_sum: -2519918078278436688
+i i1 i30 = 220,1,113
+i31 i32 i33 = -11,45,-228
+i34 i35 i36 = 4,3070463,2
+i37 b1 by2 = -1368245444,0,0
+i38 bArr lArr2 = 62,25755,-6336087705
+Test.instanceCount Test.fFld Test.iFld = 1,1070973583,-17785
+Test.bFld Test.iFld1 lFld = 1,3070463,-3597593350142543044
+sFld Test.iArrFld = 1868,48942
+bMeth_check_sum: -7128728636376474460
+iMeth_check_sum: -26426800798750
+vMeth_check_sum: 6073474439006729948
+i i1 i30 = 220,1,113
+i31 i32 i33 = -11,45,-228
+i34 i35 i36 = 4,3070463,2
+i37 b1 by2 = -1367973340,0,0
+i38 bArr lArr2 = 62,25755,-6336087705
+Test.instanceCount Test.fFld Test.iFld = 1,1070973583,-22601
+Test.bFld Test.iFld1 lFld = 1,3070463,-3597593350142270940
+sFld Test.iArrFld = 1868,48942
+bMeth_check_sum: -8554474363652713820
+iMeth_check_sum: -31712160958500
+vMeth_check_sum: -3779877117417655032
+i i1 i30 = 220,1,113
+i31 i32 i33 = -11,45,-228
+i34 i35 i36 = 4,3070463,2
+i37 b1 by2 = -1367701236,0,0
+i38 bArr lArr2 = 62,25755,-6336087705
+Test.instanceCount Test.fFld Test.iFld = 1,1070973583,-27417
+Test.bFld Test.iFld1 lFld = 1,3070463,-3597593350141998836
+sFld Test.iArrFld = 1868,48942
+bMeth_check_sum: 8466523982780598436
+iMeth_check_sum: -36997521118250
+vMeth_check_sum: 4813515399867511604
+i i1 i30 = 220,1,113
+i31 i32 i33 = -11,45,-228
+i34 i35 i36 = 4,3070463,2
+i37 b1 by2 = -1367429132,0,0
+i38 bArr lArr2 = 62,25755,-6336087705
+Test.instanceCount Test.fFld Test.iFld = 1,1070973583,-32233
+Test.bFld Test.iFld1 lFld = 1,3070463,-3597593350141726732
+sFld Test.iArrFld = 1868,48942
+bMeth_check_sum: 7040778255504359076
+iMeth_check_sum: -42282881278000
+vMeth_check_sum: -5039836156556873376
+i i1 i30 = 220,1,113
+i31 i32 i33 = -11,45,-228
+i34 i35 i36 = 4,3070463,2
+i37 b1 by2 = -1367157028,0,0
+i38 bArr lArr2 = 62,25755,-6336087705
+Test.instanceCount Test.fFld Test.iFld = 1,1070973583,-37049
+Test.bFld Test.iFld1 lFld = 1,3070463,-3597593350141454628
+sFld Test.iArrFld = 1868,48942
+bMeth_check_sum: 5615032528228119716
+iMeth_check_sum: -47568241437750
+vMeth_check_sum: 3553556360728293260
+i i1 i30 = 220,1,113
+i31 i32 i33 = -11,45,-228
+i34 i35 i36 = 4,3070463,2
+i37 b1 by2 = -1366884924,0,0
+i38 bArr lArr2 = 62,25755,-6336087705
+Test.instanceCount Test.fFld Test.iFld = 1,1070973583,-41865
+Test.bFld Test.iFld1 lFld = 1,3070463,-3597593350141182524
+sFld Test.iArrFld = 1868,48942
+bMeth_check_sum: 4189286800951880356
+iMeth_check_sum: -52853601597500
+vMeth_check_sum: -6299795195696091720
