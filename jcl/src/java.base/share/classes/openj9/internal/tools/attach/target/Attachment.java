@@ -287,15 +287,13 @@ final class Attachment extends Thread implements Response {
 				AttachmentConnection.streamSend(respStream, Response.ERROR
 						+ " command invalid: " + cmd); //$NON-NLS-1$
 			}
-		} catch (IOException e) {
-			IPC.logMessage("doCommand IOException ", e.toString()); //$NON-NLS-1$
-			return true;
 		} catch (Throwable e) {
 			IPC.logMessage("doCommand exception ", e.toString()); //$NON-NLS-1$
 			try {
-				AttachmentConnection.streamSend(respStream, Response.ERROR
-						+ " unexpected exception or error: " + e.toString()); //$NON-NLS-1$
+				// The target VM response including exceptions should be returned.
+				replyWithProperties(DiagnosticProperties.makeStringResult("unexpected exception or error: " + e.toString()));
 			} catch (IOException e1) {
+				// The communication error is ignored.
 				IPC.logMessage("IOException sending error response" + e1.toString()); //$NON-NLS-1$
 			}
 			return true;
