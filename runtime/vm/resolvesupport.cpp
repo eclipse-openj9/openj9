@@ -441,6 +441,17 @@ tryAgain:
 			/* No need to check for JITCompileTimeResolve, since it wouldn't have got this far
 			 * if the class weren't already initialized.
 			 */
+#if defined(J9VM_OPT_SNAPSHOTS)
+			if (IS_RESTORE_RUN(vm)
+				&& ((NULL == resolvedClass->classObject) || J9_ARE_ANY_BITS_SET(resolvedClass->classFlags, J9ClassIsFrozen))
+			) {
+				/* load still in progress */
+				internalReleaseVMAccess(vmStruct);
+				omrthread_yield();
+				internalAcquireVMAccess(vmStruct);
+				goto tryAgain;
+			}
+#endif /* defined(J9VM_OPT_SNAPSHOTS) */
 			initializeClass(vmStruct, resolvedClass);
 			if (J9_ARE_ANY_BITS_SET(vmStruct->publicFlags, J9_PUBLIC_FLAGS_POP_FRAMES_INTERRUPT)) {
 				goto bail;
