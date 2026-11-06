@@ -254,7 +254,7 @@ TR::Symbol::RecognizedField J9::Symbol::searchRecognizedField(TR::Compilation *c
     // So check if the field is final and check if it is this special field
     if (isStatic) {
         int32_t totalLen;
-        char *fieldName;
+        const char *fieldName;
         fieldName = owningMethod->staticName(cpIndex, totalLen,
             comp->trMemory()); // totalLen = strlen("<class>" + "<field>" + "<sig>") + 3
         static const char *assertionsDisabledStr = "$assertionsDisabled Z";
