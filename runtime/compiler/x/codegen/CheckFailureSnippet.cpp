@@ -77,7 +77,10 @@ void TR_Debug::print(OMR::Logger *log, TR::X86CheckFailureSnippet *snippet)
     TR::MethodSymbol *sym = symRef->getSymbol()->castToMethodSymbol();
 
     uint8_t *bufferPos = snippet->getSnippetLabel()->getCodeLocation();
-    printSnippetLabel(log, snippet->getSnippetLabel(), bufferPos, getName(snippet), getName(symRef));
+    printSnippetLabel(log, snippet, bufferPos);
+    log->prints(" (");
+    log->prints(getName(symRef));
+    log->printc(')');
 
     if (snippet->getRequiredFPstackPop()) {
         printPrefix(log, NULL, bufferPos, 2);
@@ -191,7 +194,10 @@ void TR_Debug::print(OMR::Logger *log, TR::X86BoundCheckWithSpineCheckSnippet *s
     TR::MethodSymbol *sym = symRef->getSymbol()->castToMethodSymbol();
 
     uint8_t *bufferPos = snippet->getSnippetLabel()->getCodeLocation();
-    printSnippetLabel(log, snippet->getSnippetLabel(), bufferPos, getName(snippet), getName(symRef));
+    printSnippetLabel(log, snippet, bufferPos);
+    log->prints(" (");
+    log->prints(getName(symRef));
+    log->printc(')');
 
     log->printf("\t\t\t\t\t\t\t\t\t%s bound check with spine check snippet", commentString());
 }
@@ -211,7 +217,10 @@ void TR_Debug::print(OMR::Logger *log, TR::X86SpineCheckSnippet *snippet)
     TR::MethodSymbol *sym = symRef->getSymbol()->castToMethodSymbol();
 
     uint8_t *bufferPos = snippet->getSnippetLabel()->getCodeLocation();
-    printSnippetLabel(log, snippet->getSnippetLabel(), bufferPos, getName(snippet), getName(symRef));
+    printSnippetLabel(log, snippet, bufferPos);
+    log->prints(" (");
+    log->prints(getName(symRef));
+    log->printc(')');
 
     log->printf("\t\t\t\t\t\t\t\t\t%s spine check snippet", commentString());
 }
@@ -332,7 +341,10 @@ void TR_Debug::print(OMR::Logger *log, TR::X86CheckFailureSnippetWithResolve *sn
     TR::MethodSymbol *sym = symRef->getSymbol()->castToMethodSymbol();
 
     uint8_t *bufferPos = snippet->getSnippetLabel()->getCodeLocation();
-    printSnippetLabel(log, snippet->getSnippetLabel(), bufferPos, getName(snippet), getName(symRef));
+    printSnippetLabel(log, snippet, bufferPos);
+    log->prints(" (");
+    log->prints(getName(symRef));
+    log->printc(')');
 
     TR::SymbolReference *methodSymRef = snippet->getNode()->getSymbolReference();
     TR::MethodSymbol *methodSymbol = methodSymRef->getSymbol()->castToMethodSymbol();

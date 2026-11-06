@@ -128,8 +128,8 @@ uint8_t *TR::X86GuardedDevirtualSnippet::emitSnippetBody()
 void TR_Debug::print(OMR::Logger *log, TR::X86GuardedDevirtualSnippet *snippet)
 {
     uint8_t *bufferPos = snippet->getSnippetLabel()->getCodeLocation();
-    printSnippetLabel(log, snippet->getSnippetLabel(), bufferPos, getName(snippet),
-        "out of line full virtual call sequence");
+    printSnippetLabel(log, snippet, bufferPos);
+    log->prints(" (out of line full virtual call sequence)");
 
 #if defined(TR_TARGET_64BIT)
     TR::Node *callNode = snippet->getNode();
