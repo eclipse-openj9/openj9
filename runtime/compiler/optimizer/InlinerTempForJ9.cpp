@@ -4014,6 +4014,18 @@ bool TR_MultipleCallTargetInliner::callTargetIsGeneratedReflectionMethod(TR_Call
     return comp()->isGeneratedReflectionMethod(targetResolvedMethod);
 }
 
+uint32_t TR_MultipleCallTargetInliner::getPreviouslyCompiledBodyTotalBytecodeSize(TR_CallTarget *calltarget)
+{
+    TR_ResolvedMethod *calleeResolvedMethod = calltarget->_calleeMethod;
+    if (calleeResolvedMethod && !calleeResolvedMethod->isInterpreted()) {
+        TR_PersistentJittedBodyInfo *bodyInfo
+            = ((TR_ResolvedJ9Method *)calleeResolvedMethod)->getExistingJittedBodyInfo();
+        if (bodyInfo)
+            return bodyInfo->getTotalBytecodeSize();
+    }
+    return 0;
+}
+
 int32_t TR_MultipleCallTargetInliner::estimateCallTargetSize(TR_CallTarget *calltarget, TR_CallStack *callStack,
     TR::Node *callNode, TR::TreeTop *callNodeTreeTop, TR_EstimateCodeSize *ecs, bool currentBlockHasExceptionSuccessors,
     bool &inlineit)
@@ -4227,9 +4239,6 @@ void TR_MultipleCallTargetInliner::weighCallSite(TR_CallStack *callStack, TR_Cal
     for (int32_t k = 0; k < callsite->numTargets(); k++) {
         int32_t size = 0;
 
-        TR_EstimateCodeSize::raiiWrapper ecsWrapper(this, tracer(), _maxRecursiveCallByteCodeSizeEstimate);
-        TR_EstimateCodeSize *ecs = ecsWrapper.getCodeEstimator();
-
         bool possiblyVeryHotLargeCallee = false;
         bool wouldBenefitFromInlining = false;
 
@@ -4243,39 +4252,21 @@ void TR_MultipleCallTargetInliner::weighCallSite(TR_CallStack *callStack, TR_Cal
         if (!currentMethodIsGeneratedReflectionMethod && callTargetIsGeneratedReflectionMethod(calltarget))
             return;
 
-        // Estimate the size of the call target
-        bool inlineit = false;
-        size = estimateCallTargetSize(calltarget, callStack, callNode, callNodeTreeTop, ecs,
-            currentBlockHasExceptionSuccessors, inlineit);
+        uint32_t previouslyCompiledBodySize = getPreviouslyCompiledBodyTotalBytecodeSize(calltarget);
 
-        // Check if initial size estimation failed
-        if (!inlineit) {
-            if (isWarm(comp())) {
-                if (comp()->isServerInlining()) {
-                    if (callNode->getInlinedSiteIndex()
-                        < 0) // Ensures setWarmCallGraphTooBig is only called for methods with inline index -1
-                             // (indexes >=0 can happen when inliner is called after inlining has already occured
-                        comp()->getCurrentMethod()->setWarmCallGraphTooBig(
-                            callNode->getByteCodeInfo().getByteCodeIndex(), comp());
-                    else
-                        heuristicTrace(tracer(),
-                            "Not calling setWarmCallGraphTooBig on callNode %p because it is not from method being "
-                            "compiled bc index %d inlinedsiteindex %d",
-                            callNode, callNode->getByteCodeInfo().getByteCodeIndex(), callNode->getInlinedSiteIndex());
-                    if (comp()->trace(OMR::inlining))
-                        heuristicTrace(tracer(), "inliner: Marked call as warm callee too big: %d > %d: %s\n", size,
-                            ecs->getSizeThreshold(), tracer()->traceSignature(calltarget->_calleeSymbol));
-                }
-            }
-            tracer()->insertCounter(ECS_Failed, callNodeTreeTop);
-            heuristicTrace(tracer(), "Not Adding Call Target %p to list of targets to be inlined", calltarget);
+        TR_EstimateCodeSize::raiiWrapper ecsWrapper(this, tracer(), _maxRecursiveCallByteCodeSizeEstimate);
+        TR_EstimateCodeSize *ecs = ecsWrapper.getCodeEstimator();
 
-            logprintf(comp()->cg()->traceBCDCodeGen(), log,
-                "q^q : failing to inline %s into %s (callNode %p on line_no=%d) due to code size\n",
-                tracer()->traceSignature(calltarget->_calleeSymbol), tracer()->traceSignature(callStack->_methodSymbol),
-                callNode, comp()->getLineNumber(callNode));
+        bool usingSizeFromPreviouslyCompiledBody = false;
 
-            continue;
+        if (previouslyCompiledBodySize > 0) {
+            size = (int32_t)previouslyCompiledBodySize;
+            usingSizeFromPreviouslyCompiledBody = true;
+            size = applySizeAdjustmentHeuristics(calltarget, size, wouldBenefitFromInlining);
+        } else {
+            if (!performSizeEstimation(calltarget, callStack, callNode, callNodeTreeTop, ecs,
+                    currentBlockHasExceptionSuccessors, wouldBenefitFromInlining, size))
+                continue;
         }
 
         if (calltarget->_isPartialInliningCandidate && calltarget->_partialInline)
@@ -4287,9 +4278,6 @@ void TR_MultipleCallTargetInliner::weighCallSite(TR_CallStack *callStack, TR_Cal
                 || (comp()->getMethodHotness() == scorching))
             && (size > _maxRecursiveCallByteCodeSizeEstimate / 2))
             possiblyVeryHotLargeCallee = true;
-
-        // Apply size adjustment heuristics
-        size = applySizeAdjustmentHeuristics(calltarget, size, wouldBenefitFromInlining);
 
         // Apply frequency-based size scaling
         int32_t frequency = getCallNodeFrequency(comp(), callNodeTreeTop, randomGenerator());
@@ -4307,6 +4295,11 @@ void TR_MultipleCallTargetInliner::weighCallSite(TR_CallStack *callStack, TR_Cal
                     heuristicTrace(tracer(), "WeighCallSite: Adjusted size for large compiled method from %d to %d\n",
                         origSize, size);
             } else {
+                if (usingSizeFromPreviouslyCompiledBody
+                    && !performSizeEstimation(calltarget, callStack, callNode, callNodeTreeTop, ecs,
+                        currentBlockHasExceptionSuccessors, wouldBenefitFromInlining, size))
+                    continue;
+
                 if (comp()->trace(OMR::inlining))
                     heuristicTrace(tracer(), "WeighCallSite: Considering shrinking call %p with frequency %d\n",
                         callNode, frequency);
@@ -4314,6 +4307,10 @@ void TR_MultipleCallTargetInliner::weighCallSite(TR_CallStack *callStack, TR_Cal
                 // Apply frequency-based scaling
                 size = scaleBasedOnFrequency(calltarget->_calleeMethod, callNode, ecs, size, frequency);
             }
+        } else if (usingSizeFromPreviouslyCompiledBody) {
+            if (!performSizeEstimation(calltarget, callStack, callNode, callNodeTreeTop, ecs,
+                    currentBlockHasExceptionSuccessors, wouldBenefitFromInlining, size))
+                continue;
         }
 
         bool toInline = getPolicy()->tryToInline(calltarget, callStack, true);
@@ -4322,31 +4319,8 @@ void TR_MultipleCallTargetInliner::weighCallSite(TR_CallStack *callStack, TR_Cal
 
         if (!toInline && !forceInline(calltarget)
             && (size > _maxRecursiveCallByteCodeSizeEstimate || ecs->recursedTooDeep() == true)) {
-            if (isWarm(comp())) {
-                if (comp()->isServerInlining()) {
-                    if (callNode->getInlinedSiteIndex()
-                        < 0) // Ensures setWarmCallGraphTooBig is only called for methods with inline index -1
-                             // (indexes >=0 can happen when inliner is called after inlining has already occured
-                        comp()->getCurrentMethod()->setWarmCallGraphTooBig(
-                            callNode->getByteCodeInfo().getByteCodeIndex(), comp());
-                    else
-                        heuristicTrace(tracer(),
-                            "Not calling setWarmCallGraphTooBig on callNode %p because it is not from method being "
-                            "compiled bc index %d inlinedsiteindex %d",
-                            callNode, callNode->getByteCodeInfo().getByteCodeIndex(), callNode->getInlinedSiteIndex());
-                    if (comp()->trace(OMR::inlining))
-                        heuristicTrace(tracer(), "inliner: Marked call as warm callee too big: %d > %d: %s\n", size,
-                            ecs->getSizeThreshold(), tracer()->traceSignature(calltarget->_calleeSymbol));
-                }
-            }
-            tracer()->insertCounter(Callee_Too_Many_Bytecodes, callNodeTreeTop);
-            TR::Options::INLINE_calleeToDeep++;
-            logprintf(comp()->trace(OMR::inlining), log,
-                "inliner: size exceeds call graph size threshold: %d > %d: %s\n", size,
-                _maxRecursiveCallByteCodeSizeEstimate, tracer()->traceSignature(calltarget->_calleeSymbol));
-
-            callsite->removecalltarget(k, tracer(), Exceeds_Size_Threshold);
-            k--;
+            rejectCallTargetDueToSize(callsite, k, callNode, callNodeTreeTop, calltarget, size,
+                ecs->getSizeThreshold());
             continue;
         }
 
@@ -4655,6 +4629,67 @@ bool TR_MultipleCallTargetInliner::isLargeCompiledMethod(TR_ResolvedMethod *call
         }
     }
     return false;
+}
+
+void TR_MultipleCallTargetInliner::recordWarmCallGraphTooBig(TR::Node *callNode, TR_CallTarget *calltarget,
+    int32_t size, int32_t sizeThreshold)
+{
+    if (isWarm(comp()) && comp()->isServerInlining()) {
+        if (callNode->getInlinedSiteIndex() < 0) {
+            comp()->getCurrentMethod()->setWarmCallGraphTooBig(callNode->getByteCodeInfo().getByteCodeIndex(), comp());
+        } else {
+            heuristicTrace(tracer(),
+                "Not calling setWarmCallGraphTooBig on callNode %p because it is not from method being "
+                "compiled bc index %d inlinedsiteindex %d",
+                callNode, callNode->getByteCodeInfo().getByteCodeIndex(), callNode->getInlinedSiteIndex());
+        }
+        if (comp()->trace(OMR::inlining)) {
+            heuristicTrace(tracer(), "inliner: Marked call as warm callee too big: %d > %d: %s\n", size, sizeThreshold,
+                tracer()->traceSignature(calltarget->_calleeSymbol));
+        }
+    }
+}
+
+void TR_MultipleCallTargetInliner::rejectCallTargetDueToSize(TR_CallSite *callsite, int32_t &targetIndex,
+    TR::Node *callNode, TR::TreeTop *callNodeTreeTop, TR_CallTarget *calltarget, int32_t size, int32_t sizeThreshold)
+{
+    recordWarmCallGraphTooBig(callNode, calltarget, size, sizeThreshold);
+    tracer()->insertCounter(Callee_Too_Many_Bytecodes, callNodeTreeTop);
+    TR::Options::INLINE_calleeToDeep++;
+    logprintf(comp()->trace(OMR::inlining), comp()->log(),
+        "inliner: size exceeds call graph size threshold: %d > %d: %s\n", size, _maxRecursiveCallByteCodeSizeEstimate,
+        tracer()->traceSignature(calltarget->_calleeSymbol));
+
+    callsite->removecalltarget(targetIndex, tracer(), Exceeds_Size_Threshold);
+    targetIndex--;
+}
+
+void TR_MultipleCallTargetInliner::handleEstimationFailed(TR::Node *callNode, TR::TreeTop *callNodeTreeTop,
+    TR_CallTarget *calltarget, TR_CallStack *callStack, int32_t size, int32_t sizeThreshold)
+{
+    recordWarmCallGraphTooBig(callNode, calltarget, size, sizeThreshold);
+    tracer()->insertCounter(ECS_Failed, callNodeTreeTop);
+    heuristicTrace(tracer(), "Not Adding Call Target %p to list of targets to be inlined", calltarget);
+
+    logprintf(comp()->cg()->traceBCDCodeGen(), comp()->log(),
+        "q^q : failing to inline %s into %s (callNode %p on line_no=%d) due to code size\n",
+        tracer()->traceSignature(calltarget->_calleeSymbol), tracer()->traceSignature(callStack->_methodSymbol),
+        callNode, comp()->getLineNumber(callNode));
+}
+
+bool TR_MultipleCallTargetInliner::performSizeEstimation(TR_CallTarget *calltarget, TR_CallStack *callStack,
+    TR::Node *callNode, TR::TreeTop *callNodeTreeTop, TR_EstimateCodeSize *ecs, bool currentBlockHasExceptionSuccessors,
+    bool wouldBenefitFromInlining, int32_t &size)
+{
+    bool inlineit = false;
+    size = estimateCallTargetSize(calltarget, callStack, callNode, callNodeTreeTop, ecs,
+        currentBlockHasExceptionSuccessors, inlineit);
+    if (!inlineit) {
+        handleEstimationFailed(callNode, callNodeTreeTop, calltarget, callStack, size, ecs->getSizeThreshold());
+        return false;
+    }
+    size = applySizeAdjustmentHeuristics(calltarget, size, wouldBenefitFromInlining);
+    return true;
 }
 
 bool TR_MultipleCallTargetInliner::exceedsSizeThreshold(TR_CallSite *callSite, int bytecodeSize, TR::Block *block,

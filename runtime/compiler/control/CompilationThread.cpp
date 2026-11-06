@@ -9567,8 +9567,11 @@ TR_MethodMetaData *TR::CompilationInfoPerThreadBase::compile(J9VMThread *vmThrea
         // As the body is finished, mark its profile info as active so that the JProfiler thread will inspect it
         if (compiler->getRecompilationInfo()) {
             TR_PersistentJittedBodyInfo *bodyInfo = compiler->getRecompilationInfo()->getJittedBodyInfo();
-            if (bodyInfo && bodyInfo->getProfileInfo()) {
-                bodyInfo->getProfileInfo()->setActive();
+            if (bodyInfo) {
+                bodyInfo->setTotalBytecodeSize(TR::CompilationInfoPerThreadBase::computeTotalBytecodeSize(compiler));
+                if (bodyInfo->getProfileInfo()) {
+                    bodyInfo->getProfileInfo()->setActive();
+                }
             }
         }
 
@@ -10436,7 +10439,10 @@ void TR::CompilationInfoPerThreadBase::logCompilationSuccess(J9VMThread *vmThrea
                 || (compiler->getOption(TR_CountOptTransformations)
                     && compiler->getVerboseOptTransformationCount() >= 1)) {
                 const uint32_t bytecodeSize = TR::CompilationInfo::getMethodBytecodeSize(method);
-                const uint32_t totalBytecodeSize = TR::CompilationInfoPerThreadBase::computeTotalBytecodeSize(compiler);
+                const uint32_t totalBytecodeSize
+                    = (compiler->getRecompilationInfo() && compiler->getRecompilationInfo()->getJittedBodyInfo())
+                    ? compiler->getRecompilationInfo()->getJittedBodyInfo()->getTotalBytecodeSize()
+                    : TR::CompilationInfoPerThreadBase::computeTotalBytecodeSize(compiler);
                 const bool isJniNative = compilee->isJNINative();
                 TR_VerboseLog::CriticalSection vlogLock;
                 TR_VerboseLog::write(TR_Vlog_COMP, "(%s%s) %s @ " POINTER_PRINTF_FORMAT "-" POINTER_PRINTF_FORMAT,
