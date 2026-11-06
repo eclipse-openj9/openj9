@@ -108,6 +108,10 @@ Java_java_lang_ClassLoader_defineClassImpl1(JNIEnv *env, jobject receiver, jclas
 	if (J9_ARE_ALL_BITS_SET(flags, CLASSOPTION_FLAG_HIDDEN)) {
 		options |= (J9_FINDCLASS_FLAG_HIDDEN | J9_FINDCLASS_FLAG_UNSAFE);
 	} else {
+		/* A normal class defined by Lookup.defineClass() does not have a host class. The Lookup
+		 * API has already checked that the class is in the same package as the lookup class.
+		 */
+		hostClazz = NULL;
 #if JAVA_SPEC_VERSION < 21
 		/* Validate the name for a normal (non-hidden) class. */
 		validateName = TRUE;

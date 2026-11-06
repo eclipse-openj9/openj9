@@ -3393,8 +3393,9 @@ fail:
 			ramClass->reservedCounter = 0;
 			ramClass->cancelCounter = 0;
 
-			/* hostClass is exclusively defined only in Unsafe.defineAnonymousClass.
-			 * For all other cases, clazz->hostClass points to itself (clazz).
+			/* hostClass is only set for anonymous classes (Unsafe.defineAnonymousClass) and hidden
+			 * classes (Lookup.defineHiddenClass). For all other cases, clazz->hostClass points to
+			 * itself (clazz).
 			 */
 			if (NULL != hostClass) {
 				ramClass->hostClass = hostClass;
@@ -3928,6 +3929,9 @@ retry:
 				 */
 				bool findModule = false;
 				J9ClassLoader *findModuleClassLoader = classLoader;
+				/* A normal (non-hidden) class defined by Lookup.defineClass() has the STRONG option. */
+				const bool isLookupDefinedClass = J9_ARE_ALL_BITS_SET(options, J9_FINDCLASS_FLAG_CLASS_OPTION_STRONG)
+						&& J9_ARE_NO_BITS_SET(options, J9_FINDCLASS_FLAG_ANON | J9_FINDCLASS_FLAG_HIDDEN);
 				if (J9_ARE_ANY_BITS_SET(options, J9_FINDCLASS_FLAG_ANON | J9_FINDCLASS_FLAG_HIDDEN)) {
 #if JAVA_SPEC_VERSION >= 22
 					/* In JDK22, MethodHandleProxies.asInterfaceInstance was reimplemented using a more
@@ -3949,7 +3953,11 @@ retry:
 						findModule = true;
 					} else if ((LOAD_LOCATION_PATCH_PATH == locationType)
 					|| (LOAD_LOCATION_MODULE == locationType)
+					|| isLookupDefinedClass
 					) {
+						/* A class defined by Lookup.defineClass() is in the same package as the lookup
+						 * class, and belongs to the module that owns that package.
+						 */
 						findModule = true;
 					} else {
 						J9UTF8 *superclassName = J9ROMCLASS_SUPERCLASSNAME(romClass);
@@ -3975,6 +3983,13 @@ retry:
 					omrthread_monitor_enter(classLoaderModuleAndLocationMutex);
 					module = findModuleForPackage(vmThread, findModuleClassLoader, J9UTF8_DATA(className), pkgNameLength);
 					omrthread_monitor_exit(classLoaderModuleAndLocationMutex);
+					if ((NULL == module)
+					&& isLookupDefinedClass
+					&& (classLoader == javaVM->systemClassLoader)
+					) {
+						/* The package is not in a named module of the bootloader. */
+						module = javaVM->unnamedModuleForSystemLoader;
+					}
 				} else {
 					Assert_VM_true((module == javaVM->unnamedModuleForSystemLoader) || (module == hostClass->module));
 				}
