@@ -57,9 +57,6 @@ public:
 	MM_LightweightNonReentrantLock *_copyCacheLock; /**< The lock associated with the list this copy cache belongs to */
 	void *_TLHRemainderBase;  /**< base pointers of the last unused TLH copy cache, that might be reused  on next copy refresh */
 	void *_TLHRemainderTop;	  /**< top pointers of the last unused TLH copy cache, that might be reused  on next copy refresh */
-	void *_DFCopyBase;	/**< The base address of the inlined "copy cache" used by CopyForwardSchemeDepthFirst */
-	void *_DFCopyAlloc;	/**< The alloc pointer of the inlined "copy cache" used by CopyForwardSchemeDepthFirst */
-	void *_DFCopyTop;	/**< The top address of the inlined "copy cache" used by CopyForwardSchemeDepthFirst */
 	UDATA _failedAllocateSize;		/**< Smallest size of allocate request that we failed in this compact group */
 	
 	/* statistics */
@@ -94,9 +91,6 @@ public:
 		_copyCacheLock = NULL;
 		_TLHRemainderBase = NULL;
 		_TLHRemainderTop = NULL;
-		_DFCopyBase = NULL;
-		_DFCopyAlloc = NULL;
-		_DFCopyTop = NULL;
 		_failedAllocateSize = UDATA_MAX;
 		_edenStats._copiedObjects = 0;
 		_edenStats._copiedBytes = 0;

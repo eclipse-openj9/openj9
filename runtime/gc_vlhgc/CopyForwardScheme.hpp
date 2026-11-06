@@ -135,6 +135,7 @@ private:
 	void *_heapBase;  /**< Cached base pointer of heap */
 	void *_heapTop;  /**< Cached top pointer of heap */
 
+	bool _singleAllocationContext; /**< In cases there is only one context, some calculation could be skipped */
 	uint8_t _regionShift;
 
 	volatile bool _abortFlag;  /**< Flag indicating whether the current copy forward cycle should be aborted due to insufficient heap to complete */
@@ -544,11 +545,11 @@ private:
 	 * Reserve the specified number of bytes to accommodate an object copy.
 	 * @param env The GC thread requesting the heap memory to be allocated.
 	 * @param objectToEvacuate Object being copied.
-	 * @param reservingContext[in] The context to which we would prefer to copy any objects discovered in this method
+	 * @param reservingContext[in/out] The context to which we would prefer to copy any objects discovered in this method
 	 * @param objectReserveSizeInBytes Amount of bytes to be reserved (can be greater than the original object size) for copying.
 	 * @return a CopyScanCache which contains the reserved memory or NULL if the reserve was not successful.
 	 */
-	MMINLINE MM_CopyScanCacheVLHGC *reserveMemoryForCopy(MM_EnvironmentVLHGC *env, J9Object *objectToEvacuate, MM_AllocationContextTarok *reservingContext, uintptr_t objectReserveSizeInBytes);
+	MMINLINE MM_CopyScanCacheVLHGC *reserveMemoryForCopy(MM_EnvironmentVLHGC *env, J9Object *objectToEvacuate, MM_AllocationContextTarok **reservingContext, uintptr_t objectReserveSizeInBytes);
 
 	void flushCaches(MM_CopyScanCacheVLHGC *cache);
 
