@@ -720,3 +720,4 @@ TraceEvent=Trc_JCL_JFRLOG_subscribeLogLevel Overhead=1 Level=3 Template="JVM.sub
 TraceException=Trc_JCL_JFRLOG_fileWrite_error Overhead=1 Level=1 Template="logJFRMessageHelper() j9file_write(%zd) returns %zd"
 TraceEvent=Trc_JCL_JFRLOG_incoming Overhead=1 Level=3 Template="logJFRMessageHelper() jfrLogTagCombination(0x%x) level(%d) utf8Message = %s"
 TraceEvent=Trc_JCL_JFRLOG_generated Overhead=1 Level=3 Template="logJFRMessageHelper() generated message (%zd) = %s"
+TraceExit=Trc_JCL_com_ibm_oti_shared_getCpeTypeForProtocol_ExitNestedJAR Noenv Overhead=1 Level=3 Template="JCL: com.ibm.oti.shared getCpeTypeForProtocol: Exiting with nested JAR"

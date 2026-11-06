@@ -2508,8 +2508,9 @@ typedef struct J9ClassPatchMap {
 
 #define CPE_FLAG_BOOTSTRAP 						1
 #define CPE_FLAG_USER							2
+#define CPE_FLAG_NESTED							4
 
-#define CPE_CLASSPATH_TYPE_MASK  (CPE_FLAG_BOOTSTRAP | CPE_FLAG_USER)
+#define CPE_CLASSPATH_TYPE_MASK  (CPE_FLAG_BOOTSTRAP | CPE_FLAG_USER | CPE_FLAG_NESTED)
 
 /* J9BCTranslationData is no longer used in the code, but the constants are.
  * DDR requires that the structure continue to exist to hold the constants.

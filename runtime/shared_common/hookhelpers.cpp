@@ -119,7 +119,11 @@ makeClasspathItems(J9JavaVM* vm, J9ClassLoader* classloader, J9ClassPathEntry** 
 		ignoreStateChange = false;
 
 		if (CPE_TYPE_JAR == classPathEntry->type) {
-			prototype = PROTO_JAR;
+			if (J9_ARE_ALL_BITS_SET(classPathEntry->flags, CPE_FLAG_NESTED)) {
+				prototype = PROTO_JAR_NESTED;
+			} else {
+				prototype = PROTO_JAR;
+			}
 		} else if (CPE_TYPE_JIMAGE == classPathEntry->type) {
 			prototype = PROTO_JIMAGE;
 			ignoreStateChange = true;
