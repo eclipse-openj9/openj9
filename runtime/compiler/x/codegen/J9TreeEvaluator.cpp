@@ -12917,6 +12917,79 @@ TR::Register *J9::X86::TreeEvaluator::tabortEvaluator(TR::Node *node, TR::CodeGe
     return NULL;
 }
 
+TR::Register *J9::X86::TreeEvaluator::callCRC32CUpdateHelper(TR::Node *node, TR::CodeGenerator *cg, bool isDirectBuffer)
+{
+    TR::Register *crc = cg->gprClobberEvaluate(node->getChild(0), TR::InstOpCode::MOV4RegReg);
+    TR::Register *buf = cg->gprClobberEvaluate(node->getChild(1), OP::MOVRegReg());
+    TR::Register *off = cg->gprClobberEvaluate(node->getChild(2), TR::InstOpCode::MOV4RegReg);
+    TR::Register *end = cg->evaluate(node->getChild(3));
+
+    if (!isDirectBuffer) {
+        TR::MemoryReference *memRef = MRef_Bdisp32(buf, TR::Compiler->om.contiguousArrayHeaderSizeInBytes(), cg);
+        Inst_RegMem(OP::LEARegMem(), node, buf, memRef, cg);
+    }
+
+    TR::Register *result;
+#if defined(TR_TARGET_64BIT)
+    {
+        /*
+        AMD64 helper calling convention:
+          edi = initial CRC (in)
+          rsi = buffer pointer (in)
+          edx = start offset (in)
+          ecx = exclusive end offset (in)
+          r8  = clobbered scratch (dummy)
+          eax = result CRC (out)
+        */
+        TR::Register *dummy = cg->allocateRegister(TR_GPR);
+        result = cg->allocateRegister();
+        TR::RegisterDependencyConditions *dependencies = RegDeps((uint8_t)0, 6, cg);
+        dependencies->addPostCondition(crc, TR::RealRegister::edi, cg);
+        dependencies->addPostCondition(buf, TR::RealRegister::esi, cg);
+        dependencies->addPostCondition(off, TR::RealRegister::edx, cg);
+        dependencies->addPostCondition(end, TR::RealRegister::ecx, cg);
+        dependencies->addPostCondition(dummy, TR::RealRegister::r8, cg);
+        dependencies->addPostCondition(result, TR::RealRegister::eax, cg);
+
+        dependencies->stopAddingConditions();
+
+        Inst_HelperCall(node, TR_AMD64java_util_zip_CRC32C_updateBytes, dependencies, cg);
+        cg->stopUsingRegister(dummy);
+    }
+#else
+    {
+        /*
+        IA32 helper calling convention:
+          eax = initial CRC (in) / result CRC (out) — same register
+          edx = buffer pointer (in)
+          ecx = start offset (in)
+          ebx = exclusive end offset (in)
+          esi = clobbered scratch (dummy)
+        */
+        TR::Register *dummy = cg->allocateRegister(TR_GPR);
+        result = crc; /* helper overwrites eax in-place; use the crc register as result */
+        TR::RegisterDependencyConditions *dependencies = RegDeps((uint8_t)0, 5, cg);
+        dependencies->addPostCondition(crc, TR::RealRegister::eax, cg);
+        dependencies->addPostCondition(buf, TR::RealRegister::edx, cg);
+        dependencies->addPostCondition(off, TR::RealRegister::ecx, cg);
+        dependencies->addPostCondition(end, TR::RealRegister::ebx, cg);
+        dependencies->addPostCondition(dummy, TR::RealRegister::esi, cg);
+
+        dependencies->stopAddingConditions();
+
+        Inst_HelperCall(node, TR_IA32java_util_zip_CRC32C_updateBytes, dependencies, cg);
+        cg->stopUsingRegister(dummy);
+    }
+#endif
+
+    for (uint16_t i = 0; i < node->getNumChildren(); i++) {
+        cg->decReferenceCount(node->getChild(i));
+    }
+
+    node->setRegister(result);
+    return result;
+}
+
 TR::Register *J9::X86::TreeEvaluator::directCallEvaluator(TR::Node *node, TR::CodeGenerator *cg)
 {
     static bool useJapaneseCompression = (feGetEnv("TR_JapaneseComp") != NULL);
@@ -13037,6 +13110,16 @@ TR::Register *J9::X86::TreeEvaluator::directCallEvaluator(TR::Node *node, TR::Co
                 return NULL;
             } else
                 break;
+        }
+        case TR::java_util_zip_CRC32C_updateBytes:
+        case TR::java_util_zip_CRC32C_updateDirectByteBuffer: {
+            static const bool disableCRC32C = feGetEnv("TR_DisableCRC32CAcceleration") != NULL;
+            if (!disableCRC32C && !TR::Compiler->om.canGenerateArraylets()
+                && comp->target().cpu.supportsFeature(OMR_FEATURE_X86_SSE4_2)) {
+                return callCRC32CUpdateHelper(node, cg,
+                    symbol->getRecognizedMethod() == TR::java_util_zip_CRC32C_updateDirectByteBuffer);
+            }
+            break;
         }
 #if JAVA_SPEC_VERSION < 19
         case TR::java_lang_StringCoding_hasNegatives:
