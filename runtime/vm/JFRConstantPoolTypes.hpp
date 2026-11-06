@@ -628,8 +628,6 @@ private:
 	bool _shouldWriteYoungGenerationConfigurationEvent;
 	bool _shouldWriteGCConfigurationEvent;
 	bool _shouldWriteGCTLABConfigurationEvent;
-	bool _shouldWriteSystemProcess;
-	bool _shouldWriteNativeLibrary;
 	bool _shouldWriteModuleRequire;
 	bool _shouldWriteModuleExport;
 	bool _shouldWriteGCSurvivorConfigurationEvent;
@@ -974,6 +972,10 @@ public:
 	void addObjectAllocationSampleEntry(J9JFRObjectAllocationSample *objectAllocationSampleData);
 
 	void addClassLoaderStatisticsEntry(J9JFRClassLoaderStatistics *classLoaderStatisticsData);
+
+	void addSystemProcessEntry(J9JFRSystemProcess *systemProcessData);
+
+	void addNativeLibraryEntry(J9JFRNativeLibrary *nativeLibraryData);
 
 	J9Pool *getExecutionSampleTable()
 	{
@@ -1444,16 +1446,6 @@ public:
 		return _shouldWriteGCTLABConfigurationEvent;
 	}
 
-	bool shouldWriteSystemProcess()
-	{
-		return _shouldWriteSystemProcess;
-	}
-
-	bool shouldWriteNativeLibrary()
-	{
-		return _shouldWriteNativeLibrary;
-	}
-
 	bool shouldWriteModuleRequire()
 	{
 		return _shouldWriteModuleRequire;
@@ -1574,10 +1566,10 @@ public:
 				addPhysicalMemoryEntry((J9JFRPhysicalMemory *)event);
 				break;
 			case J9JFR_EVENT_TYPE_SYSTEM_PROCESS:
-				_shouldWriteSystemProcess = true;
+				addSystemProcessEntry((J9JFRSystemProcess *)event);
 				break;
 			case J9JFR_EVENT_TYPE_NATIVE_LIBRARY:
-				_shouldWriteNativeLibrary = true;
+				addNativeLibraryEntry((J9JFRNativeLibrary *)event);
 				break;
 			case J9JFR_EVENT_TYPE_MODULE_REQUIRE:
 				_shouldWriteModuleRequire = true;
@@ -1650,12 +1642,6 @@ public:
 			loadThreadDumpEvents(_currentThread);
 			loadThreadAllocationStatisticsEvents();
 		} else {
-			if (_shouldWriteSystemProcess) {
-				loadSystemProcesses(_currentThread);
-			}
-			if (_shouldWriteNativeLibrary) {
-				loadNativeLibraries(_currentThread);
-			}
 			if (_shouldWriteModuleRequire || _shouldWriteModuleExport) {
 				loadModuleRequireAndModuleExportEvents();
 			}
@@ -2488,8 +2474,6 @@ done:
 		, _shouldWriteYoungGenerationConfigurationEvent(false)
 		, _shouldWriteGCConfigurationEvent(false)
 		, _shouldWriteGCTLABConfigurationEvent(false)
-		, _shouldWriteSystemProcess(false)
-		, _shouldWriteNativeLibrary(false)
 		, _shouldWriteModuleRequire(false)
 		, _shouldWriteModuleExport(false)
 		, _shouldWriteGCSurvivorConfigurationEvent(false)
