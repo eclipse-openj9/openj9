@@ -920,6 +920,7 @@ IDATA
 resolveInstanceFieldRefInto(J9VMThread *vmStruct, J9Method *method, J9ConstantPool *ramCP, UDATA cpIndex, UDATA resolveFlags, J9ROMFieldShape **resolvedField, J9RAMFieldRef *ramCPEntry)
 {
 	IDATA fieldOffset = -1;
+	J9UTF8 *name = NULL;
 	J9ROMFieldRef *romFieldRef;
 	J9Class *resolvedClass;
 	bool jitCompileTimeResolve = J9_ARE_ANY_BITS_SET(resolveFlags, J9_RESOLVE_FLAG_JIT_COMPILE_TIME);
@@ -948,7 +949,6 @@ resolveInstanceFieldRefInto(J9VMThread *vmStruct, J9Method *method, J9ConstantPo
 		J9ROMFieldShape *field;
 		J9Class *definingClass;
 		J9ROMNameAndSignature *nameAndSig;
-		J9UTF8 *name;
 		J9UTF8 *signature;
 		IDATA checkResult = J9_VISIBILITY_NON_MODULE_ACCESS_ERROR;
 		IDATA badMemberModifier = 0;
@@ -1110,7 +1110,11 @@ illegalAccess:
 	}
 
 done:
-	Trc_VM_resolveInstanceFieldRef_Exit(vmStruct, fieldOffset);
+	if (NULL != name) {
+		Trc_VM_resolveInstanceFieldRef_Exit(vmStruct, fieldOffset, J9UTF8_LENGTH(name), J9UTF8_DATA(name));
+	} else {
+		Trc_VM_resolveInstanceFieldRef_Exit(vmStruct, fieldOffset, 0, "");
+	}
 	return fieldOffset;
 }
 
