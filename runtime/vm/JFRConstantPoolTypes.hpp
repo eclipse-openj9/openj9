@@ -529,7 +529,7 @@ private:
 	JfrBuildResult _buildResult;
 	bool _debug;
 	J9PortLibrary *privatePortLibrary;
-	bool _finalWrite;
+	bool _newChunk;
 	bool _jfrV2;
 
 	/* Constantpool types */
@@ -2390,13 +2390,13 @@ done:
 		vmFuncs->releaseExclusiveVMAccess(_currentThread);
 	}
 
-	VM_JFRConstantPoolTypes(J9VMThread *currentThread, bool finalWrite)
+	VM_JFRConstantPoolTypes(J9VMThread *currentThread, bool newChunk)
 		: _currentThread(currentThread)
 		, _vm(currentThread->javaVM)
 		, _buildResult(OK)
 		, _debug(false)
 		, privatePortLibrary(_vm->portLibrary)
-		, _finalWrite(finalWrite)
+		, _newChunk(newChunk)
 		, _jfrV2(isJFRV2SupportEnabled(_vm))
 		, _classTable(NULL)
 		, _packageTable(NULL)
@@ -2843,7 +2843,7 @@ done:
 
 	~VM_JFRConstantPoolTypes()
 	{
-		if (_finalWrite) {
+		if (_newChunk) {
 			hashTableForEachDo(_threadGroupTable, &freeThreadGroupNameEntries, _currentThread);
 			hashTableForEachDo(_stringUTF8Table, &freeUTF8Strings, _currentThread);
 			j9mem_free_memory(_globalStringTable);
