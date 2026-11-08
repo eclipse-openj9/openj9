@@ -2618,6 +2618,9 @@ bool J9::Options::fePreProcess(void *base)
     if (vm->runtimeFlags & J9_RUNTIME_TUNE_FOOTPRINT)
         setTuneFootprintOptions(jitConfig);
 
+    // Enable UseDef-based VectorAPIExpansion by default for OpenJ9
+    self()->setOption(TR_EnableUseDefBasedVectorAPIExpansion);
+
 #if defined(LINUX) && defined(J9VM_OPT_SHARED_CLASSES)
     // Enable SCC disclaiming by default
     self()->setOption(TR_EnableSharedCacheDisclaiming);

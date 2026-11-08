@@ -61,6 +61,10 @@ int32_t TR_VectorAPIExpansion::perform()
         }
     }
 
+    // Excluding copies of autos from temp webs can only work if boxing and useDef-based
+    // algorithm are enabled.
+    _directedCopies = _useDefBasedAliasing && _boxingAllowed;
+
     _aliasTableSize = getAliasTableSize();
 
     if (J2SE_VERSION(TR::Compiler->javaVM) >= J2SE_V17 && !disableVectorAPIExpansion
@@ -276,16 +280,30 @@ void TR_VectorAPIExpansion::aliasDefNode(TR::Node *defNode, bool rhsHasKnownType
 
         TR_ASSERT_FATAL(rhsId != 0, "rhs should have a valid useDef index");
 
-        // Alias def with RHS
-        if (_aliasTable[rhsId]._tempAliases == NULL)
-            _aliasTable[rhsId]._tempAliases
-                = new (comp()->trStackMemory()) TR_BitVector(_aliasTableSize, comp()->trMemory(), stackAlloc);
+        if (_directedCopies) {
+            // Don't merge the webs of the def and of the RHS: whatever is stored into the def's web is an input
+            // into it, but the RHS web doesn't depend on where its value is copied to. If the def's web turns
+            // out not to be a vector the astore is not a vector node, and the RHS is boxed there.
+            // See resolveCopyEdges()
+            copyEdge edge;
+            edge._src = rhsId;
+            edge._dst = defId;
+            _copyEdges.add(edge);
 
-        _aliasTable[defId]._tempAliases->set(rhsId);
-        _aliasTable[rhsId]._tempAliases->set(defId);
+            logprintf(_trace, comp()->log(), "aliasDefNode: copy defNode %p <- rhsNode %p (id %d <- id %d)\n", defNode,
+                rhsNode, defId, rhsId);
+        } else {
+            // Alias def with RHS
+            if (_aliasTable[rhsId]._tempAliases == NULL)
+                _aliasTable[rhsId]._tempAliases
+                    = new (comp()->trStackMemory()) TR_BitVector(_aliasTableSize, comp()->trMemory(), stackAlloc);
 
-        logprintf(_trace, comp()->log(), "aliasDefNode: aliased defNode %p with rhsNode %p (id %d with id %d)\n",
-            defNode, rhsNode, defId, rhsId);
+            _aliasTable[defId]._tempAliases->set(rhsId);
+            _aliasTable[rhsId]._tempAliases->set(defId);
+
+            logprintf(_trace, comp()->log(), "aliasDefNode: aliased defNode %p with rhsNode %p (id %d with id %d)\n",
+                defNode, rhsNode, defId, rhsId);
+        }
 
     } else if (!rhsHasKnownType) {
         // RHS is not an aload - invalidate the def node, unless we already know exact type
@@ -327,6 +345,95 @@ void TR_VectorAPIExpansion::aliasDefNode(TR::Node *defNode, bool rhsHasKnownType
         logprintf(_trace, comp()->log(), "aliasDefNode: aliased defNode %p with useNode %p (#%d with #%d)\n", defNode,
             useNode, defId, useId);
     }
+}
+
+int32_t TR_VectorAPIExpansion::getTempClassRep(int32_t id)
+{
+    int32_t rep = _aliasTable[id]._tempClassId;
+
+    if (rep <= 0 || _aliasTable[rep]._tempClassId <= 0)
+        return 0;
+
+    return rep;
+}
+
+bool TR_VectorAPIExpansion::propagateCopyEdges()
+{
+    OMR::Logger *log = comp()->log();
+    bool changed = false;
+
+    for (uint32_t k = 0; k < _copyEdges.size(); k++) {
+        int32_t src = _copyEdges[k]._src;
+        int32_t dst = _copyEdges[k]._dst;
+
+        int32_t dstRep = getTempClassRep(dst);
+
+        if (dstRep == 0)
+            continue; // destination is not a vector, and its astore will box the source if needed
+
+        if (_aliasTable[dstRep]._vinfo.isUnknown())
+            continue;
+
+        int32_t srcRep = getTempClassRep(src);
+
+        if (srcRep == 0 || _aliasTable[srcRep]._vinfo.isUnknown()) {
+            logprintf(_trace, log, "%s making temp class #%d unknown since copy #%d <- #%d has an unknown input\n",
+                OPT_DETAILS_VECTOR, dstRep, dst, src);
+
+            _aliasTable[dstRep]._vinfo.setIsUnknown();
+            changed = true;
+        } else if (!_aliasTable[srcRep]._vinfo.isSet()) {
+            // the source might still get its vector info
+            continue;
+        } else if (!_aliasTable[dstRep]._vinfo.isSet()) {
+            logprintf(_trace, log, "%s assigning to temp class #%d from copy #%d <- #%d: ", OPT_DETAILS_VECTOR, dstRep,
+                dst, src);
+            _aliasTable[srcRep]._vinfo.print(_trace, log);
+            logprintf(_trace, log, "\n");
+
+            _aliasTable[dstRep]._vinfo = _aliasTable[srcRep]._vinfo;
+            changed = true;
+        } else if (_aliasTable[dstRep]._vinfo != _aliasTable[srcRep]._vinfo) {
+            logprintf(_trace, log, "%s making temp class #%d unknown since copy #%d <- #%d has different vector info\n",
+                OPT_DETAILS_VECTOR, dstRep, dst, src);
+
+            _aliasTable[dstRep]._vinfo.setIsUnknown();
+            changed = true;
+        }
+    }
+
+    return changed;
+}
+
+void TR_VectorAPIExpansion::resolveCopyEdges()
+{
+    OMR::Logger *log = comp()->log();
+
+    logprintf(_trace, log, "%s Resolving %d copies\n", OPT_DETAILS_VECTOR, (int32_t)_copyEdges.size());
+
+    while (propagateCopyEdges())
+        ;
+
+    // A temp class that didn't get vector info from anywhere has no vector inputs, so it's not a vector.
+    // This is the same as what validateVectorAliasClasses() does for classes without vector info.
+    for (int32_t id = 1; id < (int32_t)_aliasTableSize; id++) {
+        TR::SymbolReference *symRef = getSymRefFromAliasId(id);
+
+        if (!symRef || !symRef->getSymbol() || symRef->getSymbol()->isMethod())
+            continue;
+
+        if (_aliasTable[id]._tempClassId != id || _aliasTable[id]._vinfo.isSet())
+            continue;
+
+        if (_trace && _aliasTable[id]._tempAliases) // to reduce number of messages
+            log->printf("Invalidating19 temp class #%d since it has no vector inputs\n", id);
+
+        _aliasTable[id]._tempClassId = -1;
+    }
+
+    // Classes that were just invalidated are unknown inputs into the classes they are copied into
+    while (propagateCopyEdges())
+        ;
 }
 
 bool TR_VectorAPIExpansion::treeTopAllowedWithBoxing(TR::ILOpCodes opCodeValue)
@@ -1215,6 +1322,10 @@ void TR_VectorAPIExpansion::validateVectorAliasClasses(TR_BitVector *vectorAlias
 
         _aliasTable[id]._vinfo = classVectorInfo;
 
+        // The class may still get vector info through a copy, see resolveCopyEdges()
+        if (_directedCopies && tempClasses && vectorClass && !classVectorInfo.isSet())
+            continue;
+
         if (vectorClass && classVectorInfo.isSet() && (!classVectorInfo.isUnknown() || boxingAllowed()))
             continue;
 
@@ -1655,6 +1766,8 @@ int32_t TR_VectorAPIExpansion::expandVectorAPI()
 
     logprintf(_trace, comp()->log(), "%s In expandVectorAPI\n", OPT_DETAILS_VECTOR);
 
+    _copyEdges.setSize(0);
+
     buildVectorAliases(false);
     buildAliasClasses();
 
@@ -1662,6 +1775,9 @@ int32_t TR_VectorAPIExpansion::expandVectorAPI()
         validateVectorAliasClasses(&vectorAliasTableElement::_aliases, &vectorAliasTableElement::_classId);
 
     validateVectorAliasClasses(&vectorAliasTableElement::_tempAliases, &vectorAliasTableElement::_tempClassId);
+
+    if (_directedCopies)
+        resolveCopyEdges();
 
     bool checksPassed = true;
 
@@ -3593,6 +3709,8 @@ TR_VectorAPIExpansion::TR_VectorAPIExpansion(TR::OptimizationManager *manager)
     , _nodeTable(trMemory())
     , _boxingClasses(trMemory())
     , _useDefBasedAliasing(false)
+    , _directedCopies(false)
+    , _copyEdges(trMemory())
     , _useDefInfo(NULL)
     , _aliasTableSize(0)
 {
