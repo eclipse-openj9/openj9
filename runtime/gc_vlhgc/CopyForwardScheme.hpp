@@ -166,7 +166,16 @@ private:
 
 	uintptr_t *_compressedSurvivorTable;	/**< start address of compressed survivor table (1 bit presents CARD_SIZE of Heap) */
 
-	bool *_regionShouldMark;	/**< Array of region _shouldMark values to improve access time by caching */
+	/**
+	 * Array of frequently used values from RegionDescriptor, cached into a condensed array to improve access time. Only regions with _shouldMark set (evacuate regions) carry age and is-eden info:
+	 * REGION_NOT_EVACUATE     - region is not marked for evacuation (_shouldMark == false)
+	 * 0                       - age 0, Eden region
+	 * 1                       - age 0, non-Eden region
+	 * 2 and more              - age + 1 (age 1 and more up to tarokRegionMaxAge), for other evacuate regions
+	 */
+	uint8_t *_regionFlags; /**< Condensed array of frequently used RD flags */
+
+	static const uint8_t REGION_NOT_EVACUATE = UINT8_MAX;	/**< _regionFlags value for regions that are not evacuated */
 
 protected:
 public:
@@ -449,6 +458,20 @@ private:
 	MMINLINE bool isObjectInEvacuateMemoryNoCheck(J9Object *objectPtr);
 
 	/**
+	 * Determine whether the object is in an Eden region. Object must be in evacuate memory.
+	 * @param objectPtr[in] Object pointer whose properties are being examined (non-NULL, in evacuate memory).
+	 * @return true if the object is in an Eden region, false otherwise.
+	 */
+	MMINLINE bool isEvacuateObjectInEdenNoCheck(J9Object *objectPtr);
+
+	/**
+	 * Determine the age of the region containing the object. Object must be in evacuate memory.
+	 * @param objectPtr[in] Object pointer whose properties are being examined (non-NULL, in evacuate memory).
+	 * @return the region age (note that age 0 does not necessarily mean Eden).
+	 */
+	MMINLINE uintptr_t getEvacuateObjectAgeNoCheck(J9Object *objectPtr);
+
+	/**
 	 * Determine whether the object is in survivor memory or not.
 	 * @param objectPtr[in] Object pointer whose properties are being examined.
 	 * @return true if the object is found in survivor memory, false otherwise.
@@ -547,9 +570,10 @@ private:
 	 * @param objectToEvacuate Object being copied.
 	 * @param reservingContext[in/out] The context to which we would prefer to copy any objects discovered in this method
 	 * @param objectReserveSizeInBytes Amount of bytes to be reserved (can be greater than the original object size) for copying.
+	 * @param sourceCompactGroup[out] The compact group of the region the object is being evacuated from (the destination compact group is available from the returned cache)
 	 * @return a CopyScanCache which contains the reserved memory or NULL if the reserve was not successful.
 	 */
-	MMINLINE MM_CopyScanCacheVLHGC *reserveMemoryForCopy(MM_EnvironmentVLHGC *env, J9Object *objectToEvacuate, MM_AllocationContextTarok **reservingContext, uintptr_t objectReserveSizeInBytes);
+	MMINLINE MM_CopyScanCacheVLHGC *reserveMemoryForCopy(MM_EnvironmentVLHGC *env, J9Object *objectToEvacuate, MM_AllocationContextTarok **reservingContext, uintptr_t objectReserveSizeInBytes, uintptr_t *sourceCompactGroup);
 
 	void flushCaches(MM_CopyScanCacheVLHGC *cache);
 
@@ -1050,10 +1074,10 @@ protected:
 	 * object relocation. If so the same context is returned if not the object's original context
 	 * is returned.
 	 * @param[in] suggestedContext The allocation context we intended to copy the object into
-	 * @param[in] objectPtr A pointer to the object being copied
+	 * @param[in] sourceContext The owning allocation context of the object being copied
 	 * @return The reservingContext or the object's owning context if the suggestedContext is not a preferred object relocation context
 	 */
-	MMINLINE MM_AllocationContextTarok *getPreferredAllocationContext(MM_AllocationContextTarok *suggestedContext, J9Object *objectPtr);
+	MMINLINE MM_AllocationContextTarok *getPreferredAllocationContext(MM_AllocationContextTarok *suggestedContext, MM_AllocationContextTarok *sourceContext);
 
 public:
 

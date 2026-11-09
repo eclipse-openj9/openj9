@@ -271,7 +271,7 @@ gcParseXXgcArguments(J9JavaVM *vm, char *optArg)
 #if defined (J9VM_GC_VLHGC)
 		/* parse the maximum age a region can have to be included in the nursery set, if specified */
 		if (try_scan(&scan_start, "tarokNurseryMaxAge=")) {
-			if(!scan_udata_memory_size_helper(vm, &scan_start, &(extensions->tarokNurseryMaxAge._valueSpecified), "tarokNurseryMaxAge=")) {
+			if (!scan_udata_memory_size_helper(vm, &scan_start, &(extensions->tarokNurseryMaxAge._valueSpecified), "tarokNurseryMaxAge=")) {
 				returnValue = JNI_EINVAL;
 				break;
 			}
@@ -281,7 +281,7 @@ gcParseXXgcArguments(J9JavaVM *vm, char *optArg)
 
 		/* parse the RememberedSet Card List maximum size */
 		if (try_scan(&scan_start, "tarokRememberedSetCardListMaxSize=")) {
-			if(!scan_udata_memory_size_helper(vm, &scan_start, &(extensions->tarokRememberedSetCardListMaxSize), "tarokRememberedSetCardListMaxSize=")) {
+			if (!scan_udata_memory_size_helper(vm, &scan_start, &(extensions->tarokRememberedSetCardListMaxSize), "tarokRememberedSetCardListMaxSize=")) {
 				returnValue = JNI_EINVAL;
 				break;
 			}
@@ -290,7 +290,7 @@ gcParseXXgcArguments(J9JavaVM *vm, char *optArg)
 		}
 		
 		if (try_scan(&scan_start, "tarokRememberedSetCardListSize=")) {
-			if(!scan_udata_memory_size_helper(vm, &scan_start, &(extensions->tarokRememberedSetCardListSize), "tarokRememberedSetCardListSize=")) {
+			if (!scan_udata_memory_size_helper(vm, &scan_start, &(extensions->tarokRememberedSetCardListSize), "tarokRememberedSetCardListSize=")) {
 				returnValue = JNI_EINVAL;
 				break;
 			}
@@ -300,7 +300,14 @@ gcParseXXgcArguments(J9JavaVM *vm, char *optArg)
 
 		/* parse the maximum age a region can be incremented to (increments occurring after a PGC) */
 		if (try_scan(&scan_start, "tarokRegionMaxAge=")) {
-			if(!scan_udata_memory_size_helper(vm, &scan_start, &(extensions->tarokRegionMaxAge), "tarokRegionMaxAge=")) {
+			if (!scan_udata_memory_size_helper(vm, &scan_start, &(extensions->tarokRegionMaxAge), "tarokRegionMaxAge=")) {
+				returnValue = JNI_EINVAL;
+				break;
+			}
+			/* For efficiency, age (for each region) may be stored into a byte. Prevent large values.
+			 * Should be at least 2 (0 is Eden and 1 is the rest of 'nursery' */
+			if ((2 > extensions->tarokRegionMaxAge) || (127 < extensions->tarokRegionMaxAge)) {
+				j9nls_printf(PORTLIB, J9NLS_ERROR, J9NLS_GC_OPTIONS_INTEGER_OUT_OF_RANGE, "tarokRegionMaxAge=", (UDATA)2, (UDATA)127);
 				returnValue = JNI_EINVAL;
 				break;
 			}
@@ -308,7 +315,7 @@ gcParseXXgcArguments(J9JavaVM *vm, char *optArg)
 		}
 
 		if (try_scan(&scan_start, "tarokKickoffHeadroomRegionRate=")) {
-			if(!scan_u32_helper(vm, &scan_start, &(extensions->tarokKickoffHeadroomRegionRate), "tarokKickoffHeadroomRegionRate=")) {
+			if (!scan_u32_helper(vm, &scan_start, &(extensions->tarokKickoffHeadroomRegionRate), "tarokKickoffHeadroomRegionRate=")) {
 				returnValue = JNI_EINVAL;
 				break;
 			}
@@ -321,7 +328,7 @@ gcParseXXgcArguments(J9JavaVM *vm, char *optArg)
 		}
 
 		if (try_scan(&scan_start, "tarokKickoffHeadroomInBytes=")) {
-			if(!scan_udata_memory_size_helper(vm, &scan_start, &(extensions->tarokKickoffHeadroomInBytes), "tarokKickoffHeadroomInBytes=")) {
+			if (!scan_udata_memory_size_helper(vm, &scan_start, &(extensions->tarokKickoffHeadroomInBytes), "tarokKickoffHeadroomInBytes=")) {
 				returnValue = JNI_EINVAL;
 				break;
 			}

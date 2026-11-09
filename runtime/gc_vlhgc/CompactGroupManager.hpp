@@ -84,15 +84,6 @@ public:
 		return getCompactGroupNumberForAge(env, region->getAge(), migrationDestination);
 	}
 
-	/** Computes the compact group index for the receiver.
-	 * @param region Region to compute the compact group number for
-	 */
-
-	MMINLINE static UDATA getCompactGroupNumberForSingleContext(MM_HeapRegionDescriptorVLHGC *region)
-	{
-		return getCompactGroupNumberForAge(region->getAge());
-	}
-
 	/**
 	 * Computes the compact group index for the receiver.
 	 * @param env[in] The thread
@@ -180,10 +171,6 @@ public:
 		bool result = false;
 		UDATA ageOfGroup = getRegionAgeFromGroup(env, compactGroupNumber);
 
-		/*
-		 * It is no special case for allocation-based aging system because
-		 * tarokNurseryMaxAge and tarokRegionMaxAge were set at startup
-		 */
 		result = (ageOfGroup > extensions->tarokNurseryMaxAge._valueSpecified) && (ageOfGroup < extensions->tarokRegionMaxAge);
 
 		return result;

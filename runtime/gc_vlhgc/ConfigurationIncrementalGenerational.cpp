@@ -302,7 +302,6 @@ MM_ConfigurationIncrementalGenerational::initialize(MM_EnvironmentBase *env)
 
 #define DEFAULT_MAX_AGE_FOR_PGC_COUNT_BASED				24
 #define DEFAULT_MAX_NURSERY_AGE							1
-#define DEFAULT_MAX_AGE_FOR_ALLOCATION_BASED			5
 
 	/* set default region maximum age if it is not specified yet */
 	if (0 == extensions->tarokRegionMaxAge) {
