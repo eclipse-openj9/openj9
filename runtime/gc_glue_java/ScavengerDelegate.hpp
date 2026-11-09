@@ -138,9 +138,12 @@ public:
 	void fixupDestroyedSlot(MM_EnvironmentBase *env, MM_ForwardedHeader *forwardedObject, MM_MemorySubSpaceSemiSpace *subSpaceNew);
 #endif /* OMR_GC_COMPRESSED_POINTERS */
 
+#if defined(UNIFY_ABORTED_SCAVENGE) || defined(OMR_GC_CONCURRENT_SCAVENGER)
+	void fixupIndirectObjectSlots(MM_EnvironmentStandard *env, omrobjectptr_t objectPtr);
+#endif /* defined(UNIFY_ABORTED_SCAVENGE) || defined(OMR_GC_CONCURRENT_SCAVENGER) */
+
 #if defined(OMR_GC_CONCURRENT_SCAVENGER)
 	void switchConcurrentForThread(MM_EnvironmentBase *env);
-	void fixupIndirectObjectSlots(MM_EnvironmentStandard *env, omrobjectptr_t objectPtr);
 	void signalThreadsToFlushCaches(MM_EnvironmentBase *env);
 	void cancelSignalToFlushCaches(MM_EnvironmentBase *env);
 #endif /* OMR_GC_CONCURRENT_SCAVENGER */
