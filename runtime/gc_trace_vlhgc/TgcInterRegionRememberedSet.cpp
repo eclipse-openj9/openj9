@@ -200,7 +200,7 @@ tgcHookReportInterRegionRememberedSetHistogram(J9HookInterface** hookInterface, 
 	MM_GCExtensions *extensions = MM_GCExtensions::getExtensions(javaVM);
 	MM_TgcExtensions *tgcExtensions = MM_TgcExtensions::getExtensions(extensions);
 	MM_EnvironmentVLHGC env(javaVM);
-	J9HookInterface** externalHookInterface = extensions->getHookInterface();
+	J9HookInterface** externalHookInterface = extensions->getOmrHookInterface();
 	J9HookInterface** privateHookInterface = extensions->getPrivateHookInterface();
 
 	if ((J9HOOK_MM_PRIVATE_MARK_END == eventNum) && ( privateHookInterface == hookInterface)) {
