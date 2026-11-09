@@ -1864,20 +1864,23 @@ j9bcv_verifyClassStructure (J9PortLibrary * portLib, J9CfrClassFile * classfile,
 			break;
 
 		case CFR_CONSTANT_MethodHandle:
-			/* method kinds: confirm <init> only when REF_newInvokeSpecial  */
+			/* According to JVMS 4.4.8: for reference types 5, 6, 7, 9
+			 * (invokevirtual, invokestatic, invokespecial, invokeinterface)
+			 * the method name must not be <init> or <clinit>.
+			 * For reference type 8 (invokespecial) the method must be <init>.
+			 */
 			if ((info->slot1 >= MH_REF_INVOKEVIRTUAL) && (info->slot1 <= MH_REF_INVOKEINTERFACE)) {
 				J9CfrConstantPoolInfo *methodref = &classfile->constantPool[info->slot2];
 				nameAndSig = &classfile->constantPool[methodref->slot2];
 				utf8 = &classfile->constantPool[nameAndSig->slot1];
 				isInit = bcvIsInitOrClinit(utf8);
-				if (CFR_METHOD_NAME_CLINIT == isInit) {
-					errorType = J9NLS_CFR_ERR_BAD_METHOD_NAME__ID;
-					goto _formatError;
-				}
-				if (CFR_METHOD_NAME_INIT == isInit) {
-					if (
-						(info->slot1 != MH_REF_NEWINVOKESPECIAL)
-					) {
+				if (MH_REF_NEWINVOKESPECIAL != info->slot1) {
+					if ((CFR_METHOD_NAME_INIT == isInit) || (CFR_METHOD_NAME_CLINIT == isInit)) {
+						errorType = J9NLS_CFR_ERR_BAD_METHOD_NAME__ID;
+						goto _formatError;
+					}
+				} else {
+					if (CFR_METHOD_NAME_INIT != isInit) {
 						errorType = J9NLS_CFR_ERR_BAD_METHOD_NAME__ID;
 						goto _formatError;
 					}
