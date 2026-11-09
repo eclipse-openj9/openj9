@@ -863,10 +863,21 @@ TR::DataType TR_VectorAPIExpansion::getDataTypeFromNode(TR::Compilation *comp, T
         // CASE 1: Element type is passed in as constant integer value
 
         elementType = elementTypeNode->getConstValue();
-    } else if (elementTypeNode->getOpCode().isFunctionCall()
-        && elementTypeNode->getSymbolReference()->getSymbol()->castToMethodSymbol()->getRecognizedMethod()
-            == TR::java_lang_Enum_ordinal) {
-        // CASE 2: Element type is passed in as call to Enum.ordinal()
+    } else if (elementTypeNode->getOpCodeValue() == TR::icall || elementTypeNode->getOpCodeValue() == TR::iloadi) {
+        // CASE 2: Element type is passed in as call to Enum.ordinal()/field access of Enum.ordinal
+
+        TR::RecognizedMethod method = TR::unknownMethod;
+        char *fieldName = NULL;
+        int32_t fieldLen = 0;
+
+        if (elementTypeNode->getOpCodeValue() == TR::icall)
+            method = elementTypeNode->getSymbolReference()->getSymbol()->castToMethodSymbol()->getRecognizedMethod();
+        else // if elementTypeNode->getOpCodeValue() == TR::iloadi
+            fieldName = elementTypeNode->getSymbolReference()->getOwningMethod(comp)->fieldName(elementTypeNode->getSymbolReference()->getCPIndex(), fieldLen, comp->trMemory());
+
+        // Exit if the element type node isn't Enum.ordinal (either function call or field access)
+        if (method != TR::java_lang_Enum_ordinal && (!fieldName || strncmp("java/lang/Enum.ordinal", fieldName, 22)))
+            return TR::NoType;
 
         TR::Node *laneTypeEnumNode = elementTypeNode->getFirstChild();
         TR::SymbolReference *symRef
@@ -875,6 +886,7 @@ TR::DataType TR_VectorAPIExpansion::getDataTypeFromNode(TR::Compilation *comp, T
         TR::KnownObjectTable::Index knownObjectIndex
             = symRef ? symRef->getKnownObjectIndex() : TR::KnownObjectTable::UNKNOWN;
 
+        // Exit if the LaneType Enum isn't a known object
         if (knownObjectIndex == TR::KnownObjectTable::UNKNOWN)
             return TR::NoType;
 
