@@ -3206,11 +3206,21 @@ static Class<?> getPrimitiveClass(String name)
  * Assertion is enabled/disabled based on
  * classloader default, package or class default at runtime
  *
+/*[IF JAVA_SPEC_VERSION >= 28]
+ * Array types, primitive types, and void always have an
+ * assertion status of false.
+ *
+/*[ENDIF] JAVA_SPEC_VERSION >= 28
  * @since 1.4
  *
  * @return		the assertion status for this class
  */
 public boolean desiredAssertionStatus() {
+	/*[IF JAVA_SPEC_VERSION >= 28]*/
+	if (isPrimitive() || isArray()) {
+		return false;
+	}
+	/*[ENDIF] JAVA_SPEC_VERSION >= 28 */
 	ClassLoader cldr = getClassLoaderImpl();
 	if (cldr != null) {
 		/*[PR CMVC 80253] package assertion status not checked */
