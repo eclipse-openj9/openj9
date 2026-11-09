@@ -548,7 +548,7 @@ MM_ScavengerDelegate::hasIndirectReferentsInNewSpace(MM_EnvironmentStandard *env
 	return false;
 }
 
-#if defined(OMR_GC_CONCURRENT_SCAVENGER)
+#if defined(UNIFY_ABORTED_SCAVENGE) || defined(OMR_GC_CONCURRENT_SCAVENGER)
 void
 MM_ScavengerDelegate::fixupIndirectObjectSlots(MM_EnvironmentStandard *env, omrobjectptr_t objectPtr)
 {
@@ -565,7 +565,7 @@ MM_ScavengerDelegate::fixupIndirectObjectSlots(MM_EnvironmentStandard *env, omro
 		classToScan = classToScan->replacedClass;
 	} while (NULL != classToScan);
 }
-#endif /* OMR_GC_CONCURRENT_SCAVENGER */
+#endif /* defined(UNIFY_ABORTED_SCAVENGE) || defined(OMR_GC_CONCURRENT_SCAVENGER) */
 
 void
 MM_ScavengerDelegate::backOutIndirectObjectSlots(MM_EnvironmentStandard *env, omrobjectptr_t objectPtr)
