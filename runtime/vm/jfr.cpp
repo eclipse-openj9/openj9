@@ -359,7 +359,7 @@ writeOutGlobalBuffer(J9VMThread *currentThread, bool newChunk, bool finalWrite)
 	Trc_VM_jfr_writeOutGlobalBuffer(currentThread, vm->jfrBuffer.bufferSize - vm->jfrBuffer.bufferRemaining);
 
 	/* If its JFRv1 final write must be true. */
-	Assert_VM_true((!newChunk && isJFRV2SupportEnabled(vm)) || newChunk);
+	Assert_VM_true(newChunk || isJFRV2SupportEnabled(vm));
 
 	if (vm->jfrState.isCreated && (NULL != vm->jfrBuffer.bufferCurrent)) {
 		VM_JFRWriter::flushJFRDataToFile(currentThread, newChunk, finalWrite);
