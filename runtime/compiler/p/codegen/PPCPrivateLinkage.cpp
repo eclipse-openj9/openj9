@@ -2664,8 +2664,17 @@ void buildCRC32CCall(TR::Node *callNode, TR::RegisterDependencyConditions *deps,
         posArg = map.getSourceWithTarget(TR::RealRegister::gr5);
         lenArg = map.getSourceWithTarget(TR::RealRegister::gr6);
 
-        generateTrg1Src1ImmInstruction(cg, TR::InstOpCode::addi2, callNode, addrArg, addrArg,
-            TR::Compiler->om.contiguousArrayHeaderSizeInBytes());
+#if defined(J9VM_GC_SPARSE_HEAP_ALLOCATION)
+        if (TR::Compiler->om.isOffHeapAllocationEnabled()) {
+            generateTrg1MemInstruction(cg, TR::InstOpCode::Op_load, callNode, addrArg,
+                TR::MemoryReference::createWithDisplacement(cg, addrArg,
+                    comp->fej9()->getOffsetOfContiguousDataAddrField(), TR::Compiler->om.sizeofReferenceAddress()));
+        } else
+#endif
+        {
+            generateTrg1Src1ImmInstruction(cg, TR::InstOpCode::addi2, callNode, addrArg, addrArg,
+                TR::Compiler->om.contiguousArrayHeaderSizeInBytes());
+        }
     }
 
     if (crc32m3) {
@@ -2892,8 +2901,7 @@ TR::Register *J9::Power::PrivateLinkage::buildDirectDispatch(TR::Node *callNode)
         }
     }
 
-    if (!TR::Compiler->om.canGenerateArraylets() && !TR::Compiler->om.isOffHeapAllocationEnabled()
-        && comp()->target().cpu.isAtLeast(OMR_PROCESSOR_PPC_P8)
+    if (!TR::Compiler->om.canGenerateArraylets() && comp()->target().cpu.isAtLeast(OMR_PROCESSOR_PPC_P8)
         && comp()->target().cpu.supportsFeature(OMR_FEATURE_PPC_HAS_VSX)
         && (callNode->getSymbol()->castToMethodSymbol()->getRecognizedMethod() == TR::java_util_zip_CRC32C_updateBytes
             || callNode->getSymbol()->castToMethodSymbol()->getRecognizedMethod()
