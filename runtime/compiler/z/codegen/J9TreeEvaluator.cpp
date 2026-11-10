@@ -2307,24 +2307,26 @@ TR::Register *J9::Z::TreeEvaluator::inlineCRC32CUpdateBytes(TR::Node *node, TR::
     generateRREInstruction(cg, TR::InstOpCode::LLGFR, node, end, end);
 
     // Offset to be added to array object pointer to get to the data elements
+    TR::Register *buffer = cg->allocateRegister();
+    TR::Register *base = array;
     int32_t offsetToDataElements
         = isDirectBuffer ? 0 : static_cast<int32_t>(TR::Compiler->om.contiguousArrayHeaderSizeInBytes());
 #ifdef J9VM_GC_SPARSE_HEAP_ALLOCATION
     if (TR::Compiler->om.isOffHeapAllocationEnabled() && !isDirectBuffer) {
-        // Load first data element address
-        generateRXInstruction(cg, TR::InstOpCode::getLoadOpCode(), node, array,
+        // Load first data element address into buffer to not clobber `array`
+        generateRXInstruction(cg, TR::InstOpCode::getLoadOpCode(), node, buffer,
             generateS390MemoryReference(array, cg->comp()->fej9()->getOffsetOfContiguousDataAddrField(), cg));
 
-        // Since the first data element address is retrieved from the array header, the offset is set to 0
+        // Use loaded dataAddr as the base with no displacement
+        base = buffer;
         offsetToDataElements = 0;
     }
 #endif /* J9VM_GC_SPARSE_HEAP_ALLOCATION */
 
-    // Calculate buffer pointer = array + offset
+    // Calculate buffer pointer = base + offset
     // For updateBytes, in non off-heap mode, need to account for array header size
-    TR::Register *buffer = cg->allocateRegister();
     generateRXInstruction(cg, TR::InstOpCode::getLoadAddressOpCode(), node, buffer,
-        generateS390MemoryReference(array, offset, offsetToDataElements, cg));
+        generateS390MemoryReference(base, offset, offsetToDataElements, cg));
 
     // Adjust remaining count for offset index
     generateRRRInstruction(cg, TR::InstOpCode::getSubtractThreeRegOpCode(), node, remaining, end, offset);
