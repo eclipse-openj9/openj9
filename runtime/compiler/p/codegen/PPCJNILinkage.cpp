@@ -130,8 +130,7 @@ TR::Register *J9::Power::JNILinkage::buildDirectDispatch(TR::Node *callNode)
     // The specialCaseJNI shortcut will mangle register dependencies and use system/C dispatch.
     // The addresses of the optimized helpers in the server process will not necessarily
     // match the client-side addresses, so we can't take this shortcut in JITServer mode.
-    bool specialCaseJNI = (crc32m1 || crc32m2 || crc32m3) && !comp()->requiresSpineChecks()
-        && !TR::Compiler->om.isOffHeapAllocationEnabled();
+    bool specialCaseJNI = (crc32m1 || crc32m2 || crc32m3) && !comp()->requiresSpineChecks();
 
 #ifdef J9VM_OPT_JITSERVER
     specialCaseJNI = specialCaseJNI && !comp()->isOutOfProcessCompilation();
@@ -301,8 +300,17 @@ TR::Register *J9::Power::JNILinkage::buildDirectDispatch(TR::Node *callNode)
                 posArg = map.getSourceWithTarget(TR::RealRegister::gr5);
                 lenArg = map.getSourceWithTarget(TR::RealRegister::gr6);
 
-                generateTrg1Src1ImmInstruction(cg(), TR::InstOpCode::addi2, callNode, addrArg, addrArg,
-                    TR::Compiler->om.contiguousArrayHeaderSizeInBytes());
+#if defined(J9VM_GC_SPARSE_HEAP_ALLOCATION)
+                if (TR::Compiler->om.isOffHeapAllocationEnabled()) {
+                    generateTrg1MemInstruction(cg(), TR::InstOpCode::Op_load, callNode, addrArg,
+                        TR::MemoryReference::createWithDisplacement(cg(), addrArg,
+                            fej9->getOffsetOfContiguousDataAddrField(), TR::Compiler->om.sizeofReferenceAddress()));
+                } else
+#endif
+                {
+                    generateTrg1Src1ImmInstruction(cg(), TR::InstOpCode::addi2, callNode, addrArg, addrArg,
+                        TR::Compiler->om.contiguousArrayHeaderSizeInBytes());
+                }
             }
 
             if (crc32m3) {
