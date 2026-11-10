@@ -3284,6 +3284,22 @@ void TR::CompilationInfo::stopCompilationThreads()
         int32_t assumptionsInRAT = rat->countRatAssumptions();
         fprintf(stderr, "Summary of assumptions: unreclaimed=%d, in RAT=%d\n", unreclaimedAssumptions,
             rat->countRatAssumptions());
+        if (rat->_RAMetadataListProcessing_numOps > 0) {
+            fprintf(stderr, "Stats for operations on metadata assumption list:\n");
+            fprintf(stderr, "\tNumOps = %llu\n", rat->_RAMetadataListProcessing_numOps);
+            fprintf(stderr, "\tAvg visited/op = %.1f\n",
+                rat->_RAMetadataListProcessing_visitedAssumptions/(double)rat->_RAMetadataListProcessing_numOps);
+            fprintf(stderr, "\tAvg marked/op = %.1f\n",
+                rat->_RAMetadataListProcessing_markedAssumptions/(double)rat->_RAMetadataListProcessing_numOps);
+            fprintf(stderr, "\tAvg SentinelPurges/op = %.1f\n",
+                rat->_RAMetadataListProcessing_sentinelPurges/(double)rat->_RAMetadataListProcessing_numOps);
+        }
+        if (rat->_GCReclaim_numOps > 0) {
+            fprintf(stderr, "Stats for GC assumption sweep operations:\n");
+            fprintf(stderr, "\tNum sweeps = %llu", rat->_GCReclaim_numOps);
+            fprintf(stderr, "\tAvg purges/sweep = %.1f\n", rat->_GCReclaim_purgedAssumptions/(double)rat->_GCReclaim_numOps);
+        }
+        rat->checkTables();
 
         fprintf(stderr, "GCR bodies=%d, GCRSaves=%d GCRRecomp=%u\n", getPersistentInfo()->getNumGCRBodies(),
             getPersistentInfo()->getNumGCRSaves(), _statNumGCRInducedCompilations);

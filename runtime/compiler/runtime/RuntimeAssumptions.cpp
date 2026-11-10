@@ -266,12 +266,20 @@ bool TR_PersistentCHTable::classGotExtended(TR_FrontEnd *fe, TR_PersistentMemory
 
     {
         OMR::CriticalSection classGotExtended(assumptionTableMutex);
-        OMR::RuntimeAssumption **headPtr = table->getBucketPtr(RuntimeAssumptionOnClassExtend,
+        OMR::RuntimeAssumption **headPtr = table->getBucketPtrEvenIfDead(RuntimeAssumptionOnClassExtend,
             TR_RuntimeAssumptionTable::hashCode((uintptr_t)superClassId));
-        for (OMR::RuntimeAssumption *cursor = *headPtr; cursor; cursor = cursor->getNext()) {
-            if (cursor->matches((uintptr_t)superClassId)) {
+        OMR::RuntimeAssumption *next = NULL;
+        OMR::RuntimeAssumption **assumptionList = headPtr;
+        for (OMR::RuntimeAssumption *cursor = *headPtr; cursor; cursor = next) {
+            next = cursor->getNextEvenIfDead();
+            if (cursor->isMarkedForDetach()) {
+                // Prune dead entries as we go.
+                table->purgeAssumption(assumptionList, cursor);
+            } else if (cursor->matches((uintptr_t)superClassId)) {
                 cursor->compensate(fe, 0, 0);
-                removeAssumptionFromRAT(cursor);
+                table->purgeAssumption(assumptionList, cursor);
+            } else {
+                assumptionList = cursor->getNextFieldLocation();
             }
         }
     }
@@ -346,13 +354,20 @@ bool TR_PersistentCHTable::classGotInitialized(TR_FrontEnd *fe, TR_PersistentMem
     {
         OMR::CriticalSection classGotInitialized(assumptionTableMutex);
         TR_RuntimeAssumptionTable *table = persistentMemory->getPersistentInfo()->getRuntimeAssumptionTable();
-        OMR::RuntimeAssumption **headPtr = table->getBucketPtr(RuntimeAssumptionOnClassPreInitialize,
+        OMR::RuntimeAssumption **headPtr = table->getBucketPtrEvenIfDead(RuntimeAssumptionOnClassPreInitialize,
             TR_PatchNOPedGuardSiteOnClassPreInitialize::hashCode(sig, sigLen));
-
-        for (OMR::RuntimeAssumption *cursor = *headPtr; cursor; cursor = cursor->getNext()) {
-            if (cursor->matches(sig, sigLen)) {
+        OMR::RuntimeAssumption *next = NULL;
+        OMR::RuntimeAssumption **assumptionList = headPtr;
+        for (OMR::RuntimeAssumption *cursor = *headPtr; cursor; cursor = next) {
+            next = cursor->getNextEvenIfDead();
+            if (cursor->isMarkedForDetach()) {
+                // Prune dead entries as we go.
+                table->purgeAssumption(assumptionList, cursor);
+            } else if (cursor->matches(sig, sigLen)) {
                 cursor->compensate(fej9, 0, 0);
-                removeAssumptionFromRAT(cursor);
+                table->purgeAssumption(assumptionList, cursor);
+            } else {
+                assumptionList = cursor->getNextFieldLocation();
             }
         }
     }
@@ -365,12 +380,20 @@ void TR_PersistentCHTable::methodGotOverridden(TR_FrontEnd *fe, TR_PersistentMem
 {
     OMR::CriticalSection methodGotOverridden(assumptionTableMutex);
     TR_RuntimeAssumptionTable *table = persistentMemory->getPersistentInfo()->getRuntimeAssumptionTable();
-    OMR::RuntimeAssumption **headPtr = table->getBucketPtr(RuntimeAssumptionOnMethodOverride,
+    OMR::RuntimeAssumption **headPtr = table->getBucketPtrEvenIfDead(RuntimeAssumptionOnMethodOverride,
         TR_RuntimeAssumptionTable::hashCode((uintptr_t)overriddenMethod));
-    for (OMR::RuntimeAssumption *cursor = *headPtr; cursor; cursor = cursor->getNext()) {
-        if (cursor->matches((uintptr_t)overriddenMethod)) {
+    OMR::RuntimeAssumption *next = NULL;
+    OMR::RuntimeAssumption **assumptionList = headPtr;
+    for (OMR::RuntimeAssumption *cursor = *headPtr; cursor; cursor = next) {
+        next = cursor->getNextEvenIfDead();
+        if (cursor->isMarkedForDetach()) {
+            // Prune dead entries as we go.
+            table->purgeAssumption(assumptionList, cursor);
+        } else if (cursor->matches((uintptr_t)overriddenMethod)) {
             cursor->compensate(fe, 0, 0);
-            removeAssumptionFromRAT(cursor);
+            table->purgeAssumption(assumptionList, cursor);
+        } else {
+            assumptionList = cursor->getNextFieldLocation();
         }
     }
 }
@@ -388,12 +411,20 @@ void TR_PersistentCHTable::classGotRedefined(TR_FrontEnd *fe, TR_OpaqueClassBloc
     //
 
     TR_RuntimeAssumptionTable *table = _trPersistentMemory->getPersistentInfo()->getRuntimeAssumptionTable();
-    OMR::RuntimeAssumption **headPtr = table->getBucketPtr(RuntimeAssumptionOnClassExtend,
+    OMR::RuntimeAssumption **headPtr = table->getBucketPtrEvenIfDead(RuntimeAssumptionOnClassExtend,
         TR_RuntimeAssumptionTable::hashCode((uintptr_t)oldClassId));
-    for (OMR::RuntimeAssumption *cursor = *headPtr; cursor; cursor = cursor->getNext()) {
-        if (cursor->matches((uintptr_t)oldClassId)) {
+    OMR::RuntimeAssumption *next = NULL;
+    OMR::RuntimeAssumption **assumptionList = headPtr;
+    for (OMR::RuntimeAssumption *cursor = *headPtr; cursor; cursor = next) {
+        next = cursor->getNextEvenIfDead();
+        if (cursor->isMarkedForDetach()) {
+            // Prune dead entries as we go.
+            table->purgeAssumption(assumptionList, cursor);
+        } else if (cursor->matches((uintptr_t)oldClassId)) {
             cursor->compensate(fe, 0, 0);
-            removeAssumptionFromRAT(cursor);
+            table->purgeAssumption(assumptionList, cursor);
+        } else {
+            assumptionList = cursor->getNextFieldLocation();
         }
     }
 
@@ -420,11 +451,6 @@ void TR_PersistentCHTable::classGotRedefined(TR_FrontEnd *fe, TR_OpaqueClassBloc
     }
 }
 
-void TR_PersistentCHTable::removeAssumptionFromRAT(OMR::RuntimeAssumption *assumption)
-{
-    TR_RuntimeAssumptionTable *rat = _trPersistentMemory->getPersistentInfo()->getRuntimeAssumptionTable();
-    rat->markForDetachFromRAT(assumption);
-}
 
 void TR_PersistentClassInfo::setShouldNotBeNewlyExtended(int32_t ID)
 {
