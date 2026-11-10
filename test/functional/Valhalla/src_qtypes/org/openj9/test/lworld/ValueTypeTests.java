@@ -3182,6 +3182,26 @@ public class ValueTypeTests {
 		assertEquals(h2, h2_afterGC);
 		assertEquals(h3, h3_afterGC);
 	}
+	/* Test hash code and substitutability of value objects with inherited fields from the superclass. */
+	@Test(priority=1)
+	static public void testValueTypeHashCodeWithInheritedFields() throws Throwable {
+		Object p1 = new Derived(1, 2);
+		Object p2 = new Derived(1, 2);
+		/* p3 differs from p1 and p2 only in the inherited field (baseInt). */
+		Object p3 = new Derived(3, 2);
+
+		int h1 = p1.hashCode();
+		int h2 = p2.hashCode();
+		int h3 = p3.hashCode();
+
+		assertEquals(h1, h2);
+		assertNotEquals(h1, h3);
+
+		assertEquals(p1, p2);
+		assertNotEquals(p1, p3);
+	}
+
+
 
 	/* Test hash of large flattened array allocated in the sparse heap with Balanced GC. */
 	@Test(priority=1)

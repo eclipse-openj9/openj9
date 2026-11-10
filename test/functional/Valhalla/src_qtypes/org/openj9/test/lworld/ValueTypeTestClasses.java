@@ -277,4 +277,21 @@ public class ValueTypeTestClasses {
 		}
 	}
 
+	static abstract value class Base {
+		final int baseInt;
+		Base(int baseInt) {
+			this.baseInt = baseInt;
+		}
+	}
+
+	static value class Derived extends Base {
+		final int derivedInt;
+		Derived(int baseInt, int derivedInt) {
+			this.derivedInt = derivedInt;
+			super(baseInt);
+		}
+	}
+
+
+
 }
