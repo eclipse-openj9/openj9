@@ -18,6 +18,7 @@
  * [2] https://openjdk.org/legal/assembly-exception.html
  *
  * SPDX-License-Identifier: EPL-2.0 OR Apache-2.0 OR GPL-2.0-only WITH Classpath-exception-2.0 OR GPL-2.0-only WITH OpenJDK-assembly-exception-1.0
+ * Assisted-by: IBM Bob
  *******************************************************************************/
 
 #include "codegen/PPCPrivateLinkage.hpp"
@@ -2650,6 +2651,12 @@ void buildCRC32CCall(TR::Node *callNode, TR::RegisterDependencyConditions *deps,
     OMR::RegisterDependencyMap map(deps->getPreConditions()->getRegisterDependency(0), deps->getAddCursorForPre());
     for (int32_t cnt = 0; cnt < deps->getAddCursorForPre(); cnt++)
         map.addDependency(deps->getPreConditions()->getRegisterDependency(cnt), cnt);
+
+    TR::Register *crcArg = map.getSourceWithTarget(TR::RealRegister::gr3);
+    if (comp->target().is64Bit()) {
+        generateTrg1Src1Imm2Instruction(cg, TR::InstOpCode::rldicl, callNode, crcArg, crcArg, 0,
+            CONSTANT64(0xFFFFFFFF));
+    }
 
     TR::Register *addrArg, *posArg, *lenArg, *wasteArg;
     if (crc32m2) {
