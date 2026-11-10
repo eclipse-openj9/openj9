@@ -13726,15 +13726,21 @@ static TR::Register *inlineIntrinsicCompress(TR::Node *node, TR::CodeGenerator *
      * resultReg currently contains the number elements to process.
      * If resultReg equals 0, there is no work to be done. Immediately jump to the end.
      */
-    generateTrg1Src1ImmInstruction(cg, TR::InstOpCode::cmpi4, node, cr0Reg, resultReg, 0);
+    generateTrg1Src2Instruction(cg, TR::InstOpCode::or_r, node, remainingReg, resultReg, resultReg);
     generateConditionalBranchInstruction(cg, TR::InstOpCode::beq, node, doneLabel, cr0Reg);
-
-    generateTrg1Src2Instruction(cg, TR::InstOpCode::OR, node, remainingReg, resultReg, resultReg);
 
     // IMPORTANT: The upper 32 bits of a 64-bit register containing an int are undefined. Since the
     // indices are being passed in as ints, we must ensure that their upper 32 bits are not garbage.
     if (!inputOffsetNode->isConstZeroValue()) {
-        generateTrg1Src1Instruction(cg, TR::InstOpCode::extsw, node, inputOffsetReg, inputOffsetReg);
+        /*
+         * inputOffsetReg*2 is added to inputAddressReg later.
+         * The shift left here performs the multiplication and clears the upper bits at the same time.
+         * inputOffsetReg is never negative so no issues with signs here.
+         * generateShiftLeftImmediate generates an add for a shift left by 1 which does not clear the upper bits.
+         * As a result, a rlwinm is explicitly used instead.
+         */
+        generateTrg1Src1Imm2Instruction(cg, TR::InstOpCode::rlwinm, node, inputOffsetReg, inputOffsetReg, 1,
+            (uint32_t)0xFFFFFFFE);
     }
 
     if (!outputOffsetNode->isConstZeroValue()) {
@@ -13759,7 +13765,7 @@ static TR::Register *inlineIntrinsicCompress(TR::Node *node, TR::CodeGenerator *
 
     /* If the offset is a constant of 0, it doesn't need to be added in. */
     if (!inputOffsetNode->isConstZeroValue()) {
-        generateTrg1Src2Instruction(cg, TR::InstOpCode::add, node, inputAddressReg, inputAddressReg, inputOffsetReg);
+        /* inputOffsetReg was doubled earlier so it just needs to be added in. */
         generateTrg1Src2Instruction(cg, TR::InstOpCode::add, node, inputAddressReg, inputAddressReg, inputOffsetReg);
     }
 
@@ -14073,14 +14079,16 @@ static TR::Register *inlineIntrinsicCompress(TR::Node *node, TR::CodeGenerator *
             TR::MemoryReference::createWithIndexReg(cg, NULL, outputAddressReg, 8), tempReg);
     }
 
-    /* 8 halfwords were compressed so subtract that from remainingReg and bump up the address registers. */
+    /* 8 halfwords were compressed so subtract that from remainingReg. */
     generateTrg1Src1ImmInstruction(cg, TR::InstOpCode::addi, node, remainingReg, remainingReg, -8);
-    generateTrg1Src1ImmInstruction(cg, TR::InstOpCode::addi, node, inputAddressReg, inputAddressReg, 16);
-    generateTrg1Src1ImmInstruction(cg, TR::InstOpCode::addi, node, outputAddressReg, outputAddressReg, 8);
 
     /* If remainingReg is 0 then all elements have been compressed. Jump to the end. */
     generateTrg1Src1ImmInstruction(cg, TR::InstOpCode::cmpi4, node, cr0Reg, remainingReg, 0);
     generateConditionalBranchInstruction(cg, TR::InstOpCode::beq, node, doneLabel, cr0Reg);
+
+    /* 8 halfwords were compressed so bump up the address registers to account for this. */
+    generateTrg1Src1ImmInstruction(cg, TR::InstOpCode::addi, node, inputAddressReg, inputAddressReg, 16);
+    generateTrg1Src1ImmInstruction(cg, TR::InstOpCode::addi, node, outputAddressReg, outputAddressReg, 8);
 
     if (isAtLeastP10) {
         /* There are 1-7 elements left. On Power 10, they can be handled all at once without a residue loop. */
@@ -14203,14 +14211,16 @@ static TR::Register *inlineIntrinsicCompress(TR::Node *node, TR::CodeGenerator *
                 TR::MemoryReference::createWithIndexReg(cg, NULL, outputAddressReg, 4), tempReg);
         }
 
-        /* 4 halfwords were compressed so subtract that from remainingReg and bump up the address registers. */
+        /* 4 halfwords were compressed so subtract that from remainingReg. */
         generateTrg1Src1ImmInstruction(cg, TR::InstOpCode::addi, node, remainingReg, remainingReg, -4);
-        generateTrg1Src1ImmInstruction(cg, TR::InstOpCode::addi, node, inputAddressReg, inputAddressReg, 8);
-        generateTrg1Src1ImmInstruction(cg, TR::InstOpCode::addi, node, outputAddressReg, outputAddressReg, 4);
 
         /* If remainingReg is 0 then all elements have been compressed. Jump to the end. */
         generateTrg1Src1ImmInstruction(cg, TR::InstOpCode::cmpi4, node, cr0Reg, remainingReg, 0);
         generateConditionalBranchInstruction(cg, TR::InstOpCode::beq, node, doneLabel, cr0Reg);
+
+        /* 4 halfwords were compressed so bump up the address registers to account for this. */
+        generateTrg1Src1ImmInstruction(cg, TR::InstOpCode::addi, node, inputAddressReg, inputAddressReg, 8);
+        generateTrg1Src1ImmInstruction(cg, TR::InstOpCode::addi, node, outputAddressReg, outputAddressReg, 4);
 
         generateLabelInstruction(cg, TR::InstOpCode::label, node, load1ElementLabel);
 
