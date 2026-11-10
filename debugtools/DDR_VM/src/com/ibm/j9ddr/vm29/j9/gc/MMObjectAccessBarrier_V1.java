@@ -42,41 +42,21 @@ import java.lang.reflect.InvocationTargetException;
 class MMObjectAccessBarrier_V1 extends MMObjectAccessBarrier
 {
 	private int shift;
-	
-	protected MMObjectAccessBarrier_V1() throws CorruptDataException 
 
+	protected MMObjectAccessBarrier_V1() throws CorruptDataException
 	{
-		shift = 0;
-		
-		if(J9ObjectHelper.compressObjectReferences) {
+		if (J9ObjectHelper.compressObjectReferences) {
 			try {
 				J9JavaVMPointer vm = J9RASHelper.getVM(DataType.getJ9RASPointer());
-
-				/* use reflection to access compressedPointersShift which will not exist if build is default */
-				UDATA shiftUdata = (UDATA)J9JavaVMPointer.class.getMethod("compressedPointersShift").invoke(vm); //$NON-NLS-1$
-				shift = shiftUdata.intValue();
-			} catch (CorruptDataException cde) {
-				raiseCorruptDataEvent("Error initializing the object access barrier", cde, true);
-			} catch (IllegalAccessException re) {
-				/* error caused by reflection */
-				CorruptDataException rcde = new CorruptDataException(re.toString(), re);
-				raiseCorruptDataEvent("Error retrieving compressedPointersShift", rcde, true);
-			} catch (InvocationTargetException re) {
-				/* error caused by reflection */
-				CorruptDataException rcde = new CorruptDataException(re.toString(), re);
-				raiseCorruptDataEvent("Error retrieving compressedPointersShift", rcde, true);
-			} catch (NoSuchMethodException re) {
-				/* error caused by reflection */
-				CorruptDataException rcde = new CorruptDataException(re.toString(), re);
-				raiseCorruptDataEvent("Error retrieving compressedPointersShift", rcde, true);
-			} catch (SecurityException re) {
-				/* error caused by reflection */
+				shift = vm.compressedPointersShift().intValue();
+			} catch (NoSuchFieldException re) {
+				shift = 0;
 				CorruptDataException rcde = new CorruptDataException(re.toString(), re);
 				raiseCorruptDataEvent("Error retrieving compressedPointersShift", rcde, true);
 			}
 		}
 	}
-	
+
 	/**
 	 * @see MMObjectAccessBarrier
 	 */
@@ -84,12 +64,12 @@ class MMObjectAccessBarrier_V1 extends MMObjectAccessBarrier
 	public J9ObjectPointer getFinalizeLink(J9ObjectPointer object) throws CorruptDataException
 	{
 		UDATA fieldOffset = J9ObjectHelper.clazz(object).finalizeLinkOffset();
-		if(fieldOffset.eq(0)) {
+		if (fieldOffset.eq(0)) {
 			return J9ObjectPointer.NULL;
 		}
 		return ObjectReferencePointer.cast(object.addOffset(fieldOffset)).at(0);
 	}
-	
+
 	/**
 	 * @see MMObjectAccessBarrier
 	 */
@@ -97,7 +77,7 @@ class MMObjectAccessBarrier_V1 extends MMObjectAccessBarrier
 	public J9ObjectPointer getReferenceLink(J9ObjectPointer object) throws CorruptDataException
 	{
 		UDATA linkOffset = getExtensions().accessBarrier()._referenceLinkOffset();
-		return ObjectReferencePointer.cast(object.addOffset(linkOffset)).at(0); 
+		return ObjectReferencePointer.cast(object.addOffset(linkOffset)).at(0);
 	}
 
 	/**
@@ -117,7 +97,7 @@ class MMObjectAccessBarrier_V1 extends MMObjectAccessBarrier
 	{
 		return getMonitor(object).getLockword();
 	}
-	
+
 	/**
 	 * @see MMObjectAccessBarrier
 	 */
@@ -151,11 +131,11 @@ class MMObjectAccessBarrier_V1 extends MMObjectAccessBarrier
 	@Override
 	public long convertTokenFromPointer(J9ObjectPointer pointer)
 	{
-		if(pointer.isNull()) {
+		if (pointer.isNull()) {
 			return 0L;
 		}
 		UDATA address = UDATA.cast(pointer);
-		if(J9ObjectHelper.compressObjectReferences) {
+		if (J9ObjectHelper.compressObjectReferences) {
 			address = address.rightShift(shift);
 		}
 		return address.longValue();
