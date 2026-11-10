@@ -185,7 +185,7 @@ jvmtiSetEventNotificationMode(jvmtiEnv* env,
 		}
 #if JAVA_SPEC_VERSION >= 11
 		else if (JVMTI_DISABLE == mode) {
-			if (JVMTI_EVENT_SAMPLED_OBJECT_ALLOC == event_type) {
+			if ((JVMTI_EVENT_SAMPLED_OBJECT_ALLOC == event_type) && (NULL == event_thread)) {
 				/* Set sampling interval to UDATA_MAX to inform GC that sampling is not required */
 				vm->memoryManagerFunctions->j9gc_set_allocation_sampling_interval(vm, UDATA_MAX);
 			}
@@ -203,9 +203,9 @@ jvmtiSetEventNotificationMode(jvmtiEnv* env,
 			case JVMTI_EVENT_COMPILED_METHOD_UNLOAD:
 			case JVMTI_EVENT_DYNAMIC_CODE_GENERATED:
 			case JVMTI_EVENT_DATA_DUMP_REQUEST:
-#if JAVA_SPEC_VERSION >= 11
+#if JAVA_SPEC_VERSION == 11
 			case JVMTI_EVENT_SAMPLED_OBJECT_ALLOC:
-#endif /* JAVA_SPEC_VERSION >= 11 */
+#endif /* JAVA_SPEC_VERSION == 11 */
 				if (event_thread != NULL) {
 					JVMTI_ERROR(JVMTI_ERROR_ILLEGAL_ARGUMENT);
 				}

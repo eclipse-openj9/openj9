@@ -46,14 +46,35 @@ public class soae001 {
 			if (samplingResult < 1) {
 				System.out.println("com.ibm.jvmti.tests.samplingObjectAllocation.soae001.check() failed, expected 1+ but got: " + samplingResult);
 			} else {
+				/*
+				 * The JVMTI specification allows JVMTI_EVENT_SAMPLED_OBJECT_ALLOC to be enabled/disabled
+				 * at the thread level.
+				 * In Java 11, OpenJ9 disallows thread enable/disable of JVMTI_EVENT_SAMPLED_OBJECT_ALLOC
+				 * to match the RI.
+				 */
+				int javaVersion = Runtime.version().feature();
 				jvmtiResult = enable(Thread.currentThread());
-				if (0 != jvmtiResult) {
-					System.out.println("com.ibm.jvmti.tests.samplingObjectAllocation.soae001.enable(thread) failed as expected with: " + jvmtiResult);
-					jvmtiResult = disable();
+
+				if (javaVersion == 11) {
 					if (0 != jvmtiResult) {
-						System.out.println("com.ibm.jvmti.tests.samplingObjectAllocation.soae001.disable() failed with: " + jvmtiResult);
+						System.out.println("com.ibm.jvmti.tests.samplingObjectAllocation.soae001.enable(thread) failed as expected with: " + jvmtiResult);
+						jvmtiResult = disable();
+						if (0 != jvmtiResult) {
+							System.out.println("com.ibm.jvmti.tests.samplingObjectAllocation.soae001.disable() failed with: " + jvmtiResult);
+						} else {
+							result = true;
+						}
+					}
+				} else {
+					if (0 != jvmtiResult) {
+						System.out.println("com.ibm.jvmti.tests.samplingObjectAllocation.soae001.enable(thread) failed with: " + jvmtiResult);
 					} else {
-						result = true;
+						jvmtiResult = disable();
+						if (0 != jvmtiResult) {
+							System.out.println("com.ibm.jvmti.tests.samplingObjectAllocation.soae001.disable() failed with: " + jvmtiResult);
+						} else {
+							result = true;
+						}
 					}
 				}
 			}
