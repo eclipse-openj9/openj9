@@ -250,6 +250,7 @@ J9JavaVM.callInReturnPC = required
 J9JavaVM.charReflectClass = required
 J9JavaVM.classLoaderBlocks = required
 J9JavaVM.classMemorySegments = required
+J9JavaVM.compressedPointersShift = UDATA
 J9JavaVM.contendedLoadTable = required
 J9JavaVM.defaultMemorySpace = required
 J9JavaVM.doubleReflectClass = required
