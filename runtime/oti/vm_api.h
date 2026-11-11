@@ -5629,7 +5629,7 @@ setInitialVMMethods(J9JavaVM *javaVM, J9Method **cInitialStaticMethod, J9Method 
  * @param clazz[in] J9Class to be loaded
  */
 BOOLEAN
-loadWarmClassFromSnapshot(J9VMThread *vmThread, J9Class *clazz);
+loadWarmClassFromSnapshot(J9VMThread *vmThread, J9Class *clazz, BOOLEAN loadJCLClass);
 
 /**
  * Perform post-snapshot fixups on the provided J9Class.
