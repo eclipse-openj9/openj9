@@ -210,11 +210,7 @@ startproc.__crc32_vpmsum:
 
         /* Get the initial value into vr8 */
         vxor    vr8,vr8,vr8
-#if defined(TR_TARGET_64BIT)
-        MTVSRD(vs40, r3)
-#else
         MTVSRWZ(vs40, r3)
-#endif
 #ifdef REFLECT
         vsldoi  vr8,zeroes,vr8,8        /* shift into bottom 32 bits */
 #else
