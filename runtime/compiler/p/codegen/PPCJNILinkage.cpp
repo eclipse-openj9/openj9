@@ -18,6 +18,7 @@
  * [2] https://openjdk.org/legal/assembly-exception.html
  *
  * SPDX-License-Identifier: EPL-2.0 OR Apache-2.0 OR GPL-2.0-only WITH Classpath-exception-2.0 OR GPL-2.0-only WITH OpenJDK-assembly-exception-1.0
+ * Assisted-by: IBM Bob
  *******************************************************************************/
 
 #include "codegen/PPCJNILinkage.hpp"
@@ -129,8 +130,7 @@ TR::Register *J9::Power::JNILinkage::buildDirectDispatch(TR::Node *callNode)
     // The specialCaseJNI shortcut will mangle register dependencies and use system/C dispatch.
     // The addresses of the optimized helpers in the server process will not necessarily
     // match the client-side addresses, so we can't take this shortcut in JITServer mode.
-    bool specialCaseJNI = (crc32m1 || crc32m2 || crc32m3) && !comp()->requiresSpineChecks()
-        && !TR::Compiler->om.isOffHeapAllocationEnabled();
+    bool specialCaseJNI = (crc32m1 || crc32m2 || crc32m3) && !comp()->requiresSpineChecks();
 
 #ifdef J9VM_OPT_JITSERVER
     specialCaseJNI = specialCaseJNI && !comp()->isOutOfProcessCompilation();
@@ -288,14 +288,29 @@ TR::Register *J9::Power::JNILinkage::buildDirectDispatch(TR::Node *callNode)
             for (int32_t cnt = 0; cnt < deps->getAddCursorForPre(); cnt++)
                 map.addDependency(deps->getPreConditions()->getRegisterDependency(cnt), cnt);
 
+            TR::Register *crcArg = map.getSourceWithTarget(TR::RealRegister::gr3);
+            if (comp()->target().is64Bit()) {
+                generateTrg1Src1Imm2Instruction(cg(), TR::InstOpCode::rldicl, callNode, crcArg, crcArg, 0,
+                    CONSTANT64(0xFFFFFFFF));
+            }
+
             TR::Register *addrArg, *posArg, *lenArg, *wasteArg;
             if (crc32m2) {
                 addrArg = map.getSourceWithTarget(TR::RealRegister::gr4);
                 posArg = map.getSourceWithTarget(TR::RealRegister::gr5);
                 lenArg = map.getSourceWithTarget(TR::RealRegister::gr6);
 
-                generateTrg1Src1ImmInstruction(cg(), TR::InstOpCode::addi2, callNode, addrArg, addrArg,
-                    TR::Compiler->om.contiguousArrayHeaderSizeInBytes());
+#if defined(J9VM_GC_SPARSE_HEAP_ALLOCATION)
+                if (TR::Compiler->om.isOffHeapAllocationEnabled()) {
+                    generateTrg1MemInstruction(cg(), TR::InstOpCode::Op_load, callNode, addrArg,
+                        TR::MemoryReference::createWithDisplacement(cg(), addrArg,
+                            fej9->getOffsetOfContiguousDataAddrField(), TR::Compiler->om.sizeofReferenceAddress()));
+                } else
+#endif
+                {
+                    generateTrg1Src1ImmInstruction(cg(), TR::InstOpCode::addi2, callNode, addrArg, addrArg,
+                        TR::Compiler->om.contiguousArrayHeaderSizeInBytes());
+                }
             }
 
             if (crc32m3) {
