@@ -95,10 +95,10 @@ MM_ScavengerBackOutScanner::backoutFinalizableObjects(MM_EnvironmentStandard *en
 			/* walk finalizable objects loaded by the system class loader */
 			omrobjectptr_t systemObject = finalizeListManager->resetSystemFinalizableObjects();
 			while (NULL != systemObject) {
+				MM_ForwardedHeader forwardHeader(systemObject, compressed);
 
 				if(_extensions->isConcurrentScavengerEnabled()) {
 #if defined(OMR_GC_CONCURRENT_SCAVENGER)
-					MM_ForwardedHeader forwardHeader(systemObject, compressed);
 					omrobjectptr_t forwardPtr = forwardHeader.getNonStrictForwardedObject();
 
 					if (NULL != forwardPtr) {
