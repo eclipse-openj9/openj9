@@ -895,6 +895,11 @@ freeJavaVM(J9JavaVM * vm)
 		vm->classLoadingStackPool = NULL;
 	}
 
+	if (NULL != vm->rcpLoadingStackPool) {
+		pool_kill(vm->rcpLoadingStackPool);
+		vm->rcpLoadingStackPool = NULL;
+	}
+
 #if defined(J9VM_OPT_VALHALLA_FLATTENABLE_VALUE_TYPES)
 	if (NULL != vm->valueTypeVerificationStackPool) {
 		pool_kill(vm->valueTypeVerificationStackPool);
@@ -2867,6 +2872,9 @@ VMInitStages(J9JavaVM *vm, IDATA stage, void* reserved)
 				goto _error;
 
 			if (NULL == (vm->classLoadingStackPool = pool_new(sizeof(J9StackElement),  0, 0, 0, J9_GET_CALLSITE(), J9MEM_CATEGORY_CLASSES, POOL_FOR_PORT(vm->portLibrary))))
+				goto _error;
+
+			if (NULL == (vm->rcpLoadingStackPool = pool_new(sizeof(J9StackElement),  0, 0, 0, J9_GET_CALLSITE(), J9MEM_CATEGORY_CLASSES, POOL_FOR_PORT(vm->portLibrary))))
 				goto _error;
 
 #if defined(J9VM_OPT_VALHALLA_FLATTENABLE_VALUE_TYPES)
