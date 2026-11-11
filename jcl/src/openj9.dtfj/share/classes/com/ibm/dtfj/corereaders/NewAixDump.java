@@ -64,6 +64,12 @@ public abstract class NewAixDump extends CoreReaderSupport {
 	//private static final int POWER_RS64IV = POWER_4;
 	private static final int POWER_MPC7450 = 0x1000;
 	private static final int POWER_5 = 0x2000;
+	private static final int POWER_6 = 0x4000;
+	private static final int POWER_7 = 0x8000;
+	private static final int POWER_8 = 0x10000;
+	private static final int POWER_9 = 0x20000;
+	private static final int POWER_10 = 0x40000;
+	private static final int POWER_11 = 0x80000;
 
 	protected NewAixDump(DumpReader reader)
 	{
@@ -675,6 +681,12 @@ public abstract class NewAixDump extends CoreReaderSupport {
 		case POWER_4: return "POWER 4";
 		case POWER_MPC7450: return "MPC7450";
 		case POWER_5: return "POWER 5";
+		case POWER_6: return "POWER 6";
+		case POWER_7: return "POWER 7";
+		case POWER_8: return "POWER 8";
+		case POWER_9: return "POWER 9";
+		case POWER_10: return "POWER 10";
+		case POWER_11: return "POWER 11";
 		default: return "";
 		}
 	}
