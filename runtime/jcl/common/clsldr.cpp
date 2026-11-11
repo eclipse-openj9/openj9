@@ -88,7 +88,8 @@ Java_java_lang_ClassLoader_defineClassImpl1(JNIEnv *env, jobject receiver, jclas
 	J9InternalVMFunctions *vmFuncs = vm->internalVMFunctions;
 	UDATA options = 0;
 	BOOLEAN validateName = FALSE;
-	
+	J9Class *hostClazz = NULL;
+
 	vmFuncs->internalEnterVMFromJNI(currentThread);
 	if (NULL == classRep) {
 		vmFuncs->setCurrentException(currentThread, J9VMCONSTANTPOOL_JAVALANGNULLPOINTEREXCEPTION, NULL);
@@ -101,8 +102,13 @@ Java_java_lang_ClassLoader_defineClassImpl1(JNIEnv *env, jobject receiver, jclas
 		return NULL;
 	}
 
-	j9object_t hostClassObject = J9_JNI_UNWRAP_REFERENCE(hostClass);
-	J9Class *hostClazz =  J9VM_J9CLASS_FROM_HEAPCLASS(currentThread, hostClassObject);
+	if (J9_ARE_ALL_BITS_SET(flags, CLASSOPTION_FLAG_HIDDEN)) {
+		/* Only hidden classes have a host class. A normal class defined by Lookup.defineClass()
+		 * is in the same package as the lookup class, which is checked by the Lookup API.
+		 */
+		j9object_t hostClassObject = J9_JNI_UNWRAP_REFERENCE(hostClass);
+		hostClazz = J9VM_J9CLASS_FROM_HEAPCLASS(currentThread, hostClassObject);
+	}
 
 	vmFuncs->internalExitVMToJNI(currentThread);
 	if (J9_ARE_ALL_BITS_SET(flags, CLASSOPTION_FLAG_HIDDEN)) {
