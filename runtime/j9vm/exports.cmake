@@ -365,6 +365,7 @@ if(NOT JAVA_SPEC_VERSION LESS 17)
 		JVM_DumpClassListToFile
 		JVM_DumpDynamicArchive
 		JVM_GetProperties
+		JVM_RecordLibrary
 	)
 	if(J9VM_ZOS_3164_INTEROPERABILITY)
 		jvm_add_exports(jvm

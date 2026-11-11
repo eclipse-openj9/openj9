@@ -367,8 +367,13 @@ freeClassLoader(J9ClassLoader *classLoader, J9JavaVM *javaVM, J9VMThread *vmThre
 			Assert_VM_mustHaveVMAccess(vmThread);
 		}
 
-		while (NULL != nativeLibrary) {
+		for (; NULL != nativeLibrary; nativeLibrary = pool_nextDo(&sharedLibrariesWalkState)) {
 			BOOLEAN unloadPerformed = FALSE;
+
+			if (NULL == nativeLibrary->send_lifecycle_event) {
+				/* Libraries loaded by jdk17+ are processed by the class library code. */
+				continue;
+			}
 
 			if (needsFrameBuild) {
 				/* equivalent builder code:
@@ -431,7 +436,6 @@ freeClassLoader(J9ClassLoader *classLoader, J9JavaVM *javaVM, J9VMThread *vmThre
 			}
 
 			(*nativeLibrary->close)(vmThread, nativeLibrary);
-			nativeLibrary = pool_nextDo(&sharedLibrariesWalkState);
 		}
 		/* Can't free the library names or the pool without holding the lock as another thread may be
 		 * trying to load a shared library at the same time this thread is unloading.  See

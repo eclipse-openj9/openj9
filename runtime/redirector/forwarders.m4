@@ -152,6 +152,8 @@ _X(JVM_RawMonitorDestroy,JNICALL,true,void,void *deadMonitor)
 _X(JVM_RawMonitorEnter,JNICALL,true,jint,void *monitor)
 _X(JVM_RawMonitorExit,JNICALL,true,void,void *monitor)
 _X(JVM_Read,JNICALL,true,jint,jint descriptor, char *buffer, jint bytesToRead)
+_IF([JAVA_SPEC_VERSION >= 17],
+	[_X(JVM_RecordLibrary,JNICALL,true,void,JNIEnv *env, jobject nativeLibImpl, const char *name)])
 _X(JVM_Recv,JNICALL,true,jint,jint descriptor, char *buffer, jint length, jint flags)
 _X(JVM_RecvFrom,JNICALL,true,jint,jint descriptor, char *buffer, jint length, jint flags, struct sockaddr *fromAddr, int *fromLength)
 _X(JVM_RegisterSignal,JNICALL,true,void *,jint sigNum, void *handler)
