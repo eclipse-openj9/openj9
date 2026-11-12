@@ -320,7 +320,8 @@ J9AnnotationInfoEntry *TR_AnnotationBase::getAnnotationInfoEntry(TR::SymbolRefer
             // will return a string of the form "prefix.fieldname signature"
             // need to remove
             // replace space with a null and we'll have two strings
-            char *name = symRef->getOwningMethod(_comp)->fieldName(symRef->getCPIndex(), length, _comp->trMemory());
+            const char *name
+                = symRef->getOwningMethod(_comp)->fieldName(symRef->getCPIndex(), length, _comp->trMemory());
             nameBuf = (char *)j9mem_allocate_memory(length + 2 * sizeof(char), J9MEM_CATEGORY_JIT);
             if (!nameBuf)
                 return NULL;
