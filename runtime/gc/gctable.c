@@ -109,6 +109,8 @@ J9MemoryManagerFunctions MemoryManagerFunctions = {
 	J9WriteBarrierPreClass,
 	J9ReadBarrier,
 	J9ReadBarrierClass,
+	J9ReadBarrierVM,
+	J9ReadBarrierClassVM,
 	j9gc_weakRoot_readObject,
 	j9gc_weakRoot_readObjectVM,
 	j9gc_ext_check_is_valid_heap_object,

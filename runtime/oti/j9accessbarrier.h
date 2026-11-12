@@ -191,7 +191,7 @@ typedef struct J9IndexableObject* mm_j9array_t;
 	(void)0)
 #define J9OBJECT__PRE_OBJECT_LOAD_ADDRESS_VM(javaVM, object, address) \
 	((J9_GC_READ_BARRIER_TYPE_NONE != javaVM->gcReadBarrierType) ? \
-	(javaVM)->memoryManagerFunctions->J9ReadBarrier(J9JAVAVM_VMTHREAD(javaVM), (fj9object_t*)(address)) : \
+	(javaVM)->memoryManagerFunctions->J9ReadBarrierVM(javaVM, (fj9object_t*)(address)) : \
 	(void)0)
 #define J9STATIC__PRE_OBJECT_LOAD(vmThread, clazz, address) \
 	((J9_GC_READ_BARRIER_TYPE_NONE != J9VMTHREAD_JAVAVM(vmThread)->gcReadBarrierType) ? \
@@ -199,7 +199,7 @@ typedef struct J9IndexableObject* mm_j9array_t;
 	(void)0)
 #define J9STATIC__PRE_OBJECT_LOAD_VM(javaVM, clazz, address) \
 	((J9_GC_READ_BARRIER_TYPE_NONE != javaVM->gcReadBarrierType) ? \
-	(javaVM)->memoryManagerFunctions->J9ReadBarrierClass(J9JAVAVM_VMTHREAD(javaVM), (j9object_t*)(address)) : \
+	(javaVM)->memoryManagerFunctions->J9ReadBarrierClassVM(javaVM, (j9object_t*)(address)) : \
 	(void)0)
 #define J9OBJECT__PRE_OBJECT_STORE_ADDRESS(vmThread, object, address, value) \
 	(\
