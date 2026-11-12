@@ -729,7 +729,7 @@ createClassLoaderHotFieldPool(J9JavaVM *javaVM, J9ClassLoader* classLoader)
 	bool result = true;
 	omrthread_monitor_enter(javaVM->globalHotFieldPoolMutex);
 	if (NULL == classLoader->hotFieldPool) {
-		classLoader->hotFieldPool = pool_new(sizeof(J9HotField),  0, 0, 0, J9_GET_CALLSITE(), J9MEM_CATEGORY_CLASSES, POOL_FOR_PORT(javaVM->portLibrary));
+		classLoader->hotFieldPool = pool_new(sizeof(J9HotField),  0, 0, 0, J9_GET_CALLSITE(), J9MEM_CATEGORY_CLASSES, POOL_FOR_PORT(OMRPORT_FROM_J9PORT(javaVM->portLibrary)));
 		if (NULL == classLoader->hotFieldPool) {
 			result = false;
 		} else if (0 != omrthread_monitor_init_with_name(&classLoader->hotFieldPoolMutex, 0, "Hot Field Pool")) {

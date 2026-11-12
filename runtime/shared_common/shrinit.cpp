@@ -1381,7 +1381,7 @@ registerStoreFilter(J9JavaVM* vm, J9ClassLoader* classloader, const char* fixedN
 	Trc_SHR_Assert_ShouldHaveLocalMutex(vm->classMemorySegments->segmentMutex);
 
 	if (*filterPoolPtr == NULL) {
-		*filterPoolPtr = pool_new(sizeof(struct ClassNameFilterData), 0, 0, 0, J9_GET_CALLSITE(), J9MEM_CATEGORY_CLASSES, POOL_FOR_PORT(vm->portLibrary));
+		*filterPoolPtr = pool_new(sizeof(struct ClassNameFilterData), 0, 0, 0, J9_GET_CALLSITE(), J9MEM_CATEGORY_CLASSES, POOL_FOR_PORT(OMRPORT_FROM_J9PORT(vm->portLibrary)));
 	}
 	/* If we fail to allocate the pool, just don't register the store filter - we're probably going down anyway */
 	if (*filterPoolPtr) {
@@ -3619,7 +3619,7 @@ j9shr_init(J9JavaVM *vm, UDATA loadFlags, UDATA* nonfatal)
 			omrthread_rwmutex_exit_write(config->romToRamHashTableMutex);
 		}
 
-		config->jclJ9ClassPathEntryPool = pool_new(sizeof(struct J9ClassPathEntry), 0, 0, 0, J9_GET_CALLSITE(), J9MEM_CATEGORY_CLASSES, POOL_FOR_PORT(vm->portLibrary));
+		config->jclJ9ClassPathEntryPool = pool_new(sizeof(struct J9ClassPathEntry), 0, 0, 0, J9_GET_CALLSITE(), J9MEM_CATEGORY_CLASSES, POOL_FOR_PORT(OMRPORT_FROM_J9PORT(vm->portLibrary)));
 		if (!(config->jclJ9ClassPathEntryPool)) {
 			SHRINIT_ERR_TRACE(verboseFlags, J9NLS_SHRC_SHRINIT_FAILURE_CREATE_POOL);
 			goto _error;

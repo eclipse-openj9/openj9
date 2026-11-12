@@ -1467,7 +1467,7 @@ loadDLL(void* dllLoadInfo, void* userDataTemp)
 static J9Pool *
 initializeDllLoadTable(J9PortLibrary *portLibrary, J9VMInitArgs* j9vm_args, UDATA verboseFlags, J9JavaVM *vm)
 {
-	J9Pool *returnVal = pool_new(sizeof(J9VMDllLoadInfo),  0, 0, 0, J9_GET_CALLSITE(), OMRMEM_CATEGORY_VM, POOL_FOR_PORT(portLibrary));
+	J9Pool *returnVal = pool_new(sizeof(J9VMDllLoadInfo),  0, 0, 0, J9_GET_CALLSITE(), OMRMEM_CATEGORY_VM, POOL_FOR_PORT(OMRPORT_FROM_J9PORT(portLibrary)));
 	IDATA i;
 	char* testString, *options;
 	J9VMDllLoadInfo* newEntry;
@@ -2016,7 +2016,7 @@ prependJimageVMOptions(J9JavaVM *vm)
 			}
 			options[size] = '\0';
 			jimageVMOptionsList.pool = pool_new(
-					sizeof(J9JavaVMArgInfo), 0, 0, 0, J9_GET_CALLSITE(), OMRMEM_CATEGORY_VM, POOL_FOR_PORT(PORTLIB));
+					sizeof(J9JavaVMArgInfo), 0, 0, 0, J9_GET_CALLSITE(), OMRMEM_CATEGORY_VM, POOL_FOR_PORT(OMRPORT_FROM_J9PORT(PORTLIB)));
 			if (NULL == jimageVMOptionsList.pool) {
 				if (verboseDynload) {
 					j9tty_printf(PORTLIB, "PrependJimageVMOptions() pool_new for jimageVMOptionsList failed.\n");
@@ -2853,7 +2853,7 @@ VMInitStages(J9JavaVM *vm, IDATA stage, void* reserved)
 			initializeVMLocalStorage(vm);
 #endif
 
-			if (NULL == (vm->jniGlobalReferences = pool_new(sizeof(UDATA), 0, 0, POOL_NO_ZERO, J9_GET_CALLSITE(), J9MEM_CATEGORY_JNI, POOL_FOR_PORT(vm->portLibrary)))) {
+			if (NULL == (vm->jniGlobalReferences = pool_new(sizeof(UDATA), 0, 0, POOL_NO_ZERO, J9_GET_CALLSITE(), J9MEM_CATEGORY_JNI, POOL_FOR_PORT(OMRPORT_FROM_J9PORT(vm->portLibrary))))) {
 				goto _error;
 			}
 
@@ -2863,14 +2863,14 @@ VMInitStages(J9JavaVM *vm, IDATA stage, void* reserved)
 			initializeJNITable(vm);
 			/* vm->jniFunctionTable = GLOBAL_TABLE(EsJNIFunctions); */
 
-			if (NULL == (vm->jniWeakGlobalReferences = pool_new(sizeof(UDATA), 0, 0, POOL_NO_ZERO, J9_GET_CALLSITE(), J9MEM_CATEGORY_JNI, POOL_FOR_PORT(vm->portLibrary))))
+			if (NULL == (vm->jniWeakGlobalReferences = pool_new(sizeof(UDATA), 0, 0, POOL_NO_ZERO, J9_GET_CALLSITE(), J9MEM_CATEGORY_JNI, POOL_FOR_PORT(OMRPORT_FROM_J9PORT(vm->portLibrary)))))
 				goto _error;
 
-			if (NULL == (vm->classLoadingStackPool = pool_new(sizeof(J9StackElement),  0, 0, 0, J9_GET_CALLSITE(), J9MEM_CATEGORY_CLASSES, POOL_FOR_PORT(vm->portLibrary))))
+			if (NULL == (vm->classLoadingStackPool = pool_new(sizeof(J9StackElement),  0, 0, 0, J9_GET_CALLSITE(), J9MEM_CATEGORY_CLASSES, POOL_FOR_PORT(OMRPORT_FROM_J9PORT(vm->portLibrary)))))
 				goto _error;
 
 #if defined(J9VM_OPT_VALHALLA_FLATTENABLE_VALUE_TYPES)
-			if (NULL == (vm->valueTypeVerificationStackPool = pool_new(sizeof(J9StackElement),  0, 0, 0, J9_GET_CALLSITE(), J9MEM_CATEGORY_CLASSES, POOL_FOR_PORT(vm->portLibrary))))
+			if (NULL == (vm->valueTypeVerificationStackPool = pool_new(sizeof(J9StackElement),  0, 0, 0, J9_GET_CALLSITE(), J9MEM_CATEGORY_CLASSES, POOL_FOR_PORT(OMRPORT_FROM_J9PORT(vm->portLibrary)))))
 				goto _error;
 #endif /* defined(J9VM_OPT_VALHALLA_FLATTENABLE_VALUE_TYPES)*/
 
@@ -2883,7 +2883,7 @@ VMInitStages(J9JavaVM *vm, IDATA stage, void* reserved)
 			} else if (!IS_RESTORE_RUN(vm))
 #endif /* defined(J9VM_OPT_SNAPSHOTS) */
 			{
-				if (NULL == (vm->classLoaderBlocks = pool_new(sizeof(J9ClassLoader), 0, 0, 0, J9_GET_CALLSITE(), J9MEM_CATEGORY_CLASSES, POOL_FOR_PORT(vm->portLibrary)))) {
+				if (NULL == (vm->classLoaderBlocks = pool_new(sizeof(J9ClassLoader), 0, 0, 0, J9_GET_CALLSITE(), J9MEM_CATEGORY_CLASSES, POOL_FOR_PORT(OMRPORT_FROM_J9PORT(vm->portLibrary))))) {
 					goto _error;
 				}
 			}
@@ -2898,13 +2898,13 @@ VMInitStages(J9JavaVM *vm, IDATA stage, void* reserved)
 				} else if (!IS_RESTORE_RUN(vm))
 #endif /* defined(J9VM_OPT_SNAPSHOTS) */
 				{
-					if (NULL == (vm->modularityPool = pool_new(OMR_MAX(sizeof(J9Package), sizeof(J9Module)), 0, 0, 0, J9_GET_CALLSITE(), J9MEM_CATEGORY_MODULES, POOL_FOR_PORT(vm->portLibrary)))) {
+					if (NULL == (vm->modularityPool = pool_new(OMR_MAX(sizeof(J9Package), sizeof(J9Module)), 0, 0, 0, J9_GET_CALLSITE(), J9MEM_CATEGORY_MODULES, POOL_FOR_PORT(OMRPORT_FROM_J9PORT(vm->portLibrary))))) {
 						goto _error;
 					}
 				}
 			}
 #if JAVA_SPEC_VERSION >= 19
-			if (NULL == (vm->tlsPool = pool_new(sizeof(void *) * J9JVMTI_MAX_TLS_KEYS,  0, 0, 0, J9_GET_CALLSITE(), J9MEM_CATEGORY_JVMTI, POOL_FOR_PORT(vm->portLibrary))))
+			if (NULL == (vm->tlsPool = pool_new(sizeof(void *) * J9JVMTI_MAX_TLS_KEYS,  0, 0, 0, J9_GET_CALLSITE(), J9MEM_CATEGORY_JVMTI, POOL_FOR_PORT(OMRPORT_FROM_J9PORT(vm->portLibrary)))))
 				goto _error;
 #endif /* JAVA_SPEC_VERSION >= 19 */
 
@@ -8179,12 +8179,12 @@ protectedInitializeJavaVM(J9PortLibrary* portLibrary, void * userData)
 
 	/* Initialize the pool and mutex for per-class MemberName lists. */
 #if defined(J9VM_OPT_OPENJDK_METHODHANDLE)
-	vm->constRefArrayPool = pool_new(sizeof(J9ConstRefArray), 0, 0, 0, J9_GET_CALLSITE(), OMRMEM_CATEGORY_JIT, POOL_FOR_PORT(portLibrary));
+	vm->constRefArrayPool = pool_new(sizeof(J9ConstRefArray), 0, 0, 0, J9_GET_CALLSITE(), OMRMEM_CATEGORY_JIT, POOL_FOR_PORT(OMRPORT_FROM_J9PORT(portLibrary)));
 	if (NULL == vm->constRefArrayPool) {
 		goto error;
 	}
 
-	vm->memberNameListNodePool = pool_new(sizeof(J9MemberNameListNode), 0, 0, 0, J9_GET_CALLSITE(), OMRMEM_CATEGORY_VM, POOL_FOR_PORT(portLibrary));
+	vm->memberNameListNodePool = pool_new(sizeof(J9MemberNameListNode), 0, 0, 0, J9_GET_CALLSITE(), OMRMEM_CATEGORY_VM, POOL_FOR_PORT(OMRPORT_FROM_J9PORT(portLibrary)));
 	if (NULL == vm->memberNameListNodePool) {
 		goto error;
 	}
@@ -8613,7 +8613,7 @@ protectedInitializeJavaVM(J9PortLibrary* portLibrary, void * userData)
 		 * is used when a new hot field pool for a classLoader is to be dynamically created.
 		 */
 		if (vm->memoryManagerFunctions->j9gc_hot_reference_field_required(vm)) {
-			vm->hotFieldClassInfoPool = pool_new(sizeof(J9ClassHotFieldsInfo), 0, 0, 0, J9_GET_CALLSITE(), J9MEM_CATEGORY_CLASSES, POOL_FOR_PORT(portLibrary)); /* Create the hot field class pool */
+			vm->hotFieldClassInfoPool = pool_new(sizeof(J9ClassHotFieldsInfo), 0, 0, 0, J9_GET_CALLSITE(), J9MEM_CATEGORY_CLASSES, POOL_FOR_PORT(OMRPORT_FROM_J9PORT(portLibrary))); /* Create the hot field class pool */
 			if ((NULL == vm->hotFieldClassInfoPool)
 				|| (0 != omrthread_monitor_init_with_name(&vm->hotFieldClassInfoPoolMutex, 0, "hotFieldClassInfoPoolMutex"))
 				|| (0 != omrthread_monitor_init_with_name(&vm->globalHotFieldPoolMutex, 0, "globalHotFieldPoolMutex"))

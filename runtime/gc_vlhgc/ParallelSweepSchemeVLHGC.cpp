@@ -289,7 +289,7 @@ MM_ParallelSweepSchemeVLHGC::createSweepPoolState(MM_EnvironmentBase *env, MM_Me
 
 	omrthread_monitor_enter(_mutexSweepPoolState);
 	if (NULL == _poolSweepPoolState) {
-		_poolSweepPoolState = pool_new(sizeof(MM_SweepPoolState), 0, 2 * sizeof(UDATA), 0, J9_GET_CALLSITE(), OMRMEM_CATEGORY_MM, POOL_FOR_PORT(PORTLIB));
+		_poolSweepPoolState = pool_new(sizeof(MM_SweepPoolState), 0, 2 * sizeof(UDATA), 0, J9_GET_CALLSITE(), OMRMEM_CATEGORY_MM, POOL_FOR_PORT(OMRPORT_FROM_J9PORT(PORTLIB)));
 		if (NULL == _poolSweepPoolState) {
 			omrthread_monitor_exit(_mutexSweepPoolState);
 			return NULL;

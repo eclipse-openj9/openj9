@@ -162,7 +162,7 @@ OutOfLineINL_openj9_internal_foreign_abi_InternalDowncallHandler_initCifNativeTh
 	}
 
 	if (NULL == vm->cifNativeCalloutDataCache) {
-		vm->cifNativeCalloutDataCache = pool_new(sizeof(ffi_cif), 0, 0, 0, J9_GET_CALLSITE(), J9MEM_CATEGORY_VM_FFI, POOL_FOR_PORT(PORTLIB));
+		vm->cifNativeCalloutDataCache = pool_new(sizeof(ffi_cif), 0, 0, 0, J9_GET_CALLSITE(), J9MEM_CATEGORY_VM_FFI, POOL_FOR_PORT(OMRPORT_FROM_J9PORT(PORTLIB)));
 		if (NULL == vm->cifNativeCalloutDataCache) {
 			rc = GOTO_THROW_CURRENT_EXCEPTION;
 			setNativeOutOfMemoryError(currentThread, 0, 0);
@@ -195,7 +195,7 @@ OutOfLineINL_openj9_internal_foreign_abi_InternalDowncallHandler_initCifNativeTh
 
 	if (newArgTypes) {
 		if (NULL == vm->cifArgumentTypesCache) {
-			vm->cifArgumentTypesCache = pool_new(sizeof(J9CifArgumentTypes), 0, 0, 0, J9_GET_CALLSITE(), J9MEM_CATEGORY_VM_FFI, POOL_FOR_PORT(PORTLIB));
+			vm->cifArgumentTypesCache = pool_new(sizeof(J9CifArgumentTypes), 0, 0, 0, J9_GET_CALLSITE(), J9MEM_CATEGORY_VM_FFI, POOL_FOR_PORT(OMRPORT_FROM_J9PORT(PORTLIB)));
 			if (NULL == vm->cifArgumentTypesCache) {
 				rc = GOTO_THROW_CURRENT_EXCEPTION;
 				setNativeOutOfMemoryError(currentThread, 0, 0);

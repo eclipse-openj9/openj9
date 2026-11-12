@@ -321,7 +321,7 @@ allocateEnvironment(J9InvocationJavaVM * invocationJavaVM, jint version, void **
 			if (omrthread_monitor_init(&(j9env->threadDataPoolMutex), 0) != 0) {
 				goto fail;
 			}
-			j9env->threadDataPool = pool_new(sizeof(J9JVMTIThreadData), 0, 0, 0, J9_GET_CALLSITE(), J9MEM_CATEGORY_JVMTI, POOL_FOR_PORT(vm->portLibrary));
+			j9env->threadDataPool = pool_new(sizeof(J9JVMTIThreadData), 0, 0, 0, J9_GET_CALLSITE(), J9MEM_CATEGORY_JVMTI, POOL_FOR_PORT(OMRPORT_FROM_J9PORT(vm->portLibrary)));
 			if (j9env->threadDataPool == NULL) {
 				goto fail;
 			}
@@ -337,7 +337,7 @@ allocateEnvironment(J9InvocationJavaVM * invocationJavaVM, jint version, void **
 			if (j9env->watchedClasses == NULL) {
 				goto fail;
 			}
-			j9env->breakpoints = pool_new(sizeof(J9JVMTIAgentBreakpoint), 0, 0, POOL_ALWAYS_KEEP_SORTED, J9_GET_CALLSITE(), J9MEM_CATEGORY_JVMTI, POOL_FOR_PORT(vm->portLibrary));
+			j9env->breakpoints = pool_new(sizeof(J9JVMTIAgentBreakpoint), 0, 0, POOL_ALWAYS_KEEP_SORTED, J9_GET_CALLSITE(), J9MEM_CATEGORY_JVMTI, POOL_FOR_PORT(OMRPORT_FROM_J9PORT(vm->portLibrary)));
 			if (j9env->breakpoints == NULL) {
 				goto fail;
 			}
