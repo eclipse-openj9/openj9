@@ -679,8 +679,8 @@ final class MethodHandleResolver {
 			break;
 /*[IF JAVA_SPEC_VERSION >= 11]*/
 		case 17:
-			cpEntry = getCPConstantDynamicAt(internalConstantPool, index);
-			break;
+			/* A dynamic constant may resolve to null. */
+			return getCPConstantDynamicAt(internalConstantPool, index);
 /*[ENDIF] JAVA_SPEC_VERSION >= 11 */
 		default:
 			// Do nothing. The null check below will throw the appropriate exception.
