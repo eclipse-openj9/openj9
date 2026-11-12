@@ -96,29 +96,15 @@ MM_ScavengerBackOutScanner::backoutFinalizableObjects(MM_EnvironmentStandard *en
 			omrobjectptr_t systemObject = finalizeListManager->resetSystemFinalizableObjects();
 			while (NULL != systemObject) {
 				MM_ForwardedHeader forwardHeader(systemObject, compressed);
+				omrobjectptr_t forwardPtr = forwardHeader.getNonStrictForwardedObject();
 
-				if(_extensions->isConcurrentScavengerEnabled()) {
-#if defined(OMR_GC_CONCURRENT_SCAVENGER)
-					omrobjectptr_t forwardPtr = forwardHeader.getNonStrictForwardedObject();
-
-					if (NULL != forwardPtr) {
-						if (forwardHeader.isSelfForwardedPointer()) {
-							forwardHeader.restoreSelfForwardedPointer();
-						} else {
-							systemObject = forwardPtr;
-						}
-					}
-#endif /* OMR_GC_CONCURRENT_SCAVENGER */
-				}
-#if defined(UNIFY_ABORTED_SCAVENGE)
-				else if (_extensions->enableUnifiedAbort) {
-					omrobjectptr_t forwardPtr = forwardHeader.getForwardedObject();
-
-					if (NULL != forwardPtr) {
+				if (NULL != forwardPtr) {
+					if (forwardHeader.isSelfForwardedPointer()) {
+						forwardHeader.restoreSelfForwardedPointer();
+					} else {
 						systemObject = forwardPtr;
 					}
 				}
-#endif /* UNIFY_ABORTED_SCAVENGE */
 
 				omrobjectptr_t next = _extensions->accessBarrier->getFinalizeLink(systemObject);
 				objectBuffer.add(env, systemObject);
@@ -133,28 +119,15 @@ MM_ScavengerBackOutScanner::backoutFinalizableObjects(MM_EnvironmentStandard *en
 			omrobjectptr_t defaultObject = finalizeListManager->resetDefaultFinalizableObjects();
 			while (NULL != defaultObject) {
 				MM_ForwardedHeader forwardHeader(defaultObject, compressed);
+				omrobjectptr_t forwardPtr = forwardHeader.getNonStrictForwardedObject();
 
-				if(_extensions->isConcurrentScavengerEnabled()) {
-#if defined(OMR_GC_CONCURRENT_SCAVENGER)
-					omrobjectptr_t forwardPtr = forwardHeader.getNonStrictForwardedObject();
-					if (NULL != forwardPtr) {
-						if (forwardHeader.isSelfForwardedPointer()) {
-							forwardHeader.restoreSelfForwardedPointer();
-						} else {
-							defaultObject = forwardPtr;
-						}
-					}
-#endif /* OMR_GC_CONCURRENT_SCAVENGER */
-				}
-#if defined(UNIFY_ABORTED_SCAVENGE)
-				else if (_extensions->enableUnifiedAbort) {
-					omrobjectptr_t forwardPtr = forwardHeader.getForwardedObject();
-
-					if (NULL != forwardPtr) {
+				if (NULL != forwardPtr) {
+					if (forwardHeader.isSelfForwardedPointer()) {
+						forwardHeader.restoreSelfForwardedPointer();
+					} else {
 						defaultObject = forwardPtr;
 					}
 				}
-#endif /* UNIFY_ABORTED_SCAVENGE */
 
 				omrobjectptr_t next = _extensions->accessBarrier->getFinalizeLink(defaultObject);
 				objectBuffer.add(env, defaultObject);
@@ -169,29 +142,15 @@ MM_ScavengerBackOutScanner::backoutFinalizableObjects(MM_EnvironmentStandard *en
 			omrobjectptr_t referenceObject = finalizeListManager->resetReferenceObjects();
 			while (NULL != referenceObject) {
 				MM_ForwardedHeader forwardHeader(referenceObject, compressed);
+				omrobjectptr_t forwardPtr = forwardHeader.getNonStrictForwardedObject();
 
-				if(_extensions->isConcurrentScavengerEnabled()) {
-#if defined(OMR_GC_CONCURRENT_SCAVENGER)
-					omrobjectptr_t forwardPtr = forwardHeader.getNonStrictForwardedObject();
-
-					if (NULL != forwardPtr) {
-						if (forwardHeader.isSelfForwardedPointer()) {
-							forwardHeader.restoreSelfForwardedPointer();
-						} else {
-							referenceObject = forwardPtr;
-						}
-					}
-#endif /* OMR_GC_CONCURRENT_SCAVENGER */
-				}
-#if defined(UNIFY_ABORTED_SCAVENGE)
-				else if (_extensions->enableUnifiedAbort) {
-					omrobjectptr_t forwardPtr = forwardHeader.getForwardedObject();
-
-					if (NULL != forwardPtr) {
+				if (NULL != forwardPtr) {
+					if (forwardHeader.isSelfForwardedPointer()) {
+						forwardHeader.restoreSelfForwardedPointer();
+					} else {
 						referenceObject = forwardPtr;
 					}
 				}
-#endif /* UNIFY_ABORTED_SCAVENGE */
 
 				omrobjectptr_t next = _extensions->accessBarrier->getReferenceLink(referenceObject);
 				referenceBuffer.add(env, referenceObject);
@@ -313,28 +272,14 @@ MM_ScavengerBackOutScanner::backoutUnfinalizedObjects(MM_EnvironmentStandard *en
 					omrobjectptr_t object = list->getPriorList();
 					while (NULL != object) {
 						MM_ForwardedHeader forwardHeader(object, compressed);
-
-						if(_extensions->isConcurrentScavengerEnabled()) {
-#if defined(OMR_GC_CONCURRENT_SCAVENGER)
-							omrobjectptr_t forwardPtr = forwardHeader.getNonStrictForwardedObject();
-							if (NULL != forwardPtr) {
-								if (forwardHeader.isSelfForwardedPointer()) {
-									forwardHeader.restoreSelfForwardedPointer();
-								} else {
-									object = forwardPtr;
-								}
-							}
-#endif /* OMR_GC_CONCURRENT_SCAVENGER */
-						}
-#if defined(UNIFY_ABORTED_SCAVENGE)
-						else if (_extensions->enableUnifiedAbort) {
-							omrobjectptr_t forwardPtr = forwardHeader.getForwardedObject();
-
-							if (NULL != forwardPtr) {
+						omrobjectptr_t forwardPtr = forwardHeader.getNonStrictForwardedObject();
+						if (NULL != forwardPtr) {
+							if (forwardHeader.isSelfForwardedPointer()) {
+								forwardHeader.restoreSelfForwardedPointer();
+							} else {
 								object = forwardPtr;
 							}
 						}
-#endif /* UNIFY_ABORTED_SCAVENGE */
 
 						omrobjectptr_t next = _extensions->accessBarrier->getFinalizeLink(object);
 						env->getGCEnvironment()->_unfinalizedObjectBuffer->add(env, object);
