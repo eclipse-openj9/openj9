@@ -138,19 +138,23 @@ final class JFRHelpers {
 		}
 		String unit = matcher.group(2);
 		if ((null != unit) && !unit.isEmpty()) {
-			switch (unit.toLowerCase()) {
-			case "k":
-			case "kb":
-				bytes *= 1024L;
-				break;
-			case "m":
-			case "mb":
-				bytes *= 1024L * 1024L;
-				break;
-			case "g":
-			case "gb":
-				bytes *= 1024L * 1024L * 1024L;
-				break;
+			try {
+				switch (unit.toLowerCase()) {
+				case "k":
+				case "kb":
+					bytes = Math.multiplyExact(bytes, 1024L);
+					break;
+				case "m":
+				case "mb":
+					bytes = Math.multiplyExact(bytes, 1024L * 1024L);
+					break;
+				case "g":
+				case "gb":
+					bytes = Math.multiplyExact(bytes, 1024L * 1024L * 1024L);
+					break;
+				}
+			} catch (ArithmeticException ae) {
+				throw new IllegalArgumentException("Invalid memory size");
 			}
 		}
 		return bytes;
@@ -387,12 +391,92 @@ final class JFRHelpers {
 			return;
 		}
 
+		String flightRecorderOptions = VM.getJFRFlightRecorderOptions();
 		jfrCMDLineOption = VM.getjfrCMDLineOption();
 		// JFR support is enabled with V2 implementation.
-		if (null != jfrCMDLineOption) {
+		if ((null != flightRecorderOptions) || (null != jfrCMDLineOption)) {
 			initJFRClasses();
-			initJFRCmdlineOptions();
+			if (null != flightRecorderOptions) {
+				initJFRFlightRecorderOptions(flightRecorderOptions);
+			}
+			if (null != jfrCMDLineOption) {
+				initJFRCmdlineOptions();
+			}
 		}
+	}
+
+	/**
+	 * Apply -XX:FlightRecorderOptions through DCmdConfigure.
+	 *
+	 * @param options the comma separated key=value pairs
+	 */
+	private static void initJFRFlightRecorderOptions(String options) {
+		/*[IF JAVA_SPEC_VERSION == 17]*/
+		String repositoryPath = null;
+		String dumpPath = null;
+		Integer stackDepth = null;
+		Long globalBufferCount = null;
+		Long globalBufferSize = null;
+		Long threadBufferSize = null;
+		Long memorySize = null;
+		Long maxChunkSize = null;
+		Boolean sampleThreads = null;
+		try {
+			for (String pair : options.split(",")) {
+				String[] keyValue = pair.split("=", 2);
+				if (2 == keyValue.length) {
+					String key = keyValue[0];
+					String value = keyValue[1];
+					switch (key) {
+					case "repository":
+						repositoryPath = value;
+						break;
+					case "dumppath":
+						dumpPath = value;
+						break;
+					case "stackdepth":
+						stackDepth = Integer.valueOf(value);
+						break;
+					case "numglobalbuffers":
+						globalBufferCount = Long.valueOf(value);
+						break;
+					case "globalbuffersize":
+						globalBufferSize = convertToBytes(value);
+						break;
+					case "threadbuffersize":
+						threadBufferSize = convertToBytes(value);
+						break;
+					case "memorysize":
+						memorySize = convertToBytes(value);
+						break;
+					case "maxchunksize":
+						maxChunkSize = convertToBytes(value);
+						break;
+					case "samplethreads":
+						sampleThreads = Boolean.valueOf(value);
+						break;
+					default:
+						break;
+					}
+				}
+			}
+		} catch (IllegalArgumentException e) {
+			throw new InternalError("Invalid -XX:FlightRecorderOptions value: " + e.getMessage(), e);
+		}
+		doJFRDCmdConfigureExecute(
+				false,
+				repositoryPath,
+				dumpPath,
+				stackDepth,
+				globalBufferCount,
+				globalBufferSize,
+				threadBufferSize,
+				memorySize,
+				maxChunkSize,
+				sampleThreads);
+		/*[ELSE] JAVA_SPEC_VERSION == 17 */
+		throw new InternalError("JFR support is not enabled");
+		/*[ENDIF] JAVA_SPEC_VERSION == 17 */
 	}
 
 	static void initJFR() {

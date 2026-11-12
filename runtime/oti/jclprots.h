@@ -1298,6 +1298,8 @@ Java_com_ibm_oti_vm_VM_isJVMInSingleThreadedMode(JNIEnv *env, jclass unused);
 jstring JNICALL
 Java_com_ibm_oti_vm_VM_getjfrCMDLineOption(JNIEnv *env, jclass clazz);
 jstring JNICALL
+Java_com_ibm_oti_vm_VM_getJFRFlightRecorderOptions(JNIEnv *env, jclass clazz);
+jstring JNICALL
 Java_com_ibm_oti_vm_VM_getJfrDelay(JNIEnv *env, jclass clazz);
 jstring JNICALL
 Java_com_ibm_oti_vm_VM_getJfrDuration(JNIEnv *env, jclass clazz);
