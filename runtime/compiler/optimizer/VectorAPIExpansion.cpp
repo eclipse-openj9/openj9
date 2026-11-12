@@ -347,14 +347,14 @@ void TR_VectorAPIExpansion::aliasDefNode(TR::Node *defNode, bool rhsHasKnownType
     }
 }
 
-int32_t TR_VectorAPIExpansion::getTempClassRep(int32_t id)
+int32_t TR_VectorAPIExpansion::getTempClassId(int32_t id)
 {
-    int32_t rep = _aliasTable[id]._tempClassId;
+    int32_t classId = _aliasTable[id]._tempClassId;
 
-    if (rep <= 0 || _aliasTable[rep]._tempClassId <= 0)
-        return 0;
+    if (classId <= 0)
+        return -1;
 
-    return rep;
+    return _aliasTable[classId]._tempClassId;
 }
 
 bool TR_VectorAPIExpansion::propagateCopyEdges()
@@ -366,17 +366,17 @@ bool TR_VectorAPIExpansion::propagateCopyEdges()
         int32_t src = _copyEdges[k]._src;
         int32_t dst = _copyEdges[k]._dst;
 
-        int32_t dstRep = getTempClassRep(dst);
+        int32_t dstRep = getTempClassId(dst);
 
-        if (dstRep == 0)
+        if (dstRep <= 0)
             continue; // destination is not a vector, and its astore will box the source if needed
 
         if (_aliasTable[dstRep]._vinfo.isUnknown())
             continue;
 
-        int32_t srcRep = getTempClassRep(src);
+        int32_t srcRep = getTempClassId(src);
 
-        if (srcRep == 0 || _aliasTable[srcRep]._vinfo.isUnknown()) {
+        if (srcRep <= 0 || _aliasTable[srcRep]._vinfo.isUnknown()) {
             logprintf(_trace, log, "%s making temp class #%d unknown since copy #%d <- #%d has an unknown input\n",
                 OPT_DETAILS_VECTOR, dstRep, dst, src);
 

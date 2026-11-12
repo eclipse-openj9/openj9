@@ -947,13 +947,13 @@ public:
     void aliasDefNode(TR::Node *defNode, bool rhsHasKnownType);
 
     /** \brief
-     *     Returns the temp class that an alias id belongs to, or 0 if it does not belong to a valid class
+     *     Returns the temp class that an alias id belongs to, or -1 if it does not belong to a valid class
      *     (such a value is not a vector)
      *
      *  \param id
      *     Alias id
      */
-    int32_t getTempClassRep(int32_t id);
+    int32_t getTempClassId(int32_t id);
 
     /** \brief
      *     One round of propagation of vector info along the copies recorded by \c aliasDefNode().
