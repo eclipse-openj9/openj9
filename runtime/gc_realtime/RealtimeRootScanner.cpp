@@ -291,11 +291,7 @@ MM_RealtimeRootScanner::scanMonitorLookupCaches(MM_EnvironmentBase *env)
 		MM_EnvironmentRealtime *walkThreadEnv = MM_EnvironmentRealtime::getEnvironment(walkThread->omrVMThread);
 		if (FALSE == walkThreadEnv->_monitorCacheCleared) {
 			if (FALSE == MM_AtomicOperations::lockCompareExchangeU32(&walkThreadEnv->_monitorCacheCleared, FALSE, TRUE)) {
-				j9objectmonitor_t *objectMonitorLookupCache = walkThread->objectMonitorLookupCache;
-				UDATA cacheIndex = 0;
-				for (; cacheIndex < J9VMTHREAD_OBJECT_MONITOR_CACHE_SIZE; cacheIndex++) {
-					doMonitorLookupCacheSlot(&objectMonitorLookupCache[cacheIndex]);
-				}
+				memset(walkThread->objectMonitorLookupCache, 0, sizeof(walkThread->objectMonitorLookupCache));
 				if (condYield()) {
 					vmThreadListIterator.reset(_javaVM->mainThread);
 				}
