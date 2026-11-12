@@ -545,9 +545,12 @@ jvmtiGetClassModifiers(jvmtiEnv* env,
 
 	rc = getCurrentVMThread(vm, &currentThread);
 	if (rc == JVMTI_ERROR_NONE) {
-		J9Class * clazz;
-		J9ROMClass * romClass;
-		U_32 modifiers;
+		J9Class * clazz = NULL;
+#if defined(J9VM_OPT_VALHALLA_VALUE_TYPES)
+		J9Class * receiverClazz = NULL;
+#endif /* defined(J9VM_OPT_VALHALLA_VALUE_TYPES) */
+		J9ROMClass * romClass = NULL;
+		U_32 modifiers = 0;
 
 		vm->internalVMFunctions->internalEnterVMFromJNI(currentThread);
 
@@ -559,6 +562,9 @@ jvmtiGetClassModifiers(jvmtiEnv* env,
 		/* Primitive classes have the correct modifiers, so no special processing needs to be done */
 
 		clazz = J9VM_J9CLASS_FROM_JCLASS(currentThread, klass);
+#if defined(J9VM_OPT_VALHALLA_VALUE_TYPES)
+		receiverClazz = clazz;
+#endif /* defined(J9VM_OPT_VALHALLA_VALUE_TYPES) */
 		romClass = clazz->romClass;
 
 		/* Array classes have the modifiers of their leaf component type */
@@ -573,10 +579,38 @@ jvmtiGetClassModifiers(jvmtiEnv* env,
 		 			? clazz->romClass->modifiers
 		 			: clazz->romClass->memberAccessFlags;
 
-		/* Array classes must always be final and not interface */
+		/* The following is consistent with inlClassGetModifiersImpl() and Class.getModifiers(). */
 
 		if (J9ROMCLASS_IS_ARRAY(romClass)) {
-			modifiers = (modifiers | J9AccFinal) & ~J9AccInterface;
+			modifiers |= (J9AccAbstract | J9AccFinal);
+		}
+#if defined(J9VM_OPT_VALHALLA_VALUE_TYPES)
+		if (J9_ARE_ANY_BITS_SET(vm->extendedRuntimeFlags2, J9_EXTENDED_RUNTIME2_ENABLE_PREVIEW)) {
+			if ((!J9_IS_J9CLASS_VALUETYPE(receiverClazz)
+					&& !J9ROMCLASS_IS_INTERFACE(clazz->romClass)
+					&& !J9ROMCLASS_IS_PRIMITIVE_TYPE(clazz->romClass))
+					|| J9ROMCLASS_IS_ARRAY(romClass)
+			) {
+				modifiers |= J9AccClassHasIdentity;
+			}
+		} else if (!J9ROMCLASS_IS_PRIMITIVE_TYPE(receiverClazz->romClass)) {
+			/* Unlike Class.getModifiers(), JVMTI GetClassModifiers keeps reporting ACC_SUPER
+			 * (same bit as ACC_IDENTITY) for all but primitive classes when preview is disabled.
+			 */
+			modifiers |= J9AccSuper;
+		}
+#endif /* defined(J9VM_OPT_VALHALLA_VALUE_TYPES) */
+
+		/* J9AccSuper has the same value as J9AccClassHasIdentity. It is kept in the masks
+		 * so that ACC_SUPER is still reported when value types are not enabled.
+		 */
+		if (J9ROMCLASS_IS_ARRAY(romClass)) {
+			modifiers &= J9AccPublic | J9AccPrivate | J9AccProtected | J9AccSuper
+					| J9AccAbstract | J9AccFinal;
+		} else {
+			modifiers &= J9AccPublic | J9AccPrivate | J9AccProtected | J9AccSuper
+					| J9AccStatic | J9AccFinal | J9AccInterface
+					| J9AccAbstract | J9AccSynthetic | J9AccEnum | J9AccAnnotation;
 		}
 
 		/* Only the low 16 bit of the modifiers are specified - the rest are J9 internal */
