@@ -66,7 +66,7 @@ MM_ScavengerBackOutScanner::scanAllSlots(MM_EnvironmentBase *env)
 	while (NULL != (region = regionIterator.nextRegion())) {
 		MM_HeapRegionDescriptorStandardExtension *regionExtension = MM_ConfigurationDelegate::getHeapRegionDescriptorStandardExtension(env, region);
 		for (uintptr_t i = 0; i < regionExtension->_maxListIndex; i++) {
-			if (_extensions->isConcurrentScavengerEnabled()) {
+			if (_extensions->enableUnifiedAbort || _extensions->isConcurrentScavengerEnabled()) {
 				if (_scavenger->isObjectInEvacuateMemory((omrobjectptr_t )region->getLowAddress())) {
 					/* for concurrent scavenger case, only backout lists in Evacuate region. */
 					regionExtension->_continuationObjectLists[i].backoutList();
@@ -87,8 +87,8 @@ void
 MM_ScavengerBackOutScanner::backoutFinalizableObjects(MM_EnvironmentStandard *env)
 {
 	bool const compressed = _extensions->compressObjectReferences();
-#if defined(OMR_GC_CONCURRENT_SCAVENGER)
-	if (_extensions->isConcurrentScavengerEnabled()) {
+#if defined(UNIFY_ABORTED_SCAVENGE) || defined(OMR_GC_CONCURRENT_SCAVENGER)
+	if (_extensions->enableUnifiedAbort || _extensions->isConcurrentScavengerEnabled()) {
 		GC_FinalizeListManager * finalizeListManager = _extensions->finalizeListManager;
 		{
 			GC_FinalizableObjectBuffer objectBuffer(_extensions);
@@ -261,8 +261,8 @@ MM_ScavengerBackOutScanner::backoutUnfinalizedObjects(MM_EnvironmentStandard *en
 		}
 	}
 
-#if defined(OMR_GC_CONCURRENT_SCAVENGER)
-	if (_extensions->isConcurrentScavengerEnabled()) {
+#if defined(UNIFY_ABORTED_SCAVENGE) || defined(OMR_GC_CONCURRENT_SCAVENGER)
+	if (_extensions->enableUnifiedAbort || _extensions->isConcurrentScavengerEnabled()) {
 		GC_HeapRegionIteratorStandard regionIterator2(regionManager);
 		while (NULL != (region = regionIterator2.nextRegion())) {
 			MM_HeapRegionDescriptorStandardExtension *regionExtension = MM_ConfigurationDelegate::getHeapRegionDescriptorStandardExtension(env, region);
@@ -334,8 +334,8 @@ MM_ScavengerBackOutScanner::backoutUnfinalizedObjects(MM_EnvironmentStandard *en
 void
 MM_ScavengerBackOutScanner::backoutContinuationObjects(MM_EnvironmentStandard *env)
 {
-#if defined(OMR_GC_CONCURRENT_SCAVENGER)
-	if (_extensions->isConcurrentScavengerEnabled()) {
+#if defined(UNIFY_ABORTED_SCAVENGE) || defined(OMR_GC_CONCURRENT_SCAVENGER)
+	if (_extensions->enableUnifiedAbort || _extensions->isConcurrentScavengerEnabled()) {
 		/**
 		 * For ConcurrentScavenge no need to backout stack references,
 		 * since they will be fixed up to point to the new version of the object

@@ -227,7 +227,7 @@ excludeLocalGc(J9JavaVM *javaVM)
 	 * between aborted CS and following percolated global GC. The check will be done after percolate GC is complete (which will do most of heap fixup).
 	 * Since gcCheck->_scavengerBackout is only set if J9MODRON_GCCHK_SCAVENGER_BACKOUT is requested, relying on gcExtensions->isScavengerBackOutFlagRaised() instead.
 	 */
-	if (gcExtensions->isConcurrentScavengerEnabled() && gcExtensions->isScavengerBackOutFlagRaised()) {
+	if ((gcExtensions->enableUnifiedAbort || gcExtensions->isConcurrentScavengerEnabled()) && gcExtensions->isScavengerBackOutFlagRaised()) {
 		return true;
 	}
 
@@ -294,7 +294,7 @@ excludeGlobalGc(J9VMThread* vmThread)
 
 	/* If Concurrent Scavenger aborted, do not check before global GC (regardless if J9MODRON_GCCHK_SCAVENGER_BACKOUT is requested or not).
 	 * Since checkEngine->_scavengerBackout is set only if J9MODRON_GCCHK_SCAVENGER_BACKOUT requested, gcExtensions->isScavengerBackOutFlagRaised() is checked instead.  */
-	if (gcExtensions->isConcurrentScavengerEnabled() && gcExtensions->isScavengerBackOutFlagRaised() && (OMRVMSTATE_GC_CHECK_BEFORE_GC == vmThread->omrVMThread->vmState)) {
+	if ((gcExtensions->enableUnifiedAbort || gcExtensions->isConcurrentScavengerEnabled()) && gcExtensions->isScavengerBackOutFlagRaised() && (OMRVMSTATE_GC_CHECK_BEFORE_GC == vmThread->omrVMThread->vmState)) {
 		return true;
 	}
 
