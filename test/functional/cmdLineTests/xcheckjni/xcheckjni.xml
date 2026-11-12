@@ -20,6 +20,7 @@
   [2] https://openjdk.org/legal/assembly-exception.html
 
   SPDX-License-Identifier: EPL-2.0 OR Apache-2.0 OR GPL-2.0-only WITH Classpath-exception-2.0 OR GPL-2.0-only WITH OpenJDK-assembly-exception-1.0
+  Assisted-by: OpenAI Codex
 -->
 
 <!DOCTYPE suite SYSTEM "cmdlinetester.dtd">
@@ -107,6 +108,26 @@
 <test id="testSetStaticObjectFieldPassedNonStaticID">
   <command>$EXE$ $CP$  -Xint -Xcheck:jni -Dcom.ibm.tools.attach.enable=no -Xgcthreads1 j9vm.test.jnichk.PassingFieldID testSetStaticObjectFieldPassedNonStaticID</command>
   <output regex="no">JVMJNCK101E</output>
+ </test>
+
+ <test id="defineclass-bootstrap-loader">
+  <command>$EXE$ $CP$ -Xcheck:jni -Xgcthreads1 j9vm.test.jnichk.DefineClassLoader bootstrap</command>
+  <output regex="no">DefineClass bootstrap passed</output>
+  <output regex="no" type="failure">JNI error</output>
+  <return value="0" type="required" />
+ </test>
+
+ <test id="defineclass-custom-loader">
+  <command>$EXE$ $CP$ -Xcheck:jni -Xgcthreads1 j9vm.test.jnichk.DefineClassLoader custom</command>
+  <output regex="no">DefineClass custom passed</output>
+  <output regex="no" type="failure">JNI error</output>
+  <return value="0" type="required" />
+ </test>
+
+ <test id="defineclass-invalid-loader">
+  <command>$EXE$ $CP$ -Xcheck:jni -Xgcthreads1 j9vm.test.jnichk.DefineClassLoader invalid</command>
+  <output regex="no">JVMJNCK042E</output>
+  <output regex="no" type="failure">The error was not detected immediately.</output>
  </test>
 
  <loop index="I" from="1" until="9" inc="1">
