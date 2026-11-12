@@ -2453,7 +2453,6 @@ typedef struct J9NativeLibrary {
 	IDATA  ( *send_lifecycle_event)(struct J9VMThread* vmThread, struct J9NativeLibrary* library, const char * functionName, IDATA defaultResult) ;
 	UDATA  ( *close)(struct J9VMThread* vmThread, struct J9NativeLibrary* library) ;
 	UDATA  ( *bind_method)(struct J9VMThread* vmThread, struct J9NativeLibrary* library, struct J9Method* method, char* functionName, char* argSignature) ;
-	UDATA  ( *dispatch_method)(struct J9VMThread* vmThread, struct J9NativeLibrary* library, struct J9Method* method, struct J9HookedNative* hookInfo, void* arguments, void** returnValue) ;
 	struct J9Pool* hookedNatives;
 	omrthread_monitor_t hookedNativesMonitor;
 } J9NativeLibrary;
