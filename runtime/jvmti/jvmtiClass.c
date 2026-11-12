@@ -546,7 +546,9 @@ jvmtiGetClassModifiers(jvmtiEnv* env,
 	rc = getCurrentVMThread(vm, &currentThread);
 	if (rc == JVMTI_ERROR_NONE) {
 		J9Class * clazz = NULL;
+#if defined(J9VM_OPT_VALHALLA_VALUE_TYPES)
 		J9Class * receiverClazz = NULL;
+#endif /* defined(J9VM_OPT_VALHALLA_VALUE_TYPES) */
 		J9ROMClass * romClass = NULL;
 		U_32 modifiers = 0;
 
@@ -560,7 +562,9 @@ jvmtiGetClassModifiers(jvmtiEnv* env,
 		/* Primitive classes have the correct modifiers, so no special processing needs to be done */
 
 		clazz = J9VM_J9CLASS_FROM_JCLASS(currentThread, klass);
+#if defined(J9VM_OPT_VALHALLA_VALUE_TYPES)
 		receiverClazz = clazz;
+#endif /* defined(J9VM_OPT_VALHALLA_VALUE_TYPES) */
 		romClass = clazz->romClass;
 
 		/* Array classes have the modifiers of their leaf component type */
