@@ -154,8 +154,8 @@ standardInit(J9JavaVM *vm, char *dllName)
 #ifdef J9VM_OPT_SIDECAR
 #if !defined(J9VM_INTERP_MINIMAL_JCL)
 	{
-		UDATA handle = 0;
-		result = (jint)vmFuncs->registerBootstrapLibrary(vm->mainThread, "zip", (J9NativeLibrary**)&handle, FALSE);
+		J9NativeLibrary *handle = NULL;
+		result = (jint)vmFuncs->registerBootstrapLibrary(vm->mainThread, "zip", &handle, FALSE);
 	}
 #endif /* !J9VM_INTERP_MINIMAL_JCL */
 #endif /* J9VM_OPT_SIDECAR */

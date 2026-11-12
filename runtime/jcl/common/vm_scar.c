@@ -251,7 +251,7 @@ jint
 scarInit(J9JavaVM *vm)
 {
 	J9InternalVMFunctions *vmFuncs = vm->internalVMFunctions;
-	UDATA handle = 0;
+	J9NativeLibrary *handle = NULL;
 	jint result = 0;
 #if defined(WIN32)
 	char *dbgwrapperStr = NULL;
@@ -259,14 +259,14 @@ scarInit(J9JavaVM *vm)
 #endif
 
 	/* We need to overlay java.dll functions */
-	result = (jint)vmFuncs->registerBootstrapLibrary(vm->mainThread, J9_DLL_NAME, (J9NativeLibrary **)&handle, FALSE);
+	result = (jint)vmFuncs->registerBootstrapLibrary(vm->mainThread, J9_DLL_NAME, &handle, FALSE);
 	if (0 != result) {
 		return result;
 	}
-	((J9NativeLibrary*)handle)->flags |= J9NATIVELIB_FLAG_ALLOW_INL;
+	handle->flags |= J9NATIVELIB_FLAG_ALLOW_INL;
 
 #ifdef J9VM_OPT_JAVA_OFFLOAD_SUPPORT
-	if (0 != ((J9NativeLibrary*)handle)->doSwitching) {
+	if (0 != handle->doSwitching) {
 		Assert_JCL_Natives_Not_Offloaded();
 		/* Trace engine may not be running at this point, refuse to load */
 		return 1;
@@ -285,10 +285,10 @@ scarInit(J9JavaVM *vm)
 	/* Preload this dependency from the JVM directories so the system does not load it from system path, as the wrong version could be found.
 	 * Ignore the return value, if jsig isn't present the JVM won't start anyway.
 	 */
-	vmFuncs->registerBootstrapLibrary( vm->mainThread, "jsig", (J9NativeLibrary**)&handle, FALSE);
+	vmFuncs->registerBootstrapLibrary(vm->mainThread, "jsig", &handle, FALSE);
 
 	/* Preload this dependency from the JVM directories so the system does not load it from system path, as the wrong version could be found. */
-	result = (jint)vmFuncs->registerBootstrapLibrary( vm->mainThread, dbgwrapperStr, (J9NativeLibrary**)&handle, FALSE);
+	result = (jint)vmFuncs->registerBootstrapLibrary(vm->mainThread, dbgwrapperStr, &handle, FALSE);
 	if (0 != result) {
 		PORT_ACCESS_FROM_JAVAVM(vm);
 		/* If library can not be found, print a warning and proceed anyway as the dependency on this library may have been removed. */
@@ -299,7 +299,7 @@ scarInit(J9JavaVM *vm)
 #if defined(J9VM_INTERP_MINIMAL_JCL)
 	result = standardInit(vm, J9_DLL_NAME);
 #else /* J9VM_INTERP_MINIMAL_JCL */
-	result = (jint)vmFuncs->registerBootstrapLibrary( vm->mainThread, "java", (J9NativeLibrary**)&handle, FALSE);
+	result = (jint)vmFuncs->registerBootstrapLibrary(vm->mainThread, "java", &handle, FALSE);
 
 	if( result == 0 ) {
 		result = managementInit( vm );
