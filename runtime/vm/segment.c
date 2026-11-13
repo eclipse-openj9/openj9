@@ -181,6 +181,18 @@ void freeMemorySegment(J9JavaVM *javaVM, J9MemorySegment *segment, BOOLEAN freeD
 		segment->type &= ~MEMORY_TYPE_ALLOCATED;
 	}
 
+	if (J9_ARE_ALL_BITS_SET(segment->type, MEMORY_TYPE_DISCLAIMABLE_TO_FILE)) {
+		if (J9_ARE_ANY_BITS_SET(segment->type, MEMORY_TYPE_RAM_CLASS)) {
+			if (javaVM->disclaimableRAMSegmentCount > 0) {
+				javaVM->disclaimableRAMSegmentCount -= 1;
+			}
+		} else {
+			if (javaVM->disclaimableROMSegmentCount > 0) {
+				javaVM->disclaimableROMSegmentCount -= 1;
+			}
+		}
+	}
+
 	if(freeDescriptor) {
 		freeMemorySegmentListEntry(segmentList, segment);
 	}
@@ -485,10 +497,12 @@ static J9MemorySegment * allocateVirtualMemorySegmentInListInternal(J9JavaVM *ja
 	} else {
 		PORT_ACCESS_FROM_JAVAVM(javaVM);
 		UDATA pageSize = j9vmem_supported_page_sizes()[0];
+		BOOLEAN isDisclaimable = J9_ARE_ALL_BITS_SET(type, MEMORY_TYPE_DISCLAIMABLE_TO_FILE)
+			&& J9_ARE_ANY_BITS_SET(type, MEMORY_TYPE_RAM_CLASS | MEMORY_TYPE_ROM_CLASS);
 
 		segment->type = type;
 
-		if (J9_ARE_ALL_BITS_SET(type, MEMORY_TYPE_RAM_CLASS | MEMORY_TYPE_DISCLAIMABLE_TO_FILE)) {
+		if (isDisclaimable) {
 			/*
 			 * If disclaiming is enabled increase the segement size by the page size so the segment
 			 * base can be aligned to a page boundary so that it can be disclaimed with madvise().
@@ -521,7 +535,7 @@ static J9MemorySegment * allocateVirtualMemorySegmentInListInternal(J9JavaVM *ja
 
 			segment->baseAddress = allocatedBase;
 			segment->heapTop = (U_8 *)&(segment->baseAddress)[size];
-			if (J9_ARE_ALL_BITS_SET(type, MEMORY_TYPE_RAM_CLASS | MEMORY_TYPE_DISCLAIMABLE_TO_FILE)) {
+			if (isDisclaimable) {
 				segment->heapBase = (U_8 *)ROUND_UP_TO_POWEROF2((UDATA)allocatedBase, pageSize);
 			} else {
 				segment->heapBase = allocatedBase;
@@ -919,30 +933,50 @@ disclaimClassMemory(J9JavaVM *vm, UDATA flags)
 	PORT_ACCESS_FROM_JAVAVM(vm);
 	J9InternalVMFunctions *vmFuncs = vm->internalVMFunctions;
 	J9ClassLoaderWalkState walkState = {0};
-	J9ClassLoader *classLoader = vmFuncs->allClassLoadersStartDo(&walkState, vm, 0);
 	BOOLEAN enableROMClassDisclaim = J9_ARE_ANY_BITS_SET(vm->extendedRuntimeFlags3, J9_EXTENDED_RUNTIME3_DISCLAIM_ROM_CLASS_MEMORY);
 	BOOLEAN enableRAMClassDisclaim = J9_ARE_ANY_BITS_SET(vm->extendedRuntimeFlags3, J9_EXTENDED_RUNTIME3_DISCLAIM_RAM_CLASS_MEMORY);
 	BOOLEAN stopOnFirstFailure = J9_ARE_ANY_BITS_SET(flags, J9VM_DISCLAIMCLASSMEMORY_STOP_ON_FIRST_FAILURE);
 	UDATA pageSize = j9vmem_supported_page_sizes()[0];
+	J9ClassLoader *classLoader = NULL;
+#if defined(J9VM_THR_PREEMPTIVE)
+	omrthread_monitor_t segmentMutex = vm->classMemorySegments->segmentMutex;
+#endif /* defined(J9VM_THR_PREEMPTIVE) */
+
+	classLoader = vmFuncs->allClassLoadersStartDo(&walkState, vm, 0);
+
+#if defined(J9VM_THR_PREEMPTIVE)
+	if (NULL != segmentMutex) {
+		omrthread_monitor_enter(segmentMutex);
+	}
+#endif /* defined(J9VM_THR_PREEMPTIVE) */
 
 	while (NULL != classLoader) {
 		J9MemorySegment *segment = classLoader->classSegments;
 		while (NULL != segment) {
 			BOOLEAN isROM = J9_ARE_ANY_BITS_SET(segment->type, MEMORY_TYPE_ROM_CLASS);
 			BOOLEAN isRAM = J9_ARE_ANY_BITS_SET(segment->type, MEMORY_TYPE_RAM_CLASS);
-			if ((enableRAMClassDisclaim && isRAM && J9_ARE_ANY_BITS_SET(segment->type, MEMORY_TYPE_DISCLAIMABLE_TO_FILE))
-			|| (enableROMClassDisclaim && isROM)
-			) {
-				I_32 result = madvise(segment->heapBase, ROUND_DOWN_TO(pageSize, (UDATA)segment->heapTop) - (UDATA)segment->heapBase, MADV_PAGEOUT);
-				Trc_Segment_disclaimClassMemory_result(
-					segment, segment->heapBase,
-					segment->size, segment->type, segment->baseAddress, result);
+			BOOLEAN isDisclaimable = J9_ARE_ANY_BITS_SET(segment->type, MEMORY_TYPE_DISCLAIMABLE_TO_FILE);
 
-				if (0 != result) {
-					Trc_Segment_disclaimClassMemory_error(result, errno);
-					rc = FALSE;
-					if (stopOnFirstFailure) {
-						goto done;
+			if (isDisclaimable
+				&& ((enableRAMClassDisclaim && isRAM) || (enableROMClassDisclaim && isROM))
+			) {
+				/* Align segment to page boundaries for madvise. */
+				UDATA disclaimBase = ROUND_UP_TO_POWEROF2((UDATA)segment->heapBase, pageSize);
+				UDATA disclaimTop  = ROUND_DOWN_TO(pageSize, (UDATA)segment->heapTop);
+
+				if (disclaimTop > disclaimBase) {
+					UDATA disclaimSize = disclaimTop - disclaimBase;
+					I_32 result = madvise((void *)disclaimBase, disclaimSize, MADV_PAGEOUT);
+					Trc_Segment_disclaimClassMemory_result(
+						segment, (void *)disclaimBase,
+						disclaimSize, segment->type, segment->baseAddress, result);
+
+					if (0 != result) {
+						Trc_Segment_disclaimClassMemory_error(result, errno);
+						rc = FALSE;
+						if (stopOnFirstFailure) {
+							goto done;
+						}
 					}
 				}
 			}
@@ -952,6 +986,11 @@ disclaimClassMemory(J9JavaVM *vm, UDATA flags)
 	}
 
 done:
+#if defined(J9VM_THR_PREEMPTIVE)
+	if (NULL != segmentMutex) {
+		omrthread_monitor_exit(segmentMutex);
+	}
+#endif /* defined(J9VM_THR_PREEMPTIVE) */
 	vmFuncs->allClassLoadersEndDo(&walkState);
 #else /* defined(LINUX) */
 	/* Support for other platforms may be added in the future. */
