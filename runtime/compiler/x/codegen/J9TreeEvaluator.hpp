@@ -144,6 +144,7 @@ public:
     static void generateFillInDataBlockSequenceForUnresolvedField(TR::CodeGenerator *cg, TR::Node *node,
         TR::Snippet *dataSnippet, bool isWrite, TR::Register *sideEffectRegister, TR::Register *dataSnippetRegister);
     static TR::Register *directCallEvaluator(TR::Node *node, TR::CodeGenerator *cg);
+    static TR::Register *callCRC32CUpdateHelper(TR::Node *node, TR::CodeGenerator *cg, bool isDirectBuffer);
     static TR::Register *encodeUTF16Evaluator(TR::Node *node, TR::CodeGenerator *cg);
     static TR::Register *toUpperIntrinsicUTF16Evaluator(TR::Node *node, TR::CodeGenerator *cg);
     static TR::Register *toLowerIntrinsicUTF16Evaluator(TR::Node *node, TR::CodeGenerator *cg);
