@@ -4018,6 +4018,61 @@ JVM_LoadLibrary(const char *libName, jboolean throwOnFailure)
 	return result;
 }
 
+#if JAVA_SPEC_VERSION >= 17
+/**
+ * Records the native library filename to the J9ClassLoader so it's output to the javacore.
+ *
+ * @param env the JNIEnv *
+ * @param nativeLibImpl the jdk.internal.loader.NativeLibraries$NativeLibraryImpl JNI object
+ * @param name the filename of the loaded JNI library
+ *
+ * DLL: jvm
+ */
+void JNICALL
+JVM_RecordLibrary(JNIEnv *env, jobject nativeLibImpl, const char *name)
+{
+	J9VMThread *currentThread = (J9VMThread *)env;
+	J9JavaVM *javaVM = currentThread->javaVM;
+	J9InternalVMFunctions *vmFuncs = javaVM->internalVMFunctions;
+	j9object_t fromClass = NULL;
+	j9object_t classLoaderObj = NULL;
+	J9ClassLoader *classLoader = NULL;
+	J9NativeLibrary *newNativeLibrary = NULL;
+	PORT_ACCESS_FROM_JAVAVM(javaVM);
+
+	vmFuncs->internalEnterVMFromJNI(currentThread);
+
+	fromClass = J9VMJDKINTERNALLOADERNATIVELIBRARIESNATIVELIBRARYIMPL_FROMCLASS(currentThread, J9_JNI_UNWRAP_REFERENCE(nativeLibImpl));
+	classLoaderObj = J9VMJAVALANGCLASS_CLASSLOADER(currentThread, fromClass);
+	classLoader = J9VMJAVALANGCLASSLOADER_VMREF(currentThread, classLoaderObj);
+
+	vmFuncs->internalExitVMToJNI(currentThread);
+
+	f_monitorEnter(javaVM->nativeLibraryMonitor);
+
+	if (NULL == classLoader->sharedLibraries) {
+		classLoader->sharedLibraries = pool_new(
+			sizeof(J9NativeLibrary), 0, 0, 0, J9_GET_CALLSITE(), J9MEM_CATEGORY_CLASSES,
+			POOL_FOR_PORT(OMRPORT_FROM_J9PORT(PORTLIB)));
+	}
+
+	if (NULL != classLoader->sharedLibraries) {
+		newNativeLibrary = pool_newElement(classLoader->sharedLibraries);
+	}
+
+	if (NULL != newNativeLibrary) {
+		newNativeLibrary->name = j9mem_allocate_memory(strlen(name) + 1, J9MEM_CATEGORY_CLASSES);
+		if (NULL == newNativeLibrary->name) {
+			pool_removeElement(classLoader->sharedLibraries, newNativeLibrary);
+		} else {
+			strcpy(newNativeLibrary->name, name);
+		}
+	}
+
+	f_monitorExit(javaVM->nativeLibraryMonitor);
+}
+#endif /* JAVA_SPEC_VERSION >= 17 */
+
 /* NOTE this is required by JDK15+ jdk.internal.loader.NativeLibraries.unload().
  */
 #if JAVA_SPEC_VERSION >= 15
