@@ -141,16 +141,6 @@ extern void CEEJNIWrapper(J9VMThread *currentThread);
 #define J9_LAYOUT_REFERENCE 0 /* Unsafe.FIELD_LAYOUT_REFERENCE / Unsafe.ARRAY_LAYOUT_REFERENCE */
 #define J9_LAYOUT_FLATTENED 1 /* Unsafe.FIELD_LAYOUT_FLATTENED / Unsafe.ARRAY_LAYOUT_FLATTENED */
 #endif /* J9VM_OPT_VALHALLA_FLATTENABLE_VALUE_TYPES */
-#if JAVA_SPEC_VERSION >= 16
-extern "C" {
-extern void
-#if FFI_NATIVE_RAW_API
-ffiCallWithSetJmpForUpcall(J9VMThread *currentThread, ffi_cif *cif, void *function, UDATA *returnStorage, void **values, ffi_raw *values_raw);
-#else /* FFI_NATIVE_RAW_API */
-ffiCallWithSetJmpForUpcall(J9VMThread *currentThread, ffi_cif *cif, void *function, UDATA *returnStorage, void **values);
-#endif /* FFI_NATIVE_RAW_API */
-}
-#endif /* JAVA_SPEC_VERSION >= 16 */
 
 class INTERPRETER_CLASS
 {
@@ -5746,9 +5736,10 @@ done:
 #endif /* JAVA_SPEC_VERSION >= 25 */
 
 #if FFI_NATIVE_RAW_API
-		ffiCallWithSetJmpForUpcall(_currentThread, cif, function, returnStorage, values, values_raw);
+		ffi_ptrarray_to_raw(cif, values, values_raw);
+		ffi_raw_call(cif, FFI_FN(function), returnStorage, values_raw);
 #else /* FFI_NATIVE_RAW_API */
-		ffiCallWithSetJmpForUpcall(_currentThread, cif, function, returnStorage, values);
+		ffi_call(cif, FFI_FN(function), returnStorage, values);
 #endif /* FFI_NATIVE_RAW_API */
 
 #if JAVA_SPEC_VERSION >= 21

@@ -1629,7 +1629,7 @@ public class UpcallMethodHandles {
 		GroupLayout structLayout = MemoryLayout.structLayout(C_INT.withName("elem1"), C_INT.withName("elem2"));
 		MethodType mt = MethodType.methodType(MemorySegment.class, MemorySegment.class, MemorySegment.class, MemoryAddress.class);
 		FunctionDescriptor fd = FunctionDescriptor.of(structLayout, structLayout, structLayout, C_POINTER);
-		Addressable functionSymbol = nativeLibLookup.lookup("add2IntStructs_returnStructByUpcallMH").get();
+		Addressable functionSymbol = nativeLibLookup.lookup("add2IntStructs_returnStructByUpcallMH_mustNotReturn").get();
 		SegmentAllocator allocator = SegmentAllocator.ofScope(scope);
 		MethodHandle mh = clinker.downcallHandle(functionSymbol, allocator, mt, fd);
 		MemoryAddress upcallFuncAddr = clinker.upcallStub(UpcallMethodHandles.MH_add2IntStructs_returnStruct_throwException,

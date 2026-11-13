@@ -37,7 +37,6 @@ extern "C" {
 extern void c_cInterpreter(J9VMThread *currentThread);
 extern bool buildCallInStackFrameHelper(J9VMThread *currentThread, J9VMEntryLocalStorage *newELS, bool returnsObject);
 extern void restoreCallInFrameHelper(J9VMThread *currentThread);
-extern void longJumpWrapperForUpcall(J9VMThread *downCallThread);
 
 static U_8 getInternalTypeFromSignature(J9JavaVM *vm, J9Class *typeClass, U_8 sigType);
 static U_64 JNICALL native2InterpJavaUpcallImpl(J9UpcallMetaData *data, void *argsListPointer);
@@ -271,6 +270,46 @@ getNormalizedArgValue(U_8 argType, I_32 argValue)
 	return realValue;
 }
 
+/* VM-side failures cannot reach the Java catch wrapper. Call the same JDK
+ * handler through JNI, while the exception remains rooted as a local ref.
+ * Entry requires VM access; this function never returns to native user code.
+ */
+static void
+handleUncaughtUpcallException(J9VMThread *currentThread)
+{
+	Assert_VM_true(VM_VMHelpers::exceptionPending(currentThread));
+
+	VM_VMAccess::inlineExitVMToJNI(currentThread);
+
+	JNIEnv *env = (JNIEnv *)currentThread;
+	jthrowable exception = env->ExceptionOccurred();
+	env->ExceptionClear();
+
+	jclass sharedUtils = env->FindClass("jdk/internal/foreign/abi/SharedUtils");
+	if (NULL != sharedUtils) {
+		jmethodID handler = env->GetStaticMethodID(sharedUtils, "handleUncaughtException", "(Ljava/lang/Throwable;)V");
+		if (NULL != handler) {
+			env->CallStaticVoidMethod(sharedUtils, handler, exception);
+		}
+	}
+
+	/* Also covers failures resolving the helper or attempts to prevent exit. */
+	fatalError(env, "Unable to handle an uncaught exception in an FFM upcall");
+}
+
+static void
+handleUpcallThreadAttachFailure(J9JavaVM *vm)
+{
+	PORT_ACCESS_FROM_JAVAVM(vm);
+
+	j9tty_err_printf(
+		"Unrecoverable error attaching native thread during FFM upcall. "
+		"The VM will now exit\n");
+
+	j9exit_shutdown_and_exit(1);
+}
+
+
 /**
  * @brief The common helper function that calls into the interpreter
  * via native2InterpJavaUpcallImpl to invoke the OpenJDK MH in the upcall.
@@ -282,7 +321,6 @@ getNormalizedArgValue(U_8 argType, I_32 argValue)
 static U_64 JNICALL
 native2InterpJavaUpcallImpl(J9UpcallMetaData *data, void *argsListPointer)
 {
-	J9VMThread *downCallThread = data->downCallThread;
 	J9UpcallNativeSignature *nativeSig = data->nativeFuncSignature;
 	J9UpcallSigType *sigArray = nativeSig->sigArray;
 	I_32 paramCount = (I_32)(nativeSig->numSigs - 1); /* The last element is for the return type. */
@@ -293,30 +331,34 @@ native2InterpJavaUpcallImpl(J9UpcallMetaData *data, void *argsListPointer)
 	bool isCurThrdAllocated = false;
 	U_64 returnStorage = 0;
 
-#if JAVA_SPEC_VERSION >= 21
-		/* Capture the invalid linker option (intended for the trivial downcall as specified in JDK21) in upcall
-		 * by throwing out an exception so as to remind users of the incorrect behavior in applications rather
-		 * than ending up with an assertion failure by crashing the JVM in the RI implementation.
-		 */
-		if (downCallThread->isInCriticalDownCall) {
-			setCurrentExceptionNLS(downCallThread, J9VMCONSTANTPOOL_JAVALANGILLEGALTHREADSTATEEXCEPTION, J9NLS_VM_ILLEGAL_THREAD_STATE_UPCALL);
-			goto illegalState;
-		}
-#endif /* JAVA_SPEC_VERSION => 21 */
-
 	/* Determine whether to use the current thread or create a new one
 	 * when there is no java thread attached to the native thread
 	 * created directly in native.
 	 */
 	currentThread = getCurrentThread(data, &isCurThrdAllocated);
 	if (NULL == currentThread) {
-		/* The OOM exception set in getCurrentThread() will be thrown in the interpreter
-		 * after returning from the native function in downcall.
-		 */
-		goto doneAndExit;
+		handleUpcallThreadAttachFailure(data->vm);
 	}
 
+ #if JAVA_SPEC_VERSION >= 21
+	/* Inspect the executing thread, not the thread that created the stub.
+	 * Critical downcalls without heap arguments retain VM access, while those
+	 * with heap arguments may already be in JNI state. fatalError() requires
+	 * JNI state because it calls exitJavaVM().
+	 */
+	if (currentThread->isInCriticalDownCall) {
+#if defined(J9VM_INTERP_ATOMIC_FREE_JNI)
+		if (!currentThread->inNative) {
+#else /* J9VM_INTERP_ATOMIC_FREE_JNI */
+		if (J9_ARE_ANY_BITS_SET(currentThread->publicFlags, J9_PUBLIC_FLAGS_VM_ACCESS)) {
+#endif /* J9VM_INTERP_ATOMIC_FREE_JNI */
+			VM_VMAccess::inlineExitVMToJNI(currentThread);
+		}
+		fatalError((JNIEnv *)currentThread, "An FFM upcall is not allowed during a critical downcall");
+	}
+#endif /* JAVA_SPEC_VERSION >= 21 */
 	VM_VMAccess::inlineEnterVMFromJNI(currentThread);
+
 	returnType = getReturnTypeFromMetaData(data);
 	returnsObject = (J9NtcPointer == returnType) || (J9NtcStruct == returnType);
 
@@ -413,26 +455,23 @@ done:
 		restoreCallInFrameHelper(currentThread);
 	}
 
-	/* Transfer the exception from the locally created upcall thread to the downcall thread
-	 * as the upcall thread will be cleaned up before the dispatcher exits; otherwise
-	 * the current thread's exception can be brought back to the interpreter in downcall.
+	/* Exceptions from the Java upcall target and its filters are handled by
+	 * InternalUpcallHandler via SharedUtils.handleUncaughtException().
 	 *
-	 * Note:
-	 * The exception could be OOM which is set for the downcall thread
-	 * in storeMemArgObjectsToJavaArray().
+	 * A pending exception here originates from VM-side upcall preparation
+	 * or conversion and must not be allowed to return to native code.
 	 */
-	if (!VM_VMHelpers::exceptionPending(downCallThread)) {
-		if (VM_VMHelpers::exceptionPending(currentThread)) {
-			if (isCurThrdAllocated) {
-				downCallThread->currentException = currentThread->currentException;
-				currentThread->currentException = NULL;
-			}
-		} else {
-			/* Read returnStorage from returnValue (and returnValue2 on 32-bit platforms). */
-			returnStorage = *(U_64 *)&currentThread->returnValue;
-			convertUpcallReturnValue(data, returnType, &returnStorage);
-		}
+	if (VM_VMHelpers::exceptionPending(currentThread)) {
+		handleUncaughtUpcallException(currentThread);
 	}
+
+	/* Normal return path only. */
+	returnStorage = *(U_64 *)&currentThread->returnValue;
+	convertUpcallReturnValue(data, returnType, &returnStorage);
+
+	if (VM_VMHelpers::exceptionPending(currentThread)) {
+		handleUncaughtUpcallException(currentThread);
+        }
 
 	VM_VMAccess::inlineExitVMToJNI(currentThread);
 
@@ -450,20 +489,6 @@ done:
 		currentThread = NULL;
 	}
 
-#if JAVA_SPEC_VERSION >= 21
-illegalState:
-#endif /* JAVA_SPEC_VERSION => 21 */
-	/* Restore back to the setjump site in the call-out native
-	 * to handle the captured exception.
-	 *
-	 * See inlInternalDowncallHandlerInvokeNative()
-	 * in BytecodeInterpreter.hpp for details.
-	 */
-	if (VM_VMHelpers::exceptionPending(downCallThread)) {
-		longJumpWrapperForUpcall(downCallThread);
-	}
-
-doneAndExit:
 	return returnStorage;
 }
 
@@ -482,14 +507,13 @@ static J9VMThread *
 getCurrentThread(J9UpcallMetaData *data, bool *isCurThrdAllocated)
 {
 	J9JavaVM *vm = data->vm;
-	J9VMThread *downCallThread = data->downCallThread;
 	J9VMThread *currentThread = currentVMThread(vm);
 	omrthread_t osThread = NULL;
 
 	if (NULL == currentThread) {
 		/* Attach to the created OMR thread after setting the omr thread attributes. */
 		if (J9THREAD_SUCCESS != attachThreadWithCategory(&osThread, J9THREAD_CATEGORY_APPLICATION_THREAD)) {
-			goto oom;
+			return NULL;
 		}
 
 		/* Attach to the created J9VMThread after finishing all required steps which include the setting
@@ -498,22 +522,13 @@ getCurrentThread(J9UpcallMetaData *data, bool *isCurThrdAllocated)
 		if (JNI_OK != internalAttachCurrentThread(vm, &currentThread, NULL,
 				J9_PRIVATE_FLAGS_ATTACHED_THREAD | J9_PRIVATE_FLAGS_FFI_UPCALL_THREAD, osThread)) {
 			omrthread_detach(osThread);
-			osThread = NULL;
-			goto oom;
+			return NULL;
 		}
+
 		*isCurThrdAllocated = true;
 	}
 
-done:
 	return currentThread;
-
-oom:
-	/* The exception will be thrown from the downcall thread in inlInternalDowncallHandlerInvokeNative()
-	 * after returning back to the interpreter.
-	 */
-	setNativeOutOfMemoryError(downCallThread, 0, 0);
-	goto done;
-
 }
 
 /**
@@ -610,9 +625,6 @@ storeMemArgObjectsToJavaArray(J9UpcallMetaData *data, void *argsListPointer, J9V
 			}
 
 			if (NULL == memArgObject) {
-				/* The OOM exception set in createMemAddressObject/createMemSegmentObject will be
-				 * thrown in the interpreter after returning from the native function in downcall.
-				 */
 				result = false;
 				goto done;
 			}
@@ -646,7 +658,6 @@ static j9object_t
 createMemAddressObject(J9UpcallMetaData *data, I_64 offset)
 {
 	J9JavaVM * vm = data->vm;
-	J9VMThread *downCallThread = data->downCallThread;
 	J9VMThread *currentThread = currentVMThread(vm);
 	MM_ObjectAllocationAPI objectAllocate(currentThread);
 	J9Class *memAddrClass = J9VMJDKINTERNALFOREIGNMEMORYADDRESSIMPL(vm);
@@ -660,12 +671,8 @@ createMemAddressObject(J9UpcallMetaData *data, I_64 offset)
 	if (NULL == memAddrObject) {
 		memAddrObject = vm->memoryManagerFunctions->J9AllocateObject(currentThread, memAddrClass, J9_GC_ALLOCATE_OBJECT_NON_INSTRUMENTABLE);
 		if (NULL == memAddrObject) {
-			/* Directly set the OOM error to the downcall thread to bring it up back to the interpreter
-			 * in downcall when the upcall thread is the same as the downcall thread; otherwise, the OOM
-			 * error should be still set to the downcall thread given the locally created native thread
-			 * in upcall will be cleaned up before the dispatcher exists and returns to the interpreter.
-			 */
-			setHeapOutOfMemoryError(downCallThread);
+			/* Report allocation failure on the current upcall thread. */
+			setHeapOutOfMemoryError(currentThread);
 			goto done;
 		}
 	}
@@ -691,7 +698,6 @@ static j9object_t
 createMemSegmentObject(J9UpcallMetaData *data, I_64 offset, I_64 sigTypeSize)
 {
 	J9JavaVM *vm = data->vm;
-	J9VMThread *downCallThread = data->downCallThread;
 	J9VMThread *currentThread = currentVMThread(vm);
 	MM_ObjectAllocationAPI objectAllocate(currentThread);
 	j9object_t memSegmtObject = NULL;
@@ -706,12 +712,8 @@ createMemSegmentObject(J9UpcallMetaData *data, I_64 offset, I_64 sigTypeSize)
 	if (NULL == memSegmtObject) {
 		memSegmtObject = vm->memoryManagerFunctions->J9AllocateObject(currentThread, memSegmtClass, J9_GC_ALLOCATE_OBJECT_NON_INSTRUMENTABLE);
 		if (NULL == memSegmtObject) {
-			/* Directly set the OOM error to the downcall thread to bring it up back to the interpreter
-			 * in downcall when the upcall thread is the same as the downcall thread; otherwise, the OOM
-			 * error should be still set to the downcall thread given the locally created native thread
-			 * in upcall will be cleaned up before the dispatcher exists and returns to the interpreter.
-			 */
-			setHeapOutOfMemoryError(downCallThread);
+			/* Report allocation failure on the current upcall thread. */
+			setHeapOutOfMemoryError(currentThread);
 			goto done;
 		}
 	}
