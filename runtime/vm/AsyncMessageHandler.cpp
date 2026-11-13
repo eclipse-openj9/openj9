@@ -111,6 +111,13 @@ closeScope0OSlotWalkFunction(J9VMThread *vmThread, J9StackWalkState *walkState, 
 
 	/* For a JIT frame, walkState->method is the outer method while its O-slots are
 	 * walked, so also consider @Scoped methods inlined at the current PC.
+	 *
+	 * The O-slots of a JIT frame belong to the whole compiled frame and cannot be
+	 * attributed to a specific inlined method. As a result, this check is conservative:
+	 * if an inlined @Scoped method is active and an unrelated session is live in the
+	 * same frame, closing that session can flag this thread (a false positive). This
+	 * is memory-safe; the alternative of missing a thread that is accessing the session
+	 * allows its memory to be freed while still in use.
 	 */
 	if (*slot == scope) {
 		if (*inlinedIsScoped || isScopedMethod(walkState->method)) {
