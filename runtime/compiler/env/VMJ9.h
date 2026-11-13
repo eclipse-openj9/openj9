@@ -684,6 +684,19 @@ public:
     virtual TR::KnownObjectTable::Index getFieldAccessorIndex(TR::Compilation *comp,
         TR::KnownObjectTable::Index fieldIndex);
 
+    /**
+     * @brief Get the value of the opInfo field of a jdk/incubator/vector/VectorOperators$OperatorImpl object.
+     * opInfo is final, so when the operator object is known, the result of
+     * jdk/incubator/vector/IntVector.opKind(Operator, int), which tests bits in opInfo, can be evaluated
+     * at compile time.
+     *
+     * @param comp the compilation
+     * @param opIndex the known object index of the VectorOperators$OperatorImpl object
+     * @return int32_t the value of the opInfo field. -1 if the object is not an OperatorImpl or the field
+     * could not be read.
+     */
+    virtual int32_t getVectorOperatorInfo(TR::Compilation *comp, TR::KnownObjectTable::Index opIndex);
+
     virtual TR::Method *createMethod(TR_Memory *, TR_OpaqueClassBlock *, int32_t);
     virtual TR_ResolvedMethod *createResolvedMethod(TR_Memory *, TR_OpaqueMethodBlock *, TR_ResolvedMethod * = 0,
         TR_OpaqueClassBlock * = 0);
