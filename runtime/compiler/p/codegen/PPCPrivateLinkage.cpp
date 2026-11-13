@@ -480,13 +480,14 @@ void J9::Power::PrivateLinkage::mapStack(TR::ResolvedMethodSymbol *method)
     automaticIterator.reset();
     localCursor = automaticIterator.getFirst();
 
+    // Map locals with no additional alignment requirements
     while (localCursor != NULL) {
         if (comp()->target().is64Bit()) {
-            if (localCursor->getGCMapIndex() < 0 && localCursor->getSize() != 8) {
+            if (localCursor->getGCMapIndex() < 0 && localCursor->getSize() < 8) {
                 mapSingleAutomatic(localCursor, stackIndex);
             }
         } else {
-            if (localCursor->getGCMapIndex() < 0 && localCursor->getDataType() != TR::Double) {
+            if (localCursor->getGCMapIndex() < 0 && (localCursor->getSize() < 8 || localCursor->getDataType() == TR::Int64 || localCursor->getDataType() == TR::Address)) {
                 mapSingleAutomatic(localCursor, stackIndex);
             }
         }
@@ -496,6 +497,7 @@ void J9::Power::PrivateLinkage::mapStack(TR::ResolvedMethodSymbol *method)
     automaticIterator.reset();
     localCursor = automaticIterator.getFirst();
 
+    // Map locals that require 8-byte alignment
     while (localCursor != NULL) {
         if (comp()->target().is64Bit()) {
             if (localCursor->getGCMapIndex() < 0 && localCursor->getSize() == 8) {
@@ -507,6 +509,18 @@ void J9::Power::PrivateLinkage::mapStack(TR::ResolvedMethodSymbol *method)
                 stackIndex -= (stackIndex & 0x4) ? 4 : 0;
                 mapSingleAutomatic(localCursor, stackIndex);
             }
+        }
+        localCursor = automaticIterator.getNext();
+    }
+
+    automaticIterator.reset();
+    localCursor = automaticIterator.getFirst();
+
+    // Map locals that require 16-byte alignment (i.e.: vector objects)
+    while (localCursor != NULL) {
+        if (localCursor->getGCMapIndex() < 0 && localCursor->getSize() > 8) {
+            stackIndex -= (stackIndex & 0x8) ? 8 : 0;
+            mapSingleAutomatic(localCursor, stackIndex);
         }
         localCursor = automaticIterator.getNext();
     }
