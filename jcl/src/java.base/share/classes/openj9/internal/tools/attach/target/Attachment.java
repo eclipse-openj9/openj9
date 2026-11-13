@@ -171,7 +171,7 @@ final class Attachment extends Thread implements Response {
 	}
 
 	private static void closeQuietly(Closeable stream) {
-		if (null != stream) {
+		if (stream != null) {
 			try {
 				stream.close();
 			} catch (IOException e1) {
@@ -185,24 +185,33 @@ final class Attachment extends Thread implements Response {
 		boolean terminate = false;
 		IPC.logMessage("Attachment run"); //$NON-NLS-1$
 		connectToAttacher(getPortNumber());
-		while (!terminate && !isInterrupted()) {
-			terminate = doCommand(commandStream, responseStream);
-		}
 		try {
+			while (!terminate && !isInterrupted()) {
+				terminate = doCommand(commandStream, responseStream);
+			}
 			AttachmentConnection.streamSend(responseStream, Response.DETACHED);
-			if (null != responseStream) {
-				responseStream.close();
-				responseStream = null;
-			}
-			if (null != commandStream) {
-				commandStream.close();
-				commandStream = null;
-			}
 		} catch (IOException e) {
 			lastError = e;
-		}
-		if (null != handler) {
-			handler.removeAttachment(this);
+		} finally {
+			try {
+				if (responseStream != null) {
+					responseStream.close();
+					responseStream = null;
+				}
+			} catch (IOException e) {
+				lastError = e;
+			}
+			try {
+				if (commandStream != null) {
+					commandStream.close();
+					commandStream = null;
+				}
+			} catch (IOException e) {
+				lastError = e;
+			}
+			if (handler != null) {
+				handler.removeAttachment(this);
+			}
 		}
 	}
 
@@ -287,15 +296,43 @@ final class Attachment extends Thread implements Response {
 				AttachmentConnection.streamSend(respStream, Response.ERROR
 						+ " command invalid: " + cmd); //$NON-NLS-1$
 			}
-		} catch (IOException e) {
-			IPC.logMessage("doCommand IOException ", e.toString()); //$NON-NLS-1$
+		} catch (InternalError e) {
+			String errorString = e.toString();
+			IPC.logMessage("doCommand InternalError ", errorString); //$NON-NLS-1$
+			Class<?> dcmdExceptionClass = null;
+			try {
+				dcmdExceptionClass = Class.forName("jdk.jfr.internal.dcmd.DCmdException");  //$NON-NLS-1$
+			} catch (ClassNotFoundException e1) {
+				IPC.logMessage("Class.forName(DCmdException) failed " + e1.toString()); //$NON-NLS-1$
+			}
+
+			Throwable cause = e.getCause();
+			if ((dcmdExceptionClass != null) && dcmdExceptionClass.isInstance(cause)) {
+				try {
+					// The target VM DCmdException message should be returned.
+					replyWithProperties(DiagnosticProperties.makeStringResult(cause.getMessage()));
+				} catch (IOException e1) {
+					// The communication error is ignored.
+					IPC.logMessage("IOException sending DCmdException string response" + e1.toString()); //$NON-NLS-1$
+				}
+			} else {
+				try {
+					AttachmentConnection.streamSend(respStream, Response.ERROR
+							+ " unexpected InternalError: " + errorString); //$NON-NLS-1$
+				} catch (IOException e1) {
+					// The communication error is ignored.
+					IPC.logMessage("IOException sending InternalError response" + e1.toString()); //$NON-NLS-1$
+				}
+			}
 			return true;
 		} catch (Throwable e) {
-			IPC.logMessage("doCommand exception ", e.toString()); //$NON-NLS-1$
+			String exceptionString = e.toString();
+			IPC.logMessage("doCommand exception ", exceptionString); //$NON-NLS-1$
 			try {
 				AttachmentConnection.streamSend(respStream, Response.ERROR
-						+ " unexpected exception or error: " + e.toString()); //$NON-NLS-1$
+						+ " unexpected exception or error: " + exceptionString); //$NON-NLS-1$
 			} catch (IOException e1) {
+				// The communication error is ignored.
 				IPC.logMessage("IOException sending error response" + e1.toString()); //$NON-NLS-1$
 			}
 			return true;
@@ -316,14 +353,25 @@ final class Attachment extends Thread implements Response {
 	 */
 	synchronized void teardown() {
 		try {
-			if (null != responseStream) {
+			if (responseStream != null) {
 				responseStream.close();
+				responseStream = null;
 			}
-			if (null != attacherSocket) {
+		} catch (IOException e) {
+			lastError = e;
+		}
+		try {
+			if (attacherSocket != null) {
 				attacherSocket.close();
+				attacherSocket = null;
 			}
-			if (null != commandStream) {
+		} catch (IOException e) {
+			lastError = e;
+		}
+		try {
+			if (commandStream != null) {
 				commandStream.close();
+				commandStream = null;
 			}
 		} catch (IOException e) {
 			lastError = e;
@@ -429,7 +477,7 @@ final class Attachment extends Thread implements Response {
 	private boolean startAgent(Properties agentProperties) {
 		try {
 			IPC.logMessage("startAgent"); //$NON-NLS-1$
-			if (null != MethodRefsHolder.startRemoteManagementAgentMethod) {
+			if (MethodRefsHolder.startRemoteManagementAgentMethod != null) {
 				Object startArgument;
 				/*[IF (JAVA_SPEC_VERSION >= 9) | Sidecar18-SE-OpenJ9]*/
 				startArgument = agentProperties.entrySet().stream()
@@ -454,7 +502,7 @@ final class Attachment extends Thread implements Response {
 
 	private static String startLocalAgent() throws IbmAttachOperationFailedException {
 		IPC.logMessage("startLocalAgent"); //$NON-NLS-1$
-		if (null != MethodRefsHolder.startLocalManagementAgentMethod) { /* forces initialization */
+		if (MethodRefsHolder.startLocalManagementAgentMethod != null) { /* forces initialization */
 			try {
 				MethodRefsHolder.startLocalManagementAgentMethod.invoke(null);
 			} catch (Throwable exc) {
