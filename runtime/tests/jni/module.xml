@@ -179,6 +179,7 @@
 	<export name="Java_j9vm_test_jni_VolatileTest_setVolatileStaticInt"/>
 	<export name="Java_j9vm_test_jni_VolatileTest_setVolatileStaticFloat"/>
 	<export name="Java_j9vm_test_jni_NullRefTest_test"/>
+	<export name="Java_j9vm_test_jnichk_DefineClassLoader_defineClass"/>
 	<export name="Java_j9vm_test_jnichk_BufferOverrun_test"/>
 	<export name="Java_j9vm_test_jnichk_ModifiedBuffer_test"/>
 	<export name="Java_j9vm_test_jnichk_DeleteGlobalRefTwice_test"/>

@@ -356,3 +356,20 @@ Java_j9vm_test_jnichk_PassingFieldID_testSetStaticObjectFieldPassedNonStaticID(J
 		}
 	}
 }
+
+/* Exercise DefineClass with bootstrap, custom, and invalid class loader arguments. */
+jclass JNICALL
+Java_j9vm_test_jnichk_DefineClassLoader_defineClass(JNIEnv *env, jclass clazz, jobject loader, jbyteArray bytes)
+{
+	jsize length = (*env)->GetArrayLength(env, bytes);
+	jbyte *buffer = (*env)->GetByteArrayElements(env, bytes, NULL);
+	jclass result = NULL;
+
+	if (NULL == buffer) {
+		return NULL;
+	}
+
+	result = (*env)->DefineClass(env, "j9vm/test/jnichk/DefineClassTarget", loader, buffer, length);
+	(*env)->ReleaseByteArrayElements(env, bytes, buffer, JNI_ABORT);
+	return result;
+}
