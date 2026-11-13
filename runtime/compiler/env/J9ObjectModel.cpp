@@ -117,7 +117,8 @@ bool J9::ObjectModel::areFlattenableValueTypesEnabled()
 #if defined(J9VM_OPT_JITSERVER)
     if (auto stream = TR::CompilationInfo::getStream()) {
 #if defined(J9VM_OPT_VALHALLA_FLATTENABLE_VALUE_TYPES)
-        return true;
+        auto *vmInfo = TR::compInfoPT->getClientData()->getOrCacheVMInfo(stream);
+        return J9_ARE_ANY_BITS_SET(vmInfo->_extendedRuntimeFlags2, J9_EXTENDED_RUNTIME2_ENABLE_PREVIEW);
 #else /* defined(J9VM_OPT_VALHALLA_FLATTENABLE_VALUE_TYPES) */
         return false;
 #endif /* defined(J9VM_OPT_VALHALLA_FLATTENABLE_VALUE_TYPES) */
@@ -134,7 +135,8 @@ bool J9::ObjectModel::isValueTypeFlatteningEnabled()
     if (auto stream = TR::CompilationInfo::getStream()) {
 #if defined(J9VM_OPT_VALHALLA_FLATTENABLE_VALUE_TYPES)
         auto *vmInfo = TR::compInfoPT->getClientData()->getOrCacheVMInfo(stream);
-        return J9_ARE_ANY_BITS_SET(vmInfo->_extendedRuntimeFlags3, J9_EXTENDED_RUNTIME3_ENABLE_VT_FLATTENING);
+        return J9_ARE_ANY_BITS_SET(vmInfo->_extendedRuntimeFlags2, J9_EXTENDED_RUNTIME2_ENABLE_PREVIEW)
+            && J9_ARE_ANY_BITS_SET(vmInfo->_extendedRuntimeFlags3, J9_EXTENDED_RUNTIME3_ENABLE_VT_FLATTENING);
 #else /* defined(J9VM_OPT_VALHALLA_FLATTENABLE_VALUE_TYPES) */
         return false;
 #endif /* defined(J9VM_OPT_VALHALLA_FLATTENABLE_VALUE_TYPES) */
@@ -187,7 +189,8 @@ bool J9::ObjectModel::isValueTypeArrayFlatteningEnabled()
     if (auto stream = TR::CompilationInfo::getStream()) {
 #if defined(J9VM_OPT_VALHALLA_FLATTENABLE_VALUE_TYPES)
         auto *vmInfo = TR::compInfoPT->getClientData()->getOrCacheVMInfo(stream);
-        return J9_ARE_ANY_BITS_SET(vmInfo->_extendedRuntimeFlags2, J9_EXTENDED_RUNTIME2_ENABLE_VT_ARRAY_FLATTENING);
+        return J9_ARE_ALL_BITS_SET(vmInfo->_extendedRuntimeFlags2,
+            J9_EXTENDED_RUNTIME2_ENABLE_PREVIEW | J9_EXTENDED_RUNTIME2_ENABLE_VT_ARRAY_FLATTENING);
 #else /* defined(J9VM_OPT_VALHALLA_FLATTENABLE_VALUE_TYPES) */
         return false;
 #endif /* defined(J9VM_OPT_VALHALLA_FLATTENABLE_VALUE_TYPES) */
