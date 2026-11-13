@@ -6384,7 +6384,7 @@ typedef struct JFRState {
 	UDATA objectAllocationSampleInterval;
 	/* hires-clock ticks when the last GC cycle ended; 0 if no GC has occurred */
 	uint64_t lastGCCycleEndTicks;
-	I_64 metadataID;
+	U_64 metadataID;
 	I_64 chunkStartTime;
 	I_64 chunkStartTicks;
 	U_8 chunkGeneration;
