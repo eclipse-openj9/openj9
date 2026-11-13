@@ -71,6 +71,7 @@ J9_DECLARE_CONSTANT_NAS(onRetransformNAS, onRetransformUTF8, onRetransformSigUTF
 // TODO: allow configureable values
 #define J9JFR_THREAD_BUFFER_SIZE (128 * 1024)
 #define J9JFR_GLOBAL_BUFFER_SIZE (10 * J9JFR_THREAD_BUFFER_SIZE)
+#define J9JFR_THREAD_DUMP_BUFFER_SIZE (200 * 10 * 1024)
 #define J9JFR_SAMPLING_RATE 10
 #define J9JFR_CLASSNAME_BUFFER_SIZE 128
 #define J9TIME_MICROSECONDS_PER_SECOND	(1000000ULL)
@@ -246,7 +247,7 @@ jfrEventSize(J9JFREvent *jfrEvent)
 		size = sizeof(J9JFRDataLoss);
 		break;
 	case J9JFR_EVENT_TYPE_THREAD_DUMP:
-		size = sizeof(J9JFRThreadDump) + (((J9JFRThreadDump *)jfrEvent)->bufferSize * sizeof(U_8));
+		size = sizeof(J9JFRThreadDump);
 		break;
 	case J9JFR_EVENT_TYPE_THREAD_ALLOCATION_STATISTICS:
 		size = sizeof(J9JFRThreadAllocationStatistics);
@@ -347,11 +348,15 @@ areJFRBuffersReadyForWrite(J9VMThread *currentThread)
  * false a partial write is done keeping the checkpoint open for
  * more writes (only available in JFRv2).
  * @param finalWrite[in] if true this is the last chunk.
+ * @param resetThreadDumpBuffer[in] if true the thread dump buffer is reset after the write.
+ * Thread dump events hold pointers into the thread dump buffer, so this may only be true if
+ * the current thread has exclusive VM access and all the thread local buffers have been
+ * flushed (and are therefore empty), otherwise unflushed events would be left dangling.
  *
  * @returns true on success, false on failure
  */
 static bool
-writeOutGlobalBuffer(J9VMThread *currentThread, bool newChunk, bool finalWrite)
+writeOutGlobalBuffer(J9VMThread *currentThread, bool newChunk, bool finalWrite, bool resetThreadDumpBuffer)
 {
 	J9JavaVM *vm = currentThread->javaVM;
 	Assert_VM_mustHaveVMAccess(currentThread);
@@ -367,6 +372,13 @@ writeOutGlobalBuffer(J9VMThread *currentThread, bool newChunk, bool finalWrite)
 		/* Reset the buffer */
 		vm->jfrBuffer.bufferRemaining = vm->jfrBuffer.bufferSize;
 		vm->jfrBuffer.bufferCurrent = vm->jfrBuffer.bufferStart;
+
+		if (resetThreadDumpBuffer) {
+			/* The thread dump buffer is guarded by exclusive VM access, see requestThreadDump(). */
+			Assert_VM_true((J9_XACCESS_EXCLUSIVE == vm->exclusiveAccessState) || (J9_XACCESS_EXCLUSIVE == vm->safePointState));
+			vm->jfrThreadDumpBuffer.bufferRemaining = vm->jfrThreadDumpBuffer.bufferSize;
+			vm->jfrThreadDumpBuffer.bufferCurrent = vm->jfrThreadDumpBuffer.bufferStart;
+		}
 
 #if defined(DEBUG)
 		memset(vm->jfrBuffer.bufferStart, 0, J9JFR_GLOBAL_BUFFER_SIZE);
@@ -401,7 +413,8 @@ allocateMemFromGlobalBuffer(J9VMThread *currentThread, UDATA size, bool *hasExcl
 			if (!*hasExclusive) {
 				internalAcquireVMAccess(currentThread);
 			}
-			bool result = writeOutGlobalBuffer(currentThread, !isJFRV2SupportEnabled(vm), false);
+			/* Other threads' buffers are not flushed here, so don't reset the thread dump buffer. */
+			bool result = writeOutGlobalBuffer(currentThread, !isJFRV2SupportEnabled(vm), false, false);
 			if (!*hasExclusive) {
 				internalReleaseVMAccess(currentThread);
 			}
@@ -683,7 +696,7 @@ jfrClassesUnload(J9HookInterface **hook, UDATA eventNum, void *eventData, void *
 	if (isJFRV2SupportEnabled(vm)) {
 		/* if there is an open JFR file write out the data, otherwise emit a data loss event. */
 		if (NULL != currentThread->javaVM->jfrState.jfrFileName) {
-			writeOutGlobalBuffer(currentThread, false, false);
+			writeOutGlobalBuffer(currentThread, false, false, true);
 		} else {
 			/* In JFRv2 we need to coordinate chunk rotation with the JCL. We can't block a GC for
 			 * this so for now just discard the data and emit a data loss event.
@@ -693,13 +706,19 @@ jfrClassesUnload(J9HookInterface **hook, UDATA eventNum, void *eventData, void *
 			vm->jfrBuffer.bufferRemaining = vm->jfrBuffer.bufferSize;
 			vm->jfrBuffer.bufferCurrent = vm->jfrBuffer.bufferStart;
 
+			/* All thread buffers were flushed above and the global buffer's events
+			 * are discarded, so nothing references the thread dump buffer any more.
+			 */
+			vm->jfrThreadDumpBuffer.bufferRemaining = vm->jfrThreadDumpBuffer.bufferSize;
+			vm->jfrThreadDumpBuffer.bufferCurrent = vm->jfrThreadDumpBuffer.bufferStart;
+
 			jfrEmitDataLoss(currentThread, lostData);
 		}
 	} else {
 		/* Some class pointers in the thread and global buffers are about the become
 		 * invalid, so write out all of the available data now.
 		 */
-		writeOutGlobalBuffer(currentThread, true, false);
+		writeOutGlobalBuffer(currentThread, true, false, true);
 	}
 }
 
@@ -732,7 +751,7 @@ jfrVMShutdown(J9HookInterface **hook, UDATA eventNum, void *eventData, void *use
 
 	/* Flush and free all the thread buffers and write out the global buffer */
 	flushAllThreadBuffers(currentThread, true, false);
-	writeOutGlobalBuffer(currentThread, !isJFRV2SupportEnabled(currentThread->javaVM), true);
+	writeOutGlobalBuffer(currentThread, !isJFRV2SupportEnabled(currentThread->javaVM), true, true);
 
 	if (acquiredExclusive) {
 		releaseExclusiveVMAccess(currentThread);
@@ -1338,6 +1357,7 @@ initializeJFR(J9JavaVM *vm)
 	jint rc = JNI_ERR;
 
 	U_8 *buffer = NULL;
+	U_8 *threadDumpBuffer = NULL;
 	UDATA timeSuccess = 0;
 	J9VMThread *currentThread = currentVMThread(vm);
 	Trc_VM_initializeJFR(currentThread, vm);
@@ -1378,6 +1398,12 @@ initializeJFR(J9JavaVM *vm)
 		goto fail;
 	}
 
+	/* Allocate thread dump buffer. */
+	threadDumpBuffer = (U_8 *)j9mem_allocate_memory(J9JFR_THREAD_DUMP_BUFFER_SIZE, J9MEM_CATEGORY_JFR);
+	if (NULL == threadDumpBuffer) {
+		goto fail;
+	}
+
 	vm->jfrState.threadObjectJNIRefTable = hashTableNew(OMRPORT_FROM_J9PORT(privatePortLibrary), J9_GET_CALLSITE(), 0, sizeof(J9JFRThreadObject), sizeof(U_64), 0, J9MEM_CATEGORY_JFR, jfrThreadObjectHashFn, jfrThreadObjectEqualFn, NULL, NULL);
 	if (NULL == vm->jfrState.threadObjectJNIRefTable) {
 		goto fail;
@@ -1391,6 +1417,12 @@ initializeJFR(J9JavaVM *vm)
 	vm->jfrBuffer.bufferCurrent = buffer;
 	vm->jfrBuffer.bufferSize = J9JFR_GLOBAL_BUFFER_SIZE;
 	vm->jfrBuffer.bufferRemaining = J9JFR_GLOBAL_BUFFER_SIZE;
+
+	vm->jfrThreadDumpBuffer.bufferStart = threadDumpBuffer;
+	vm->jfrThreadDumpBuffer.bufferCurrent = threadDumpBuffer;
+	vm->jfrThreadDumpBuffer.bufferSize = J9JFR_THREAD_DUMP_BUFFER_SIZE;
+	vm->jfrThreadDumpBuffer.bufferRemaining = J9JFR_THREAD_DUMP_BUFFER_SIZE;
+
 	vm->jfrState.jfrChunkCount = 0;
 	vm->jfrState.isConstantEventsInitialized = FALSE;
 
@@ -1613,6 +1645,8 @@ tearDownJFR(J9JavaVM *vm)
 
 	j9mem_free_memory((void *)vm->jfrBuffer.bufferStart);
 	memset(&vm->jfrBuffer, 0, sizeof(vm->jfrBuffer));
+	j9mem_free_memory((void *)vm->jfrThreadDumpBuffer.bufferStart);
+	memset(&vm->jfrThreadDumpBuffer, 0, sizeof(vm->jfrThreadDumpBuffer));
 	if (NULL != vm->jfrBufferMutex) {
 		omrthread_monitor_destroy(vm->jfrBufferMutex);
 		vm->jfrBufferMutex = NULL;
@@ -2113,8 +2147,8 @@ void
 jfrDump(J9VMThread *currentThread, BOOLEAN newChunk)
 {
 	/* Flush all the thread buffers and write out the global buffer. */
-	flushAllThreadBuffers(currentThread, false, false);
-	writeOutGlobalBuffer(currentThread, newChunk, false);
+	bool allFlushed = flushAllThreadBuffers(currentThread, false, false);
+	writeOutGlobalBuffer(currentThread, newChunk, false, allFlushed);
 }
 
 void
@@ -3417,28 +3451,41 @@ void
 JfrPeriodicEventSet::requestThreadDump(J9VMThread *currentThread)
 {
 	J9JavaVM *vm = currentThread->javaVM;
+	J9JFRBuffer *threadDumpBuffer = &vm->jfrThreadDumpBuffer;
 
 	if (!isJFREventEnabled(vm, JfrThreadDumpEvent)) {
 		return;
 	}
 
-	const U_64 bufferSize = VM_JFRUtils::THREAD_DUMP_EVENT_SIZE_PER_THREAD * vm->peakThreadCount;
-	const UDATA eventSize = bufferSize + sizeof(J9JFRThreadDump);
-	J9JFRThreadDump *jfrEvent = (J9JFRThreadDump *)reserveBuffer(currentThread, currentThread, eventSize);
+	/* Thread dump events point into the thread dump buffer, which is only reset (see
+	 * writeOutGlobalBuffer()) while a thread holds exclusive VM access and all the thread
+	 * local buffers are empty. Hold exclusive VM access from allocating the dump space
+	 * until the event referencing it is in the thread local buffer, so that a reset can't
+	 * happen in between. This also serializes concurrent requests.
+	 */
+	acquireExclusiveVMAccess(currentThread);
 
-	if (NULL == jfrEvent) {
-		return;
+	// TODO: should we check enablement of JFR thread as well?
+	if ((NULL != threadDumpBuffer->bufferStart)
+		&& (threadDumpBuffer->bufferRemaining >= sizeof(J9JFRThreadDump))
+	) {
+		J9JFRThreadDump *jfrEvent = (J9JFRThreadDump *)reserveBuffer(currentThread, currentThread, sizeof(J9JFRThreadDump));
+
+		if (NULL != jfrEvent) {
+			const U_64 bufferSize = threadDumpBuffer->bufferRemaining - sizeof(J9JFRThreadDump);
+			U_8 *buffer = threadDumpBuffer->bufferCurrent;
+			UDATA length = getThreadDump(currentThread, buffer, bufferSize);
+
+			initializeEventFields(currentThread, currentThread, (J9JFREvent *)jfrEvent, J9JFR_EVENT_TYPE_THREAD_DUMP);
+			jfrEvent->result = buffer;
+			jfrEvent->resultLength = length;
+
+			threadDumpBuffer->bufferCurrent += length;
+			threadDumpBuffer->bufferRemaining -= length;
+		}
 	}
 
-	U_8 *buffer = NULL;
-	UDATA length = 0;
-	buffer = (U_8 *)(jfrEvent + 1);
-	length = getThreadDump(currentThread, buffer, bufferSize);
-
-	initializeEventFields(currentThread, currentThread, (J9JFREvent *)jfrEvent, J9JFR_EVENT_TYPE_THREAD_DUMP);
-	jfrEvent->bufferSize = bufferSize;
-	jfrEvent->result = buffer;
-	jfrEvent->resultLength = length;
+	releaseExclusiveVMAccess(currentThread);
 
 	return;
 }
