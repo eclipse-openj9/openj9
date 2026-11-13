@@ -43,19 +43,19 @@
 
 
 /*
- * Monitor name defines for the JLM Report
- * 
- * Example object monitor name: "[003257F8] java/lang/Object@1342BD58(Object)"
+ * Monitor name defines for the JLM Report.
  *
+ * Example object monitor name: "[003257F8] java/lang/Object@1342BD58(Object)"
  */
 #define OBJ_MON_NAME_FORMAT "[%p] %.*s@%p (%s)"
-#define OBJ_MON_NAME_POINTER_SIZE  (sizeof(void*) * 2)
-#define	OBJ_MON_NAME_CLASS_NAME_SIZE	(128)
+#define OBJ_MON_NAME_POINTER_SIZE (sizeof(void *) * 2)
+#define	OBJ_MON_NAME_CLASS_NAME_SIZE (128)
 #define OBJ_MON_NAME_OBJ_TYPE_SIZE (10)
 /* big enough to contain OBJ_MON_NAME_FORMAT, plus 6 for a bit of leeway */
-#define OBJ_MON_NAME_BUF_MINIMUM_SIZE  (1 + OBJ_MON_NAME_POINTER_SIZE + 1 + 1 + \
-							   	   	   OBJ_MON_NAME_CLASS_NAME_SIZE + 1 + OBJ_MON_NAME_POINTER_SIZE + 1 + \
-							   	   	   	  1 + OBJ_MON_NAME_OBJ_TYPE_SIZE + 1 + 1 + 6)
+#define OBJ_MON_NAME_BUF_MINIMUM_SIZE \
+		(1 + OBJ_MON_NAME_POINTER_SIZE + 1 + 1 \
+				+ OBJ_MON_NAME_CLASS_NAME_SIZE + 1 + OBJ_MON_NAME_POINTER_SIZE + 1 \
+				+ 1 + OBJ_MON_NAME_OBJ_TYPE_SIZE + 1 + 1 + 6)
 
 #define OBJ_MON_NAME_BUF_SIZE  OBJ_MON_NAME_BUF_MINIMUM_SIZE
 
@@ -113,19 +113,19 @@
 /* Dump Format defs */
 /* 1 byte raw/Java + 1 held + 4 enter + 4 slow + 4 recursive + 4 spin2 + 4 yield + 8 hold time = 30  */
 #define JLM_DUMP_COUNT_FIELD_SIZE 30
-/* 2 integer fields */ 
+/* 2 integer fields */
 #define JLM_DUMP_FORMAT_SIZE       8
 /* version */
 #define JLM_DUMP_VERSION           1
 
 
-static void GetMonitorName (J9VMThread *vmThread, J9ThreadAbstractMonitor *monitor, char *nameBuf);
+static void GetMonitorName(J9VMThread *vmThread, J9ThreadAbstractMonitor *monitor, char *nameBuf);
 
 
-jint 
+jint
 request_MonitorJlmDump(jvmtiEnv * env, J9VMJlmDump * jlmd, jint dump_format)
 {
-#if	defined(OMR_THR_JLM)
+#if defined(OMR_THR_JLM)
 	J9VMThread * vmThread;
 	J9ThreadAbstractMonitor * monitor;
 	J9ThreadMonitorTracing  * tracing;
@@ -185,7 +185,7 @@ request_MonitorJlmDump(jvmtiEnv * env, J9VMJlmDump * jlmd, jint dump_format)
 					if (monitor->flags & J9THREAD_MONITOR_OBJECT) {
 					j9object_t object = J9WEAKROOT_OBJECT_LOAD(vmThread, &monitor->userData);
 						/* Similar to jvmtiGetTag code, but with object being of object_t type */
-						if (object != NULL) {							
+						if (object != NULL) {
 						J9JVMTIObjectTag   entry;
 						J9JVMTIObjectTag * objectTag;
 
@@ -218,7 +218,7 @@ request_MonitorJlmDump(jvmtiEnv * env, J9VMJlmDump * jlmd, jint dump_format)
 			GetMonitorName(vmThread, monitor, monitor_name);
 			strcpy(dump, monitor_name);
 
-			dump += strlen((const char *)dump) + 1;
+			dump += strlen(dump) + 1;
 		}
 	}
 
@@ -264,7 +264,7 @@ request_MonitorJlmDump(jvmtiEnv * env, J9VMJlmDump * jlmd, jint dump_format)
 jint
 JlmStart(J9VMThread* vmThread)
 {
-#if	defined(OMR_THR_JLM)
+#if defined(OMR_THR_JLM)
 	return (omrthread_jlm_init(J9THREAD_LIB_FLAG_JLM_ENABLED) == 0) ? (jint) JLM_SUCCESS : (jint) JLM_NOT_AVAILABLE;
 #else
 	return (jint) JLM_NOT_AVAILABLE;
@@ -272,10 +272,10 @@ JlmStart(J9VMThread* vmThread)
 }
 
 
-jint 
+jint
 JlmStop(void)
 {
-#if	defined(OMR_THR_JLM)
+#if defined(OMR_THR_JLM)
 	omrthread_lib_clear_flags(J9THREAD_LIB_FLAG_JLM_ENABLED_ALL);
 	return (jint) JLM_SUCCESS;
 #else
@@ -284,10 +284,10 @@ JlmStop(void)
 }
 
 
-jint 
+jint
 JlmStartTimeStamps(void)
 {
-#if	defined(OMR_THR_JLM_HOLD_TIMES)
+#if defined(OMR_THR_JLM_HOLD_TIMES)
 	return (omrthread_jlm_init(J9THREAD_LIB_FLAG_JLM_ENABLED | J9THREAD_LIB_FLAG_JLM_TIME_STAMPS_ENABLED) == 0) ? (jint) JLM_SUCCESS : (jint) JLM_NOT_AVAILABLE;
 #else
 	return (jint) JLM_NOT_AVAILABLE;
@@ -295,7 +295,7 @@ JlmStartTimeStamps(void)
 }
 
 
-jint 
+jint
 JlmStopTimeStamps(void)
 {
 #if defined(OMR_THR_JLM_HOLD_TIMES)
@@ -308,7 +308,7 @@ JlmStopTimeStamps(void)
 
 
 
-static void 
+static void
 GetMonitorName(J9VMThread *vmThread, J9ThreadAbstractMonitor *monitor, char *nameBuf)
 {
 	PORT_ACCESS_FROM_VMC(vmThread);
@@ -322,7 +322,7 @@ GetMonitorName(J9VMThread *vmThread, J9ThreadAbstractMonitor *monitor, char *nam
 		char* name;
 		UDATA length;
 		BOOLEAN free = FALSE;
-		
+
 		if (J9VM_IS_INITIALIZED_HEAPCLASS(vmThread, object)) {
 			clazz = J9VM_J9CLASS_FROM_HEAPCLASS(vmThread, object);
 			objType = "Class";
@@ -331,7 +331,7 @@ GetMonitorName(J9VMThread *vmThread, J9ThreadAbstractMonitor *monitor, char *nam
 			objType = "Object";
 		}
 		romClass = clazz->romClass;
-		
+
 		/* Default case: non-array class */
 		className = J9ROMCLASS_CLASSNAME(romClass);
 		name = (char *) J9UTF8_DATA(className);
@@ -368,11 +368,11 @@ GetMonitorName(J9VMThread *vmThread, J9ThreadAbstractMonitor *monitor, char *nam
 		j9str_printf(nameBuf, OBJ_MON_NAME_BUF_SIZE,
 				OBJ_MON_NAME_FORMAT,
 				monitor,
-				(length < OBJ_MON_NAME_CLASS_NAME_SIZE) ? length : OBJ_MON_NAME_CLASS_NAME_SIZE, 
-				name, 
+				(length < OBJ_MON_NAME_CLASS_NAME_SIZE) ? length : OBJ_MON_NAME_CLASS_NAME_SIZE,
+				name,
 				object, objType);
 
-		if (free){
+		if (free) {
 			j9mem_free_memory(name);
 		}
 	} else {
@@ -383,8 +383,7 @@ GetMonitorName(J9VMThread *vmThread, J9ThreadAbstractMonitor *monitor, char *nam
 
 jint request_MonitorJlmDumpSize(J9JavaVM * jvm, UDATA * dump_size, jint dump_format)
 {
-#if	defined(OMR_THR_JLM)
-{
+#if defined(OMR_THR_JLM)
 	J9VMThread * vmThread;
 	J9ThreadAbstractMonitor * monitor;
 	omrthread_monitor_walk_state_t walkState;
@@ -412,7 +411,7 @@ jint request_MonitorJlmDumpSize(J9JavaVM * jvm, UDATA * dump_size, jint dump_for
 		objIDfieldSize = sizeof(void *);
 	}
 
-    /* Assumes acquireExclusiveVMAccess & release by caller */
+	/* Assumes acquireExclusiveVMAccess & release by caller */
 	/* walk all the monitors to count them */
 	omrthread_monitor_init_walk(&walkState);
 	while ( NULL != (monitor = (J9ThreadAbstractMonitor *) omrthread_monitor_walk_no_locking(&walkState)) ) {
@@ -431,8 +430,7 @@ jint request_MonitorJlmDumpSize(J9JavaVM * jvm, UDATA * dump_size, jint dump_for
 	}
 
 	return rc;
-}
 #else
-        return (jint) JLM_NOT_AVAILABLE;
+	return (jint) JLM_NOT_AVAILABLE;
 #endif /* defined(OMR_THR_JLM) */
 }

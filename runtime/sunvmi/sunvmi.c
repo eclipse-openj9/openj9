@@ -1083,7 +1083,7 @@ internalFindClassFromClassLoader(JNIEnv *env, char *className, jboolean init, jo
 		options |= J9_FINDCLASS_FLAG_THROW_ON_FAIL;
 	}
 
-	clazz = vmFuncs->internalFindClassUTF8(currentThread, (U_8 *)className, strlen((const char *)className), loader, options);
+	clazz = vmFuncs->internalFindClassUTF8(currentThread, (U_8 *)className, strlen(className), loader, options);
 
 	if (NULL != clazz) {
 		if (init) {
