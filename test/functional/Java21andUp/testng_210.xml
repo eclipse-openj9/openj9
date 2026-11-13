@@ -29,4 +29,9 @@
 			<class name="org.openj9.test.jep425.VirtualThreadTests"/>
 		</classes>
 	</test>
+  <test name="Jep442Tests_SharedArenaClose">
+		<classes>
+			<class name="org.openj9.test.jep442.SharedArenaCloseTests"/>
+		</classes>
+	</test>
 </suite>
