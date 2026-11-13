@@ -629,6 +629,20 @@ typedef struct J9JFRClassLoaderStatistics {
 	U_64 hiddenBlockSize;
 } J9JFRClassLoaderStatistics;
 
+typedef struct J9JFRSystemProcess {
+	J9JFR_EVENT_COMMON_FIELDS
+	I_64 ticks;
+	UDATA pid;
+	char *commandLine;
+} J9JFRSystemProcess;
+
+typedef struct J9JFRNativeLibrary {
+	J9JFR_EVENT_COMMON_FIELDS
+	char *name;
+	UDATA addressLow;
+	UDATA addressHigh;
+} J9JFRNativeLibrary;
+
 #endif /* defined(J9VM_OPT_JFR) */
 
 /* @ddr_namespace: map_to_type=J9CfrError */
