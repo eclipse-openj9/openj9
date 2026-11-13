@@ -296,6 +296,12 @@ initializeMethodRunAddressNoHook(J9JavaVM* vm, J9Method *method)
 void
 initializeMethodRunAddressForSnapshot(J9JavaVM *vm, J9Method *method)
 {
+	J9ROMMethod *romMethod = J9_ROM_METHOD_FROM_RAM_METHOD(method);
+
+	/* Clear the JNI bit as the method will need to be re-bound on restore. */
+	if (J9_ARE_ANY_BITS_SET(romMethod->modifiers, J9AccNative)) {
+		VM_AtomicSupport::bitAnd((UDATA *)&method->constantPool, ~(UDATA)J9_STARTPC_JNI_NATIVE);
+	}
 	method->extra = (void *)J9_STARTPC_NOT_TRANSLATED;
 
 #if defined(J9VM_OPT_OPENJDK_METHODHANDLE)
