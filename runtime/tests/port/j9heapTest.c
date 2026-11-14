@@ -241,7 +241,7 @@ j9heap_test2(struct J9PortLibrary *portLibrary, int randomSeed)
 	
 	reportTestEntry(portLibrary, testName);
 	
-	allocPool = pool_new(sizeof(AllocListElement),  0, 0, 0, J9_GET_CALLSITE(), OMRMEM_CATEGORY_PORT_LIBRARY, POOL_FOR_PORT(portLibrary));
+	allocPool = pool_new(sizeof(AllocListElement),  0, 0, 0, J9_GET_CALLSITE(), OMRMEM_CATEGORY_PORT_LIBRARY, POOL_FOR_PORT(OMRPORT_FROM_J9PORT(portLibrary)));
 	if (NULL == allocPool) {
 		outputErrorMessage(PORTTEST_ERROR_ARGS, "Failed to allocate pool\n", heapSize);
 		goto exit;

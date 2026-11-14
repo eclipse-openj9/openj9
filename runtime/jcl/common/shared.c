@@ -933,7 +933,7 @@ getClasspathCache(JNIEnv* env)
 	J9Pool** cpPool = &vm->sharedClassConfig->jclClasspathCache;
 
 	if (!*cpPool) {
-		*cpPool = pool_new(sizeof(struct J9ClasspathByID),  0, 0, 0, J9_GET_CALLSITE(), J9MEM_CATEGORY_VM_JCL, POOL_FOR_PORT(vm->portLibrary));
+		*cpPool = pool_new(sizeof(struct J9ClasspathByID),  0, 0, 0, J9_GET_CALLSITE(), J9MEM_CATEGORY_VM_JCL, POOL_FOR_PORT(OMRPORT_FROM_J9PORT(vm->portLibrary)));
 	}
 	return *cpPool;
 }
@@ -947,7 +947,7 @@ getURLCache(JNIEnv* env)
 	J9Pool** urlPool = &vm->sharedClassConfig->jclURLCache;
 
 	if (!*urlPool) {
-		*urlPool = pool_new(sizeof(struct J9URLByID), 0, 0, 0, J9_GET_CALLSITE(), J9MEM_CATEGORY_VM_JCL, POOL_FOR_PORT(vm->portLibrary));
+		*urlPool = pool_new(sizeof(struct J9URLByID), 0, 0, 0, J9_GET_CALLSITE(), J9MEM_CATEGORY_VM_JCL, POOL_FOR_PORT(OMRPORT_FROM_J9PORT(vm->portLibrary)));
 	}
 	return *urlPool;
 }
@@ -961,7 +961,7 @@ getTokenCache(JNIEnv* env)
 	J9Pool** tokenPool = &vm->sharedClassConfig->jclTokenCache;
 
 	if (!*tokenPool) {
-		*tokenPool = pool_new(sizeof(struct J9TokenByID),  0, 0, 0, J9_GET_CALLSITE(), J9MEM_CATEGORY_VM_JCL, POOL_FOR_PORT(vm->portLibrary));
+		*tokenPool = pool_new(sizeof(struct J9TokenByID),  0, 0, 0, J9_GET_CALLSITE(), J9MEM_CATEGORY_VM_JCL, POOL_FOR_PORT(OMRPORT_FROM_J9PORT(vm->portLibrary)));
 	}
 	return *tokenPool;
 }

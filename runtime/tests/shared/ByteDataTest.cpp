@@ -652,7 +652,7 @@ IDATA checkFindResults(J9JavaVM* vm, struct CachePointers* cachePointers, UDATA 
 	
 	PORT_ACCESS_FROM_JAVAVM(vm);
 	
-	resultsPool = pool_new(sizeof(J9SharedDataDescriptor),  0, 0, 0, J9_GET_CALLSITE(), J9MEM_CATEGORY_CLASSES, POOL_FOR_PORT(PORTLIB));
+	resultsPool = pool_new(sizeof(J9SharedDataDescriptor),  0, 0, 0, J9_GET_CALLSITE(), J9MEM_CATEGORY_CLASSES, POOL_FOR_PORT(OMRPORT_FROM_J9PORT(PORTLIB)));
 	
 	if (!resultsPool) {
 		j9tty_printf(PORTLIB, "Failed to create results pool - exiting\n");

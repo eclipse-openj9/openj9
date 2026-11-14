@@ -153,7 +153,7 @@ static UDATA internalGrowJavaStack(J9VMThread * vmThread, UDATA newStackSize)
 	walkState.userData2 = (void *) NULL;
 #ifdef J9VM_INTERP_NATIVE_SUPPORT
 	if (vmThread->javaVM->jitConfig) {
-		walkState.restartPoint = pool_new(sizeof(J9I2JState *), 0, 0, 0, J9_GET_CALLSITE(), OMRMEM_CATEGORY_VM, POOL_FOR_PORT(PORTLIB));
+		walkState.restartPoint = pool_new(sizeof(J9I2JState *), 0, 0, 0, J9_GET_CALLSITE(), OMRMEM_CATEGORY_VM, POOL_FOR_PORT(OMRPORT_FROM_J9PORT(PORTLIB)));
 		if (!walkState.restartPoint) {
 			Trc_VM_growJavaStack_PoolAllocFailed(vmThread);
 			freeJavaStack(vmThread->javaVM, newStack);

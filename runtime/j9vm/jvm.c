@@ -2158,7 +2158,7 @@ JNI_CreateJavaVM_impl(JavaVM **pvm, void **penv, void *vm_args, BOOLEAN isJITSer
 		vmArgumentsList.pool = pool_new(sizeof(J9JavaVMArgInfo),
 				32, /* expect at least ~16 arguments, overallocate to accommodate user arguments */
 				0, 0,
-				J9_GET_CALLSITE(), OMRMEM_CATEGORY_VM, POOL_FOR_PORT(&j9portLibrary));
+				J9_GET_CALLSITE(), OMRMEM_CATEGORY_VM, POOL_FOR_PORT(OMRPORT_FROM_J9PORT(&j9portLibrary)));
 		if (NULL == vmArgumentsList.pool) {
 			result = JNI_ERR;
 			goto exit;

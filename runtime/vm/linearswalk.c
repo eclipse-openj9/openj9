@@ -100,7 +100,7 @@ lswInitialize(J9JavaVM * vm, J9StackWalkState * walkState)
 
 	/* Pool of annotations for the annotations hashtable */
 
-	annotationPool = pool_new(sizeof(J9SWFrame), 0, 0, POOL_ALWAYS_KEEP_SORTED, J9_GET_CALLSITE(), OMRMEM_CATEGORY_VM, POOL_FOR_PORT(vm->portLibrary));
+	annotationPool = pool_new(sizeof(J9SWFrame), 0, 0, POOL_ALWAYS_KEEP_SORTED, J9_GET_CALLSITE(), OMRMEM_CATEGORY_VM, POOL_FOR_PORT(OMRPORT_FROM_J9PORT(vm->portLibrary)));
 	if (NULL == annotationPool) {
 		rc = SW_ERROR_ANNOTATION_POOL_NOMEM;
 		goto err;
@@ -108,7 +108,7 @@ lswInitialize(J9JavaVM * vm, J9StackWalkState * walkState)
 
 	/* Pool of string buffers to be parcelled out for small strings. */
 
-	stringPool = pool_new(LSW_STRING_POOL_MAX, 0, 0, POOL_ALWAYS_KEEP_SORTED, J9_GET_CALLSITE(), OMRMEM_CATEGORY_VM, POOL_FOR_PORT(vm->portLibrary));
+	stringPool = pool_new(LSW_STRING_POOL_MAX, 0, 0, POOL_ALWAYS_KEEP_SORTED, J9_GET_CALLSITE(), OMRMEM_CATEGORY_VM, POOL_FOR_PORT(OMRPORT_FROM_J9PORT(vm->portLibrary)));
 	if (NULL == stringPool) {
 		rc = SW_ERROR_STRING_POOL_NOMEM;
 		goto err;

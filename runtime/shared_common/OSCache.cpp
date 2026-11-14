@@ -710,7 +710,7 @@ SH_OSCache::getAllCacheStatistics(J9JavaVM* vm, const char* ctrlDirName, UDATA g
 	}
 
 	if (!ignoreCompatible) {
-		cacheList = pool_new(sizeof(SH_OSCache_Info), 0, 0, 0, J9_GET_CALLSITE(), J9MEM_CATEGORY_CLASSES, POOL_FOR_PORT(PORTLIB));
+		cacheList = pool_new(sizeof(SH_OSCache_Info), 0, 0, 0, J9_GET_CALLSITE(), J9MEM_CATEGORY_CLASSES, POOL_FOR_PORT(OMRPORT_FROM_J9PORT(PORTLIB)));
 		if (cacheList == NULL) {
 			Trc_SHR_OSC_getAllCacheStatistics_Exit2();
 			rc = NULL;
@@ -720,7 +720,7 @@ SH_OSCache::getAllCacheStatistics(J9JavaVM* vm, const char* ctrlDirName, UDATA g
 	}
 
 	/* Incompatible caches are added after the compatible caches so are initially created in a different pool */
-	incompatibleList = pool_new(sizeof(SH_OSCache_Info), 0, 0, 0, J9_GET_CALLSITE(), J9MEM_CATEGORY_CLASSES, POOL_FOR_PORT(PORTLIB));
+	incompatibleList = pool_new(sizeof(SH_OSCache_Info), 0, 0, 0, J9_GET_CALLSITE(), J9MEM_CATEGORY_CLASSES, POOL_FOR_PORT(OMRPORT_FROM_J9PORT(PORTLIB)));
 	if (incompatibleList == NULL) {
 		Trc_SHR_OSC_getAllCacheStatistics_Exit3();
 		rc = NULL;

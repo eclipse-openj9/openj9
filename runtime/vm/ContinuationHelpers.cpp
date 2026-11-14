@@ -129,7 +129,7 @@ createContinuation(J9VMThread *currentThread, j9object_t continuationObject)
 #if JAVA_SPEC_VERSION >= 24
 		continuation->nextWaitingContinuation = NULL;
 		if (J9_ARE_ANY_BITS_SET(vm->extendedRuntimeFlags3, J9_EXTENDED_RUNTIME3_YIELD_PINNED_CONTINUATION)) {
-			continuation->monitorEnterRecordPool = pool_new(sizeof(J9MonitorEnterRecord), 0, 0, 0, J9_GET_CALLSITE(), OMRMEM_CATEGORY_VM, POOL_FOR_PORT(PORTLIB));
+			continuation->monitorEnterRecordPool = pool_new(sizeof(J9MonitorEnterRecord), 0, 0, 0, J9_GET_CALLSITE(), OMRMEM_CATEGORY_VM, POOL_FOR_PORT(OMRPORT_FROM_J9PORT(PORTLIB)));
 		}
 #endif /* JAVA_SPEC_VERSION >= 24 */
 

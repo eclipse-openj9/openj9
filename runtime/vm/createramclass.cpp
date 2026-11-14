@@ -979,7 +979,7 @@ computeVTable(J9VMThread *vmStruct, J9ClassLoader *classLoader, J9Class *supercl
 					j9tty_printf(PORTLIB, "\nAdding interfaceMethods for class <%.*s> using interface[%i]=%p.  #Local=%i\t#Inherited=", J9UTF8_LENGTH(className), J9UTF8_DATA(className), totalInterfaces, interfaces, interfaceCount, inheritedInterfaceCount);
 				}
 #endif /* VERBOSE_INTERFACE_METHODS */
-				J9Pool *equivalentSet = pool_new(sizeof(J9EquivalentEntry),  0, 0, 0, J9_GET_CALLSITE(), J9MEM_CATEGORY_CLASSES, POOL_FOR_PORT(vm->portLibrary));
+				J9Pool *equivalentSet = pool_new(sizeof(J9EquivalentEntry),  0, 0, 0, J9_GET_CALLSITE(), J9MEM_CATEGORY_CLASSES, POOL_FOR_PORT(OMRPORT_FROM_J9PORT(vm->portLibrary)));
 				if (NULL == equivalentSet) {
 					/* OOM will be thrown */
 					goto fail;

@@ -209,8 +209,8 @@ allocateInlineBuffers (J9JSRIData * inlineBuffers)
 	/* Create buffers if first call */
 	if (!inlineBuffers->codeBlockPool) {
 
-		inlineBuffers->codeBlockPool = pool_new(sizeof(J9JSRICodeBlock), 0, 0, 0, J9_GET_CALLSITE(), J9MEM_CATEGORY_CLASSES, POOL_FOR_PORT(inlineBuffers->portLib));
-		inlineBuffers->exceptionListEntryPool = pool_new(sizeof(J9JSRIExceptionListEntry), 0, 0, 0, J9_GET_CALLSITE(), J9MEM_CATEGORY_CLASSES, POOL_FOR_PORT(inlineBuffers->portLib));
+		inlineBuffers->codeBlockPool = pool_new(sizeof(J9JSRICodeBlock), 0, 0, 0, J9_GET_CALLSITE(), J9MEM_CATEGORY_CLASSES, POOL_FOR_PORT(OMRPORT_FROM_J9PORT(inlineBuffers->portLib)));
+		inlineBuffers->exceptionListEntryPool = pool_new(sizeof(J9JSRIExceptionListEntry), 0, 0, 0, J9_GET_CALLSITE(), J9MEM_CATEGORY_CLASSES, POOL_FOR_PORT(OMRPORT_FROM_J9PORT(inlineBuffers->portLib)));
 
 	} else { /* reset buffers */
 		pool_clear (inlineBuffers->codeBlockPool);
@@ -219,7 +219,7 @@ allocateInlineBuffers (J9JSRIData * inlineBuffers)
 	pool_kill (inlineBuffers->jsrDataPool);
 
 	inlineBuffers->jsrDataPool = pool_new((sizeof(J9JSRIJSRData) + inlineBuffers->maxStack + inlineBuffers->maxLocals + sizeof(UDATA)),
-			0, 0, 0, J9_GET_CALLSITE(), J9MEM_CATEGORY_CLASSES, POOL_FOR_PORT(inlineBuffers->portLib));
+			0, 0, 0, J9_GET_CALLSITE(), J9MEM_CATEGORY_CLASSES, POOL_FOR_PORT(OMRPORT_FROM_J9PORT(inlineBuffers->portLib)));
 	createNewMap(inlineBuffers);
 
 	if (inlineBuffers->errorCode) {
