@@ -1104,8 +1104,9 @@ FUNC_LABEL(_interfaceSlotsUnavailable):
 	ldr	x10, [x30, #J9TR_ICSnippet_codeCacheReturnAddress]	// protect code cache RA in x10 (in L_commonJitDispatch, it is expected)
 //#define NO_HELPER_LASTITABLE_CHECK
 //#define NO_ITABLEWALK_CHECK
-//#define NO_ITERATION_LIMIT
-//    b   L_callHelper
+// Maximum number of iTable entries to walk before going to the VM helper:
+// Undefine it or set it to 0 for walking all the entries
+#define ITABLEWALK_ITERATION_LIMIT 4
 #ifndef NO_HELPER_LASTITABLE_CHECK
 	// Before iTable walk or going to the VM helper, check if the receiver class lastITable matches the interface
 	// class of the method being called and if so, use it to quickly look up the vtable offset and make the call
@@ -1117,21 +1118,21 @@ FUNC_LABEL(_interfaceSlotsUnavailable):
 	cmp	x11, x13
 #ifndef NO_ITABLEWALK_CHECK
 	beq	L_hitITable
-	// Before going to the VM helper, walk up to 4 iTable entries
+	// Before going to the VM helper, walk iTable entries
 	ldr	x12, [x14, #J9TR_J9Class_iTable]		// Load the iTable pointer
-#ifndef NO_ITERATION_LIMIT
-	mov	x9, #4						// iteration limit
-#endif /* NO_ITERATION_LIMIT */
+#if ITABLEWALK_ITERATION_LIMIT > 0
+	mov	x9, #ITABLEWALK_ITERATION_LIMIT			// iteration limit
+#endif /* ITABLEWALK_ITERATION_LIMIT > 0 */
 L_iTableLoop:
 	cbz	x12, L_callHelper				// check iTable != null
 	ldr	x13, [x12, #J9TR_J9ITable_interfaceClass]	// Load iTable class
 	cmp	x11, x13
 	beq	L_hitITable
-#ifndef NO_ITERATION_LIMIT
+#if ITABLEWALK_ITERATION_LIMIT > 0
 	subs	x9, x9, #1					// decrement counter, set flags
 	beq	L_callHelper					// limit reached, fall back to helper
-#endif /* NO_ITERATION_LIMIT */
-	ldr	x12, [x12, #J9TR_J9ITable_next]		// Load the next iTable pointer
+#endif /* ITABLEWALK_ITERATION_LIMIT > 0 */
+	ldr	x12, [x12, #J9TR_J9ITable_next]			// Load the next iTable pointer
 	b	L_iTableLoop
 #else /* ~NO_ITABLEWALK_CHECK */
 	bne	L_callHelper
