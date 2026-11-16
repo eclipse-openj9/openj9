@@ -562,6 +562,7 @@ VMSnapshotImpl::fixupClassLoaders()
 		currentClassLoader->gcRememberedSet = 0;
 		currentClassLoader->gcThreadNotification = NULL;
 		currentClassLoader->jniIDs = NULL;
+		currentClassLoader->romClassOrphansHashTable = NULL;
 #if defined(J9VM_NEEDS_JNI_REDIRECTION)
 		currentClassLoader->jniRedirectionBlocks = NULL;
 #endif /* J9VM_NEEDS_JNI_REDIRECTION */
