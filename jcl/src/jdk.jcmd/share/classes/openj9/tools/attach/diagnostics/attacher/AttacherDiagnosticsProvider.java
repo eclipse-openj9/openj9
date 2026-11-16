@@ -55,7 +55,7 @@ public class AttacherDiagnosticsProvider {
 		checkAttached();
 		Properties info = vm.executeDiagnosticCommand(diagnosticCommand);
 		DiagnosticProperties.dumpPropertiesIfDebug("Properties from target:", info); //$NON-NLS-1$
-		IPC.logMessage("exit getRemoteThreadGroupInfo"); //$NON-NLS-1$
+		IPC.logMessage("exit executeDiagnosticCommand"); //$NON-NLS-1$
 		return info;
 	}
 

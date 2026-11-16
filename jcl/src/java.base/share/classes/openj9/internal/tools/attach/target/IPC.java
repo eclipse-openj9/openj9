@@ -25,7 +25,6 @@ package openj9.internal.tools.attach.target;
 import com.ibm.oti.vm.VM;
 
 import java.io.ByteArrayInputStream;
-import java.io.ByteArrayOutputStream;
 import java.io.File;
 import java.io.IOException;
 import java.io.InputStream;
@@ -553,10 +552,9 @@ public class IPC {
 	 */
 	public static void sendProperties(Properties props, OutputStream outStream)
 			throws IOException {
-		ByteArrayOutputStream propsBuffer = new ByteArrayOutputStream();
-		props.store(propsBuffer, ""); //$NON-NLS-1$
-		outStream.write(propsBuffer.toByteArray());
+		props.store(outStream, ""); //$NON-NLS-1$
 		outStream.write(0);
+		outStream.flush();
 	}
 
 	/**
