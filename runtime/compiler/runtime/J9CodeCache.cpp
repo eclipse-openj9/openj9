@@ -93,8 +93,10 @@ TR::CodeCache *J9::CodeCache::allocate(TR::CodeCacheManager *cacheManager, size_
 bool J9::CodeCache::initialize(TR::CodeCacheManager *manager, TR::CodeCacheMemorySegment *codeCacheSegment,
     size_t allocatedCodeCacheSizeInBytes, TR::CodeCacheKind kind)
 {
+#ifdef LINUX
     // initialize backing file to invalid
     _backingFile = OMRPORT_INVALID_FD;
+#endif
 
     // make J9 memory segment look all used up
     // J9MemorySegment *j9segment = _segment->segment();
