@@ -70,7 +70,8 @@ public:
     TR_J9VMBase *fej9();
 
     TR::CodeCache *initialize(bool useConsolidatedCache, uint32_t numberOfCodeCachesToCreateAtStartup);
-    void destroy() { } // must override OMR::CodeCacheManager::destroy()
+
+    void destroy() {} // must override OMR::CodeCacheManager::destroy()
 
     bool isSufficientPhysicalMemoryAvailableForAllocation(size_t requestedCodeCacheSize);
     void addCodeCache(TR::CodeCache *codeCache);
@@ -157,7 +158,12 @@ public:
 
     void setDisclaimEnabled(bool value) { _disclaimEnabled = value; }
 
+    bool isAOTDisclaimEnabled() const { return _aotDisclaimEnabled; }
+
+    void setAOTDisclaimEnabled(bool v) { _aotDisclaimEnabled = v; }
+
     int32_t disclaimAllCodeCaches();
+    int32_t disclaimAOTCodeCaches();
 
 private:
     TR_FrontEnd *_fe;
@@ -165,6 +171,7 @@ private:
     static J9JITConfig *_jitConfig;
     static J9JavaVM *_javaVM;
     bool _disclaimEnabled; // If true, code cache can be disclaimed to a file or swap
+    bool _aotDisclaimEnabled;
 };
 
 } // namespace J9

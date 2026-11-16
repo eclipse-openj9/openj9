@@ -67,6 +67,7 @@ J9::CodeCacheManager::CodeCacheManager(TR_FrontEnd *fe, TR::RawAllocator rawAllo
 {
     _codeCacheManager = reinterpret_cast<TR::CodeCacheManager *>(this);
     _disclaimEnabled = TR::Options::getCmdLineOptions()->getOption(TR_EnableCodeCacheDisclaiming);
+    _aotDisclaimEnabled = !TR::Options::getCmdLineOptions()->getOption(TR_DisableAOTCodeCacheDisclaiming);
 }
 
 TR::CodeCacheManager *J9::CodeCacheManager::self() { return static_cast<TR::CodeCacheManager *>(this); }
@@ -395,6 +396,9 @@ TR::CodeCacheMemorySegment *J9::CodeCacheManager::allocateCodeCacheSegment(size_
             segmentType |= MEMORY_TYPE_DISCLAIMABLE_TO_FILE;
         }
     }
+
+    // if _aotDisclaim is enabled, then we only back the AOT code caches with a backing file.
+    // The rest of the code cache is allocated normally.
 #endif
 
     mcc_printf("TR::CodeCache::allocate : requesting %d bytes\n", codeCacheSizeToAllocate);
@@ -733,6 +737,27 @@ int32_t J9::CodeCacheManager::disclaimAllCodeCaches()
     CacheListCriticalSection scanCacheList(self());
     for (TR::CodeCache *codeCache = self()->getFirstCodeCache(); codeCache; codeCache = codeCache->next()) {
         numDisclaimed += codeCache->disclaim(self(), compInfo->canDisclaimOnSwap(), compInfo->canDisclaimOnFile());
+    }
+#endif // LINUX
+
+    return numDisclaimed;
+}
+
+int32_t J9::CodeCacheManager::disclaimAOTCodeCaches()
+{
+    if (!_aotDisclaimEnabled)
+        return 0;
+
+    int32_t numDisclaimed = 0;
+
+#ifdef LINUX
+    TR::CompilationInfo *compInfo = TR::CompilationInfo::get(_jitConfig);
+
+    for (TR::CodeCache *codeCache = self()->getFirstCodeCache(); codeCache; codeCache = codeCache->next()) {
+        if (codeCache->_kind == TR::CodeCacheKind::AOT) {
+            numDisclaimed
+                += codeCache->disclaimAOT(self(), compInfo->canDisclaimOnSwap(), compInfo->canDisclaimOnFile());
+        }
     }
 #endif // LINUX
 
