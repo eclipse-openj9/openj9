@@ -595,6 +595,19 @@ followReferencesCallback(j9object_t *slotPtr, j9object_t referrer, void *userDat
 		return JVMTI_ITERATION_IGNORE;
 	}
 
+#if defined(J9VM_OPT_VALHALLA_VALUE_TYPES)
+	/* valueTypeObjectTagTable owns a JNI global reference to each tagged value type object.
+	 * Do not report it as a root: the user did not create it, and following it would make the
+	 * object look reachable. A tag change made from this callback would also modify the
+	 * global reference pool that is being walked. */
+	if ((J9GC_ROOT_TYPE_JNI_GLOBAL == type)
+		&& J9_IS_J9CLASS_VALUETYPE(J9OBJECT_CLAZZ(vmThread, object))
+		&& isValueTypeTagGlobalRef(iteratorData->env, slotPtr)
+	) {
+		return JVMTI_ITERATION_IGNORE;
+	}
+#endif /* defined(J9VM_OPT_VALHALLA_VALUE_TYPES) */
+
 	iteratorData->object = object;
 	iteratorData->referrer = referrer;
 	
@@ -1000,15 +1013,22 @@ static void
 jvmtiFollowRefs_getTags(J9JVMTIHeapData * iteratorData, j9object_t  referrer, j9object_t  object) 
 {
 	J9JVMTIObjectTag entry, *result;
-	J9Class *clazz;
+	J9Class *clazz = J9OBJECT_CLAZZ(iteratorData->currentThread, object);
 
 	/* get the object tag */
-	entry.ref = object;
-	result = hashTableFind(iteratorData->env->objectTagTable, &entry);
-	iteratorData->tags.objectTag = (result == NULL) ? 0 : result->tag;
+#if defined(J9VM_OPT_VALHALLA_VALUE_TYPES)
+	/* Value type objects are looked up in valueTypeObjectTagTable, all others in objectTagTable. */
+	if (J9_IS_J9CLASS_VALUETYPE(clazz)) {
+		iteratorData->tags.objectTag = getValueTypeObjectTag(iteratorData->env, object);
+	} else
+#endif /* defined(J9VM_OPT_VALHALLA_VALUE_TYPES) */
+	{
+		entry.ref = object;
+		result = hashTableFind(iteratorData->env->objectTagTable, &entry);
+		iteratorData->tags.objectTag = (result == NULL) ? 0 : result->tag;
+	}
 	
 	/* get the class (of object) tag */
-	clazz = J9OBJECT_CLAZZ(iteratorData->currentThread, object);
 	entry.ref = J9VM_J9CLASS_TO_HEAPCLASS(clazz);
 	result = hashTableFind(iteratorData->env->objectTagTable, &entry);
 	iteratorData->tags.classTag = (result == NULL) ? 0 : result->tag;
@@ -1017,12 +1037,19 @@ jvmtiFollowRefs_getTags(J9JVMTIHeapData * iteratorData, j9object_t  referrer, j9
 	 * the usual j9object, ignore it here */   
 	if ((referrer != NULL) && (iteratorData->event.type != J9JVMTI_HEAP_EVENT_STACK)) {
 		/* get the referrer object tag */
-		entry.ref = referrer;
-		result = hashTableFind(iteratorData->env->objectTagTable, &entry);
-		iteratorData->tags.referrerObjectTag = (result == NULL) ? 0 : result->tag;
+		clazz = J9OBJECT_CLAZZ(iteratorData->currentThread, referrer);
+#if defined(J9VM_OPT_VALHALLA_VALUE_TYPES)
+		if (J9_IS_J9CLASS_VALUETYPE(clazz)) {
+			iteratorData->tags.referrerObjectTag = getValueTypeObjectTag(iteratorData->env, referrer);
+		} else
+#endif /* defined(J9VM_OPT_VALHALLA_VALUE_TYPES) */
+		{
+			entry.ref = referrer;
+			result = hashTableFind(iteratorData->env->objectTagTable, &entry);
+			iteratorData->tags.referrerObjectTag = (result == NULL) ? 0 : result->tag;
+		}
 
 		/* get the referrer object class tag */
-		clazz = J9OBJECT_CLAZZ(iteratorData->currentThread, referrer);
 		entry.ref = J9VM_J9CLASS_TO_HEAPCLASS(clazz);
 		result = hashTableFind(iteratorData->env->objectTagTable, &entry);
 		iteratorData->tags.referrerClassTag = (result == NULL) ? 0 : result->tag;
@@ -2005,6 +2032,22 @@ updateObjectTag(J9JVMTIHeapData * iteratorData, j9object_t object, jlong *origin
 {
 	J9JVMTIObjectTag entry;
 	J9JVMTIObjectTag *resultTag;
+
+#if defined(J9VM_OPT_VALHALLA_VALUE_TYPES)
+	/* Value type tags live in valueTypeObjectTagTable; setValueTypeObjectTag adds, updates or
+	 * removes the entry. The heap walk holds exclusive VM access, which includes VM access. */
+	if (J9_IS_J9CLASS_VALUETYPE(J9OBJECT_CLAZZ(iteratorData->currentThread, object))) {
+		if (*originalTag != newTag) {
+			jvmtiError rc = setValueTypeObjectTag(iteratorData->currentThread, iteratorData->env, object, newTag);
+			if (JVMTI_ERROR_NONE == rc) {
+				*originalTag = newTag;
+			} else {
+				iteratorData->rc = rc;
+			}
+		}
+		return;
+	}
+#endif /* defined(J9VM_OPT_VALHALLA_VALUE_TYPES) */
 	
 	/* The callback could have added or removed the tag. Modify the hashtable entry to
 	 * account for it */

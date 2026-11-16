@@ -577,7 +577,11 @@ wrapHeapIterationCallback(J9JavaVM * vm, J9MM_IterateObjectDescriptor *objectDes
 			if (isValueType) {
 #if defined(J9VM_OPT_VALHALLA_VALUE_TYPES)
 				if (tag != originalTag) {
-					setValueTypeObjectTag(vm->internalVMFunctions->currentVMThread(vm), iteratorData->env, object, tag);
+					jvmtiError err = setValueTypeObjectTag(vm->internalVMFunctions->currentVMThread(vm), iteratorData->env, object, tag);
+					if (JVMTI_ERROR_NONE != err) {
+						iteratorData->rc = err;
+						return JVMTI_ITERATION_ABORT;
+					}
 				}
 #endif /* defined(J9VM_OPT_VALHALLA_VALUE_TYPES) */
 			} else if (objectTag) {
@@ -632,6 +636,16 @@ wrapObjectIterationCallback(j9object_t *slotPtr, j9object_t referrer, void *user
 		if (J9VM_IS_UNINITIALIZED_HEAPCLASS(vmThread, object)) {
 			return JVMTI_ITERATION_IGNORE;
 		}
+
+#if defined(J9VM_OPT_VALHALLA_VALUE_TYPES)
+		/* Skip the global references owned by valueTypeObjectTagTable, see followReferencesCallback. */
+		if ((J9GC_ROOT_TYPE_JNI_GLOBAL == type)
+			&& J9_IS_J9CLASS_VALUETYPE(J9OBJECT_CLAZZ(vmThread, object))
+			&& isValueTypeTagGlobalRef(iteratorData->env, slotPtr)
+		) {
+			return JVMTI_ITERATION_IGNORE;
+		}
+#endif /* defined(J9VM_OPT_VALHALLA_VALUE_TYPES) */
 
 		clazz = J9OBJECT_CLAZZ(vmThread, object);
 		entry.ref = J9VM_J9CLASS_TO_HEAPCLASS(clazz);
@@ -688,7 +702,11 @@ wrapObjectIterationCallback(j9object_t *slotPtr, j9object_t referrer, void *user
 		if (isValueType) {
 #if defined(J9VM_OPT_VALHALLA_VALUE_TYPES)
 			if (result->tag != originalTag) {
-				setValueTypeObjectTag(vmThread, iteratorData->env, object, result->tag);
+				jvmtiError err = setValueTypeObjectTag(vmThread, iteratorData->env, object, result->tag);
+				if (JVMTI_ERROR_NONE != err) {
+					iteratorData->rc = err;
+					return JVMTI_ITERATION_ABORT;
+				}
 			}
 #endif /* defined(J9VM_OPT_VALHALLA_VALUE_TYPES) */
 		} else if ( &entry == result ) {
