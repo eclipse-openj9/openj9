@@ -256,7 +256,7 @@ VM_JFRChunkWriter::writeJFRMetadata()
 
 	/* metadata ID */
 	if (_isJFRv2) {
-		_bufferWriter->writeLEB128((U_64)_vm->jfrState.metadataID);
+		_bufferWriter->writeLEB128(_vm->jfrState.metadataID);
 	} else {
 		_bufferWriter->writeLEB128((U_64)METADATA_ID);
 	}
