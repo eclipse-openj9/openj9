@@ -1347,8 +1347,8 @@ void TR::CompilationInfoPerThreadRemote::processEntry(TR_MethodToBeCompiled &ent
         setCompilationThreadState(COMPTHREAD_SIGNAL_SUSPEND);
         compInfo->decNumCompThreadsActive();
         if (TR::Options::getCmdLineOptions()->getVerboseOption(TR_VerboseCompilationThreads)) {
-            TR_VerboseLog::writeLineLocked(TR_Vlog_INFO, "t=%6u Suspend compThread %d Qweight=%d active=%d %s %s",
-                (uint32_t)compInfo->getPersistentInfo()->getElapsedTime(), getCompThreadId(),
+            TR_VerboseLog::writeLineLocked(TR_Vlog_INFO, "t=%6llu Suspend compThread %d Qweight=%d active=%d %s %s",
+                (unsigned long long)compInfo->getPersistentInfo()->getElapsedTime(), getCompThreadId(),
                 compInfo->getQueueWeight(), compInfo->getNumCompThreadsActive(),
                 compInfo->getRampDownMCT() ? "RampDownMCT" : "",
                 compInfo->getSuspendThreadDueToLowPhysicalMemory() ? "LowPhysicalMem" : "");
@@ -1360,8 +1360,8 @@ void TR::CompilationInfoPerThreadRemote::processEntry(TR_MethodToBeCompiled &ent
             compInfo->getCompilationMonitor()->notifyAll();
             if (TR::Options::getCmdLineOptions()->getVerboseOption(TR_VerboseCompilationThreads)) {
                 TR_VerboseLog::writeLineLocked(TR_Vlog_INFO,
-                    "t=%6u compThread %d notifying other sleeping comp threads. Jobless=%d",
-                    (uint32_t)compInfo->getPersistentInfo()->getElapsedTime(), getCompThreadId(),
+                    "t=%6llu compThread %d notifying other sleeping comp threads. Jobless=%d",
+                    (unsigned long long)compInfo->getPersistentInfo()->getElapsedTime(), getCompThreadId(),
                     compInfo->getNumCompThreadsJobless());
             }
         }
@@ -1759,14 +1759,14 @@ void TR::CompilationInfoPerThreadRemote::deleteClientSessionData(uint64_t client
     compInfo->acquireCompMonitor(compThread);
     bool result = compInfo->getClientSessionHT()->deleteClientSession(clientId, true);
     if (TR::Options::getVerboseOption(TR_VerboseJITServer) || TR::Options::getVerboseOption(TR_VerboseJITServerConns)) {
-        uint32_t timestamp = (uint32_t)compInfo->getPersistentInfo()->getElapsedTime();
+        uint64_t timestamp = compInfo->getPersistentInfo()->getElapsedTime();
         if (!result) {
             TR_VerboseLog::writeLineLocked(TR_Vlog_JITServer,
-                "t=%6u Client (clientUID=%llu) disconnected. Client session not deleted", timestamp,
-                (unsigned long long)clientId);
+                "t=%6llu Client (clientUID=%llu) disconnected. Client session not deleted",
+                (unsigned long long)timestamp, (unsigned long long)clientId);
         } else {
             TR_VerboseLog::writeLineLocked(TR_Vlog_JITServer,
-                "t=%6u Client (clientUID=%llu) disconnected. Client session deleted", timestamp,
+                "t=%6llu Client (clientUID=%llu) disconnected. Client session deleted", (unsigned long long)timestamp,
                 (unsigned long long)clientId);
         }
     }

@@ -419,8 +419,8 @@ bool TR_HWProfiler::checkAndTurnBufferProcessingOff()
     if (TR::Options::getCmdLineOptions()->getOption(TR_UseRIOnlyForLargeQSZ)
         && _compInfo->getMethodQueueSize() > TR::Options::_qszMinThresholdToRIDowngrade) {
         if (TR::Options::isAnyVerboseOptionSet(TR_VerboseHWProfiler)) {
-            TR_VerboseLog::writeLineLocked(TR_Vlog_HWPROFILER, "t=%6u RI continue because QSZ is large: %d",
-                (uint32_t)_compInfo->getPersistentInfo()->getElapsedTime(), _compInfo->getMethodQueueSize());
+            TR_VerboseLog::writeLineLocked(TR_Vlog_HWPROFILER, "t=%6llu RI continue because QSZ is large: %d",
+                (unsigned long long)_compInfo->getPersistentInfo()->getElapsedTime(), _compInfo->getMethodQueueSize());
         }
         return false; // keep RI on because the queue is large and we will be downgrading
     }
@@ -440,9 +440,10 @@ bool TR_HWProfiler::checkAndTurnBufferProcessingOff()
             if (TR::Options::isAnyVerboseOptionSet(TR_VerboseHWProfiler, TR_VerbosePerformance)) {
                 float recompFrequency = (float)newRecompDecisionsYes / (float)newRecompDecisionsTotal;
                 TR_VerboseLog::writeLineLocked(TR_Vlog_HWPROFILER,
-                    "t=%6u RI buffer processing disabled because recomp frequency is %.4f newRecompDecisionsTotal=%llu",
-                    (uint32_t)_compInfo->getPersistentInfo()->getElapsedTime(), recompFrequency,
-                    newRecompDecisionsTotal);
+                    "t=%6llu RI buffer processing disabled because recomp frequency is %.4f "
+                    "newRecompDecisionsTotal=%llu",
+                    (unsigned long long)_compInfo->getPersistentInfo()->getElapsedTime(), recompFrequency,
+                    (unsigned long long)newRecompDecisionsTotal);
             }
             return true;
         } else // continue to have RI on; TODO: delete this code
@@ -450,9 +451,9 @@ bool TR_HWProfiler::checkAndTurnBufferProcessingOff()
             if (TR::Options::isAnyVerboseOptionSet(TR_VerboseHWProfiler)) {
                 float recompFrequency = (float)newRecompDecisionsYes / (float)newRecompDecisionsTotal;
                 TR_VerboseLog::writeLineLocked(TR_Vlog_HWPROFILER,
-                    "t=%6u RI continue. recomp frequency is %.4f newRecompDecisionsTotal=%llu",
-                    (uint32_t)_compInfo->getPersistentInfo()->getElapsedTime(), recompFrequency,
-                    newRecompDecisionsTotal);
+                    "t=%6llu RI continue. recomp frequency is %.4f newRecompDecisionsTotal=%llu",
+                    (unsigned long long)_compInfo->getPersistentInfo()->getElapsedTime(), recompFrequency,
+                    (unsigned long long)newRecompDecisionsTotal);
             }
         }
     }

@@ -2603,8 +2603,8 @@ void TR::CompilationInfoPerThread::suspendCompilationThread()
             getCompilationInfo()->decNumCompThreadsActive();
 
         if (TR::Options::getCmdLineOptions()->getVerboseOption(TR_VerboseCompilationThreads)) {
-            TR_VerboseLog::writeLineLocked(TR_Vlog_PERF, "t=%6u Suspension request for compThread %d sleeping=%s",
-                (uint32_t)getCompilationInfo()->getPersistentInfo()->getElapsedTime(), getCompThreadId(),
+            TR_VerboseLog::writeLineLocked(TR_Vlog_PERF, "t=%6llu Suspension request for compThread %d sleeping=%s",
+                (unsigned long long)getCompilationInfo()->getPersistentInfo()->getElapsedTime(), getCompThreadId(),
                 getMethodBeingCompiled() ? "NO" : "YES");
         }
 
@@ -2642,8 +2642,8 @@ void TR::CompilationInfo::suspendCompilationThread(bool purgeCompQueue)
             // should we try to interrupt the compilation in progress?
             stoppedOneCompilationThread = true;
             if (TR::Options::getCmdLineOptions()->getVerboseOption(TR_VerboseCompilationThreads)) {
-                TR_VerboseLog::writeLineLocked(TR_Vlog_PERF, "t=%6u Suspension request for compThread %d sleeping=%s",
-                    (uint32_t)getPersistentInfo()->getElapsedTime(), curCompThreadInfoPT->getCompThreadId(),
+                TR_VerboseLog::writeLineLocked(TR_Vlog_PERF, "t=%6llu Suspension request for compThread %d sleeping=%s",
+                    (unsigned long long)getPersistentInfo()->getElapsedTime(), curCompThreadInfoPT->getCompThreadId(),
                     curCompThreadInfoPT->getMethodBeingCompiled() ? "NO" : "YES");
             }
         }
@@ -2675,8 +2675,8 @@ void TR::CompilationInfoPerThread::resumeCompilationThread()
             getCompilationInfo()->incNumCompThreadsActive();
 
         if (TR::Options::getCmdLineOptions()->getVerboseOption(TR_VerboseCompilationThreads)) {
-            TR_VerboseLog::writeLineLocked(TR_Vlog_INFO, "t=%6u Resume request for compThread %d",
-                (uint32_t)getCompilationInfo()->getPersistentInfo()->getElapsedTime(), getCompThreadId());
+            TR_VerboseLog::writeLineLocked(TR_Vlog_INFO, "t=%6llu Resume request for compThread %d",
+                (unsigned long long)getCompilationInfo()->getPersistentInfo()->getElapsedTime(), getCompThreadId());
         }
     }
 
@@ -2740,9 +2740,9 @@ void TR::CompilationInfo::resumeCompilationThread()
         compInfoPTHot->setCompilationThreadState(COMPTHREAD_ACTIVE);
         incNumCompThreadsActive();
         if (TR::Options::getCmdLineOptions()->getVerboseOption(TR_VerboseCompilationThreads)) {
-            TR_VerboseLog::writeLineLocked(TR_Vlog_INFO, "t=%6u Resume compThread %d Qweight=%d active=%d",
-                (uint32_t)getPersistentInfo()->getElapsedTime(), compInfoPTHot->getCompThreadId(), getQueueWeight(),
-                getNumCompThreadsActive());
+            TR_VerboseLog::writeLineLocked(TR_Vlog_INFO, "t=%6llu Resume compThread %d Qweight=%d active=%d",
+                (unsigned long long)getPersistentInfo()->getElapsedTime(), compInfoPTHot->getCompThreadId(),
+                getQueueWeight(), getNumCompThreadsActive());
         }
     }
 
@@ -3777,15 +3777,15 @@ IDATA J9THREAD_PROC compilationThreadProc(void *entryarg)
         compInfoPT->setCompilationThreadState(COMPTHREAD_ACTIVE);
         compInfo->incNumCompThreadsActive();
         if (TR::Options::getCmdLineOptions()->getVerboseOption(TR_VerboseCompilationThreads)) {
-            TR_VerboseLog::writeLineLocked(TR_Vlog_INFO, "t=%6u Created compThread %d as ACTIVE",
-                (uint32_t)compInfo->getPersistentInfo()->getElapsedTime(), compInfoPT->getCompThreadId());
+            TR_VerboseLog::writeLineLocked(TR_Vlog_INFO, "t=%6llu Created compThread %d as ACTIVE",
+                (unsigned long long)compInfo->getPersistentInfo()->getElapsedTime(), compInfoPT->getCompThreadId());
         }
     } else // all other compilation threads should start as suspended
     {
         compInfoPT->setCompilationThreadState(COMPTHREAD_SIGNAL_SUSPEND);
         if (TR::Options::getCmdLineOptions()->getVerboseOption(TR_VerboseCompilationThreads)) {
-            TR_VerboseLog::writeLineLocked(TR_Vlog_INFO, "t=%6u Created compThread %d as SUSPENDED",
-                (uint32_t)compInfo->getPersistentInfo()->getElapsedTime(), compInfoPT->getCompThreadId());
+            TR_VerboseLog::writeLineLocked(TR_Vlog_INFO, "t=%6llu Created compThread %d as SUSPENDED",
+                (unsigned long long)compInfo->getPersistentInfo()->getElapsedTime(), compInfoPT->getCompThreadId());
         }
     }
     compInfo->releaseCompMonitor(compThread);
@@ -4170,8 +4170,8 @@ void TR::CompilationInfoPerThread::processEntries()
                     compInfo->decNumCompThreadsActive();
                     if (TR::Options::getCmdLineOptions()->getVerboseOption(TR_VerboseCompilationThreads)) {
                         TR_VerboseLog::writeLineLocked(TR_Vlog_INFO,
-                            "t=%6u Suspending compThread %d due to %s Qweight=%d active=%d overallCompCpuUtil=%d",
-                            (uint32_t)compInfo->getPersistentInfo()->getElapsedTime(), getCompThreadId(),
+                            "t=%6llu Suspending compThread %d due to %s Qweight=%d active=%d overallCompCpuUtil=%d",
+                            (unsigned long long)compInfo->getPersistentInfo()->getElapsedTime(), getCompThreadId(),
                             compThreadAction == TR::CompilationInfo::SUSPEND_COMP_THREAD_EXCEED_CPU_ENTITLEMENT
                                 ? "exceeding CPU entitlement"
                                 : "empty queue",
@@ -4187,10 +4187,10 @@ void TR::CompilationInfoPerThread::processEntries()
                     int32_t sleepTimeMs = compInfo->computeCompThreadSleepTime(getLastCompilationDuration());
                     if (TR::Options::getCmdLineOptions()->getVerboseOption(TR_VerboseCompilationThreads)) {
                         TR_VerboseLog::writeLineLocked(TR_Vlog_INFO,
-                            "t=%6u compThread %d sleeping %d ms due to throttling Qweight=%d active=%d "
+                            "t=%6llu compThread %d sleeping %d ms due to throttling Qweight=%d active=%d "
                             "overallCompCpuUtil=%d",
-                            (uint32_t)compInfo->getPersistentInfo()->getElapsedTime(), getCompThreadId(), sleepTimeMs,
-                            compInfo->getQueueWeight(), compInfo->getNumCompThreadsActive(),
+                            (unsigned long long)compInfo->getPersistentInfo()->getElapsedTime(), getCompThreadId(),
+                            sleepTimeMs, compInfo->getQueueWeight(), compInfo->getNumCompThreadsActive(),
                             compInfo->getOverallCompCpuUtilization());
                     }
                     compInfo->debugPrint(compThread, "\tcompilation thread waiting some time\n");
@@ -4224,8 +4224,8 @@ void TR::CompilationInfoPerThread::processEntries()
                 compInfo->decNumCompThreadsActive();
                 if (TR::Options::isAnyVerboseOptionSet(TR_VerboseCompilationThreads, TR_VerbosePerformance)) {
                     TR_VerboseLog::writeLineLocked(TR_Vlog_PERF,
-                        "t=%6u Suspending compilation thread %d due to insufficient resources",
-                        (uint32_t)compInfo->getPersistentInfo()->getElapsedTime(), getCompThreadId());
+                        "t=%6llu Suspending compilation thread %d due to insufficient resources",
+                        (unsigned long long)compInfo->getPersistentInfo()->getElapsedTime(), getCompThreadId());
                 }
             }
         } else {
@@ -4237,8 +4237,8 @@ void TR::CompilationInfoPerThread::processEntries()
             if (TR::Options::isAnyVerboseOptionSet(TR_VerboseCompilationThreads, TR_VerbosePerformance,
                     TR_VerboseCompFailure)) {
                 TR_VerboseLog::writeLineLocked(TR_Vlog_PERF,
-                    "t=%6u Disable further compilation due to OOM while processing compile entries",
-                    (uint32_t)compInfo->getPersistentInfo()->getElapsedTime());
+                    "t=%6llu Disable further compilation due to OOM while processing compile entries",
+                    (unsigned long long)compInfo->getPersistentInfo()->getElapsedTime());
             }
             compInfo->purgeMethodQueue(compilationVirtualAddressExhaustion);
             // Must change the state to prevent an infinite loop
@@ -4444,8 +4444,8 @@ void TR::CompilationInfoPerThread::processEntry(TR_MethodToBeCompiled &entry,
                 if (TR::Options::isAnyVerboseOptionSet(TR_VerboseJITServer, TR_VerboseCompilationDispatch,
                         TR_VerbosePerformance, TR_VerboseCompFailure))
                     TR_VerboseLog::writeLineLocked(TR_Vlog_JITServer,
-                        "t=%6u Buffering an upgrade request into the LPQ: j9method=%p",
-                        (uint32_t)compInfo->getPersistentInfo()->getElapsedTime(),
+                        "t=%6llu Buffering an upgrade request into the LPQ: j9method=%p",
+                        (unsigned long long)compInfo->getPersistentInfo()->getElapsedTime(),
                         entry.getMethodDetails().getMethod());
                 compInfo->getLowPriorityCompQueue().addUpgradeReqToLPQ(getMethodBeingCompiled(),
                     TR_MethodToBeCompiled::REASON_SERVER_UNAVAILABLE);
@@ -4560,8 +4560,8 @@ void TR::CompilationInfoPerThread::processEntry(TR_MethodToBeCompiled &entry,
         setCompilationThreadState(COMPTHREAD_SIGNAL_SUSPEND);
         compInfo->decNumCompThreadsActive();
         if (TR::Options::getCmdLineOptions()->getVerboseOption(TR_VerboseCompilationThreads)) {
-            TR_VerboseLog::writeLineLocked(TR_Vlog_INFO, "t=%6u Suspend compThread %d Qweight=%d active=%d %s %s %s",
-                (uint32_t)compInfo->getPersistentInfo()->getElapsedTime(), getCompThreadId(),
+            TR_VerboseLog::writeLineLocked(TR_Vlog_INFO, "t=%6llu Suspend compThread %d Qweight=%d active=%d %s %s %s",
+                (unsigned long long)compInfo->getPersistentInfo()->getElapsedTime(), getCompThreadId(),
                 compInfo->getQueueWeight(), compInfo->getNumCompThreadsActive(),
                 compInfo->getRampDownMCT() ? "RampDownMCT" : "",
                 compInfo->getSuspendThreadDueToLowPhysicalMemory() ? "LowPhysicalMem" : "",
@@ -4579,8 +4579,8 @@ void TR::CompilationInfoPerThread::processEntry(TR_MethodToBeCompiled &entry,
             compInfo->getCompilationMonitor()->notifyAll();
             if (TR::Options::getCmdLineOptions()->getVerboseOption(TR_VerboseCompilationThreads)) {
                 TR_VerboseLog::writeLineLocked(TR_Vlog_INFO,
-                    "t=%6u compThread %d notifying other sleeping comp threads. Jobless=%d",
-                    (uint32_t)compInfo->getPersistentInfo()->getElapsedTime(), getCompThreadId(),
+                    "t=%6llu compThread %d notifying other sleeping comp threads. Jobless=%d",
+                    (unsigned long long)compInfo->getPersistentInfo()->getElapsedTime(), getCompThreadId(),
                     compInfo->getNumCompThreadsJobless());
             }
         }
@@ -5008,8 +5008,8 @@ TR_MethodToBeCompiled *TR::CompilationInfo::addMethodToBeCompiled(TR::IlGenerato
                 }
                 if (TR::Options::getCmdLineOptions()->getVerboseOption(TR_VerboseCompilationThreads))
                     TR_VerboseLog::writeLineLocked(TR_Vlog_INFO,
-                        "t=%6u High priority req (0x%x) blocked by priority 0x%x",
-                        (uint32_t)getPersistentInfo()->getElapsedTime(), priority, lowPriCompReq->_priority);
+                        "t=%6llu High priority req (0x%x) blocked by priority 0x%x",
+                        (unsigned long long)getPersistentInfo()->getElapsedTime(), priority, lowPriCompReq->_priority);
             }
         }
 
@@ -5034,9 +5034,9 @@ TR_MethodToBeCompiled *TR::CompilationInfo::addMethodToBeCompiled(TR::IlGenerato
 
             compInfoPT->resumeCompilationThread();
             if (TR::Options::getCmdLineOptions()->getVerboseOption(TR_VerboseCompilationThreads)) {
-                TR_VerboseLog::writeLineLocked(TR_Vlog_INFO, "t=%6u Activate compThread %d Qweight=%d active=%d",
-                    (uint32_t)getPersistentInfo()->getElapsedTime(), compInfoPT->getCompThreadId(), getQueueWeight(),
-                    getNumCompThreadsActive());
+                TR_VerboseLog::writeLineLocked(TR_Vlog_INFO, "t=%6llu Activate compThread %d Qweight=%d active=%d",
+                    (unsigned long long)getPersistentInfo()->getElapsedTime(), compInfoPT->getCompThreadId(),
+                    getQueueWeight(), getNumCompThreadsActive());
             }
         }
     }
@@ -5875,9 +5875,9 @@ void *TR::CompilationInfo::compileOnSeparateThread(J9VMThread *vmThread, TR::IlG
             shouldReturn = false;
             if (TR::Options::isAnyVerboseOptionSet(TR_VerboseCompFailure, TR_VerboseCompileRequest)) {
                 TR_VerboseLog::writeLineLocked(TR_Vlog_FAILURE,
-                    "t=%u <WARNING: JIT Compilations are suspended. Current request will be coalesced with existing "
+                    "t=%llu <WARNING: JIT Compilations are suspended. Current request will be coalesced with existing "
                     "one in the queue>",
-                    (uint32_t)getPersistentInfo()->getElapsedTime());
+                    (unsigned long long)getPersistentInfo()->getElapsedTime());
             }
         }
 
@@ -5892,8 +5892,8 @@ void *TR::CompilationInfo::compileOnSeparateThread(J9VMThread *vmThread, TR::IlG
             updateCompilationErrorStats(compilationSuspended);
 
             if (TR::Options::isAnyVerboseOptionSet(TR_VerboseCompFailure, TR_VerboseCompileRequest)) {
-                TR_VerboseLog::writeLineLocked(TR_Vlog_FAILURE, "t=%u <WARNING: JIT Compilations are suspended>",
-                    (uint32_t)getPersistentInfo()->getElapsedTime());
+                TR_VerboseLog::writeLineLocked(TR_Vlog_FAILURE, "t=%llu <WARNING: JIT Compilations are suspended>",
+                    (unsigned long long)getPersistentInfo()->getElapsedTime());
             }
 
             return startPC;
@@ -6082,8 +6082,8 @@ void *TR::CompilationInfo::compileOnSeparateThread(J9VMThread *vmThread, TR::IlG
             *compErrCode = compilationInProgress; // Will be performed later
         if (TR::Options::isAnyVerboseOptionSet(TR_VerbosePerformance, TR_VerboseJITServer, TR_VerboseCompileRequest)) {
             TR_VerboseLog::writeLineLocked(TR_Vlog_CR,
-                "t=%u Postponing recompilation for j9method=%p due to low compilation density mode",
-                (uint32_t)getPersistentInfo()->getElapsedTime(), method);
+                "t=%llu Postponing recompilation for j9method=%p due to low compilation density mode",
+                (unsigned long long)getPersistentInfo()->getElapsedTime(), method);
         }
         return 0; // mark that compilation is not yet done
     }
@@ -6786,8 +6786,8 @@ void TR::CompilationInfoPerThreadBase::generatePerfToolEntry()
         if (!getPerfFile()) // couldn't open the file
         {
             if (TR::Options::getJITCmdLineOptions()->getVerboseOption(TR_VerboseCompFailure))
-                TR_VerboseLog::writeLineLocked(TR_Vlog_FAILURE, "t=%u WARNING: Cannot open perf tool file: %s",
-                    (uint32_t)_compInfo.getPersistentInfo()->getElapsedTime(),
+                TR_VerboseLog::writeLineLocked(TR_Vlog_FAILURE, "t=%llu WARNING: Cannot open perf tool file: %s",
+                    (unsigned long long)_compInfo.getPersistentInfo()->getElapsedTime(),
                     perfFilename); // even if snprintf failed above we should still be ok.
             // Do we want a message without verbose log being specified?
         }
@@ -6994,8 +6994,8 @@ void TR::CompilationInfoPerThreadBase::downgradeLocalCompilationIfLowPhysicalMem
             if (TR::Options::isAnyVerboseOptionSet(TR_VerboseJITServer, TR_VerboseCompilationDispatch,
                     TR_VerbosePerformance, TR_VerboseCompFailure))
                 TR_VerboseLog::writeLineLocked(TR_Vlog_JITServer,
-                    "t=%6u Downgraded a forced local compilation to cold due to low memory: j9method=%p",
-                    (uint32_t)_compInfo.getPersistentInfo()->getElapsedTime(), method);
+                    "t=%6llu Downgraded a forced local compilation to cold due to low memory: j9method=%p",
+                    (unsigned long long)_compInfo.getPersistentInfo()->getElapsedTime(), method);
             entry->_optimizationPlan->setOptLevel(cold);
             entry->_optimizationPlan->setOptLevelDowngraded(true);
             entry->_optimizationPlan->setDisableGCR(); // disable GCR to prevent aggressive recompilation
@@ -7459,8 +7459,8 @@ void TR::CompilationInfoPerThreadBase::preCompilationTasks(J9VMThread *vmThread,
                 if (TR::Options::isAnyVerboseOptionSet(TR_VerbosePerformance, TR_VerboseJITServer,
                         TR_VerboseCompilationDispatch))
                     TR_VerboseLog::writeLineLocked(TR_Vlog_DISPATCH,
-                        "t=%u Changed the remote sync compilation to a local sync cold compilation: j9method=%p",
-                        (uint32_t)persistentInfo->getElapsedTime(), method);
+                        "t=%llu Changed the remote sync compilation to a local sync cold compilation: j9method=%p",
+                        (unsigned long long)persistentInfo->getElapsedTime(), method);
             }
             // We want to suppress remote compilations when the JVM has compiled most
             // of the methods that are important to performance.
@@ -7489,9 +7489,9 @@ void TR::CompilationInfoPerThreadBase::preCompilationTasks(J9VMThread *vmThread,
                         if (TR::Options::isAnyVerboseOptionSet(TR_VerbosePerformance, TR_VerboseJITServer,
                                 TR_VerboseCompilationDispatch)) {
                             TR_VerboseLog::writeLineLocked(TR_Vlog_DISPATCH,
-                                "t=%u Changed remote warm compilation into local cold for j9method=%p due to low "
+                                "t=%llu Changed remote warm compilation into local cold for j9method=%p due to low "
                                 "compilation density mode",
-                                (uint32_t)persistentInfo->getElapsedTime(), method);
+                                (unsigned long long)persistentInfo->getElapsedTime(), method);
                         }
                         // Add an upgrade recomp if possible
                         if (!entry->isJNINative() && !details.isNewInstanceThunk() && !details.isMethodHandleThunk()
@@ -7506,8 +7506,8 @@ void TR::CompilationInfoPerThreadBase::preCompilationTasks(J9VMThread *vmThread,
                                 if (TR::Options::isAnyVerboseOptionSet(TR_VerbosePerformance, TR_VerboseJITServer,
                                         TR_VerboseCompilationDispatch)) {
                                     TR_VerboseLog::writeLineLocked(TR_Vlog_DISPATCH,
-                                        "t=%u Will enqueue an upgrade compilation into LPQ for j9method=%p",
-                                        (uint32_t)persistentInfo->getElapsedTime(), method);
+                                        "t=%llu Will enqueue an upgrade compilation into LPQ for j9method=%p",
+                                        (unsigned long long)persistentInfo->getElapsedTime(), method);
                                 }
                             }
                         }
@@ -7613,8 +7613,8 @@ void *TR::CompilationInfoPerThreadBase::postCompilationTasks(J9VMThread *vmThrea
 
             // May issue a message in the vlog if requested
             if (TR::Options::getCmdLineOptions()->getVerboseOption(TR_VerboseCompilationThreads))
-                TR_VerboseLog::writeLineLocked(TR_Vlog_PERF, "t=%6u CPU time spent so far in compThread:%d = %d ms",
-                    (uint32_t)_compInfo.getPersistentInfo()->getElapsedTime(), getCompThreadId(), CPUmillis);
+                TR_VerboseLog::writeLineLocked(TR_Vlog_PERF, "t=%6llu CPU time spent so far in compThread:%d = %d ms",
+                    (unsigned long long)_compInfo.getPersistentInfo()->getElapsedTime(), getCompThreadId(), CPUmillis);
         }
     }
 
@@ -8108,8 +8108,8 @@ TR_MethodMetaData *TR::CompilationInfoPerThreadBase::wrappedCompile(J9PortLibrar
         } else if (jitConfig->runtimeFlags & (J9JIT_CODE_CACHE_FULL | J9JIT_DATA_CACHE_FULL)) {
             if (TR::Options::isAnyVerboseOptionSet(TR_VerboseCompileEnd, TR_VerboseCompFailure,
                     TR_VerbosePerformance)) {
-                TR_VerboseLog::writeLineLocked(TR_Vlog_PERF, "t=%6u <WARNING: JIT CACHES FULL>",
-                    (uint32_t)that->getCompilationInfo()->getPersistentInfo()->getElapsedTime());
+                TR_VerboseLog::writeLineLocked(TR_Vlog_PERF, "t=%6llu <WARNING: JIT CACHES FULL>",
+                    (unsigned long long)that->getCompilationInfo()->getPersistentInfo()->getElapsedTime());
             }
             if (jitConfig->runtimeFlags & J9JIT_CODE_CACHE_FULL)
                 Trc_JIT_cacheFull(vmThread);
@@ -8377,8 +8377,8 @@ TR_MethodMetaData *TR::CompilationInfoPerThreadBase::wrappedCompile(J9PortLibrar
                     if (that->_methodBeingCompiled->_reqFromJProfilingQueue) {
                         doJProfile = true;
                         if (TR::Options::getCmdLineOptions()->getVerboseOption(TR_VerbosePerformance))
-                            TR_VerboseLog::writeLineLocked(TR_Vlog_INFO, "t=%6u Processing req from JPQ",
-                                (uint32_t)that->getCompilationInfo()->getPersistentInfo()->getElapsedTime());
+                            TR_VerboseLog::writeLineLocked(TR_Vlog_INFO, "t=%6llu Processing req from JPQ",
+                                (unsigned long long)that->getCompilationInfo()->getPersistentInfo()->getElapsedTime());
                     } else {
                         // Is this request a candidate for JProfiling?
                         if (TR_JProfilingQueue::isJProfilingCandidate(that->_methodBeingCompiled, options, vm)) {
@@ -11476,8 +11476,8 @@ void TR_LowPriorityCompQueue::startTrackingIProfiledCalls(int32_t threshold)
             memset(_spine, 0, HT_SIZE * sizeof(Entry));
             _threshold = threshold;
             if (TR::Options::getCmdLineOptions()->getVerboseOption(TR_VerbosePerformance)) {
-                TR_VerboseLog::writeLineLocked(TR_Vlog_INFO, "t=%6u Allocated the LPQ tracking hashtable",
-                    (uint32_t)_compInfo->getPersistentInfo()->getElapsedTime());
+                TR_VerboseLog::writeLineLocked(TR_Vlog_INFO, "t=%6llu Allocated the LPQ tracking hashtable",
+                    (unsigned long long)_compInfo->getPersistentInfo()->getElapsedTime());
             }
             FLUSH_MEMORY(TR::Compiler->target.isSMP());
             _trackingEnabled = true;
@@ -11563,8 +11563,8 @@ void TR_LowPriorityCompQueue::tryToScheduleCompilation(J9VMThread *vmThread, J9M
                                 _compInfo->getCompilationMonitor()->notifyAll();
                                 if (TR::Options::getCmdLineOptions()->getVerboseOption(TR_VerboseCompilationThreads)) {
                                     TR_VerboseLog::writeLineLocked(TR_Vlog_INFO,
-                                        "t=%6u LPQ logic waking up a sleeping comp thread. Jobless=%d",
-                                        (uint32_t)_compInfo->getPersistentInfo()->getElapsedTime(),
+                                        "t=%6llu LPQ logic waking up a sleeping comp thread. Jobless=%d",
+                                        (unsigned long long)_compInfo->getPersistentInfo()->getElapsedTime(),
                                         _compInfo->getNumCompThreadsJobless());
                                 }
                             } else // At least one thread is active.
@@ -11589,9 +11589,9 @@ void TR_LowPriorityCompQueue::tryToScheduleCompilation(J9VMThread *vmThread, J9M
                                         if (TR::Options::getCmdLineOptions()->getVerboseOption(
                                                 TR_VerboseCompilationThreads)) {
                                             TR_VerboseLog::writeLineLocked(TR_Vlog_INFO,
-                                                "t=%6u Activate compThread %d to handle LPQ request. Qweight=%d "
+                                                "t=%6llu Activate compThread %d to handle LPQ request. Qweight=%d "
                                                 "active=%d",
-                                                (uint32_t)_compInfo->getPersistentInfo()->getElapsedTime(),
+                                                (unsigned long long)_compInfo->getPersistentInfo()->getElapsedTime(),
                                                 compInfoPT->getCompThreadId(), _compInfo->getQueueWeight(),
                                                 _compInfo->getNumCompThreadsActive());
                                         }
@@ -11604,10 +11604,10 @@ void TR_LowPriorityCompQueue::tryToScheduleCompilation(J9VMThread *vmThread, J9M
                         if (enqueued) {
                             if (TR::Options::getCmdLineOptions()->getVerboseOption(TR_VerboseCompileRequest)) {
                                 TR_VerboseLog::writeLineLocked(TR_Vlog_CR,
-                                    "t=%u Compile request to LPQ for j9m=%p loopy=%d smpl=%u cnt=%d Q_SZ=%d Q_SZI=%d "
+                                    "t=%llu Compile request to LPQ for j9m=%p loopy=%d smpl=%u cnt=%d Q_SZ=%d Q_SZI=%d "
                                     "LPQ_SZ=%d CPU=%d%% JVM_CPU=%d%%",
-                                    (uint32_t)_compInfo->getPersistentInfo()->getElapsedTime(), j9method, isLoopy,
-                                    entry->_count, (int32_t)TR::CompilationInfo::getInvocationCount(j9method),
+                                    (unsigned long long)_compInfo->getPersistentInfo()->getElapsedTime(), j9method,
+                                    isLoopy, entry->_count, (int32_t)TR::CompilationInfo::getInvocationCount(j9method),
                                     _compInfo->getMethodQueueSize(), _compInfo->getNumQueuedFirstTimeCompilations(),
                                     getLowPriorityQueueSize(), _compInfo->getCpuUtil()->getCpuUsage(),
                                     _compInfo->getCpuUtil()->getVmCpuUsage());
@@ -11972,9 +11972,9 @@ void TR_JitSampleInfo::update(uint64_t crtTime, uint32_t crtGlobalSampleCounter)
         }
         if (TR::Options::getCmdLineOptions()->getVerboseOption(TR_VerboseSampleDensity))
             TR_VerboseLog::writeLineLocked(TR_Vlog_INFO,
-                "t=%6u globalSamplesDensity: %u/%u=%u samples/sec  max=%u samples/sec increaseFactor=%u", crtTime,
-                diffSamples, _sizeOfLastInterval, _samplesPerSecondDuringLastInterval, _maxSamplesPerSecond,
-                _increaseFactor);
+                "t=%6llu globalSamplesDensity: %u/%u=%u samples/sec  max=%u samples/sec increaseFactor=%u",
+                (unsigned long long)crtTime, diffSamples, _sizeOfLastInterval, _samplesPerSecondDuringLastInterval,
+                _maxSamplesPerSecond, _increaseFactor);
     }
 }
 
@@ -12121,8 +12121,8 @@ bool J9Method_HT::addNewEntry(J9Method *j9method, uint64_t timestamp)
     }
     if (TR::Options::getVerboseOption(TR_VerboseSampling))
         TR_VerboseLog::writeLineLocked(TR_Vlog_SAMPLING,
-            "t=%6u J9MethodTracking: j9m=%p Adding new entry. compiled:%d success=%d totalEntries=%u",
-            (unsigned)getPersistentInfo()->getElapsedTime(), j9method, alreadyCompiled, added, _numEntries);
+            "t=%6llu J9MethodTracking: j9m=%p Adding new entry. compiled:%d success=%d totalEntries=%u",
+            (unsigned long long)getPersistentInfo()->getElapsedTime(), j9method, alreadyCompiled, added, _numEntries);
     return added;
 }
 
@@ -12133,8 +12133,8 @@ bool DLTTracking::shouldIssueDLTCompilation(J9Method *j9method, int32_t numHitsI
     if (methodCount <= 0 || numHitsInDLTBuffer >= TR::Options::_numDLTBufferMatchesToEagerlyIssueCompReq) {
         if (TR::Options::getVerboseOption(TR_VerboseSampling))
             TR_VerboseLog::writeLineLocked(TR_Vlog_SAMPLING,
-                "t=%6u DLTTracking: j9m=%p Issue DLT because methodCount=%d numHitsInDLTBuffer=%d",
-                (unsigned)getPersistentInfo()->getElapsedTime(), j9method, methodCount, numHitsInDLTBuffer);
+                "t=%6llu DLTTracking: j9m=%p Issue DLT because methodCount=%d numHitsInDLTBuffer=%d",
+                (unsigned long long)getPersistentInfo()->getElapsedTime(), j9method, methodCount, numHitsInDLTBuffer);
         return true;
     }
     // Search DLT_HT for this method
@@ -12175,8 +12175,8 @@ bool DLTTracking::shouldIssueDLTCompilation(J9Method *j9method, int32_t numHitsI
         }
         if (TR::Options::getVerboseOption(TR_VerboseSampling))
             TR_VerboseLog::writeLineLocked(TR_Vlog_SAMPLING,
-                "t=%6u DLTTracking: j9m=%p issueDLT=%d entry=%p entryCount=%d methodCount=%d seqID=%d",
-                (unsigned)getPersistentInfo()->getElapsedTime(), j9method, shouldIssueDLT, entry, entryCount,
+                "t=%6llu DLTTracking: j9m=%p issueDLT=%d entry=%p entryCount=%d methodCount=%d seqID=%d",
+                (unsigned long long)getPersistentInfo()->getElapsedTime(), j9method, shouldIssueDLT, entry, entryCount,
                 methodCount, entry->_seqID);
     } else // method does not exist in DLT_HT
     {
@@ -12184,8 +12184,8 @@ bool DLTTracking::shouldIssueDLTCompilation(J9Method *j9method, int32_t numHitsI
         // If adding is successful, do not issue DLT request
         shouldIssueDLT = !addNewEntry(j9method, getPersistentInfo()->getElapsedTime());
         if (TR::Options::getVerboseOption(TR_VerboseSampling))
-            TR_VerboseLog::writeLineLocked(TR_Vlog_SAMPLING, "t=%6u DLTTracking: j9m=%p issueDLT=%d entry=%p",
-                (unsigned)getPersistentInfo()->getElapsedTime(), j9method, shouldIssueDLT, entry);
+            TR_VerboseLog::writeLineLocked(TR_Vlog_SAMPLING, "t=%6llu DLTTracking: j9m=%p issueDLT=%d entry=%p",
+                (unsigned long long)getPersistentInfo()->getElapsedTime(), j9method, shouldIssueDLT, entry);
     }
 
     return shouldIssueDLT;
@@ -12208,8 +12208,8 @@ void DLTTracking::adjustStoredCounterForMethod(J9Method *j9method, int32_t count
         } while (oldValue != VM_AtomicSupport::lockCompareExchangeU32((uint32_t *)&entry->_count, oldValue, newValue));
         if (TR::Options::getVerboseOption(TR_VerboseSampling))
             TR_VerboseLog::writeLineLocked(TR_Vlog_SAMPLING,
-                "t=%6u DLTTracking: j9m=%p entry=%p adjusting entry count to %d",
-                (unsigned)getPersistentInfo()->getElapsedTime(), j9method, entry, newValue);
+                "t=%6llu DLTTracking: j9m=%p entry=%p adjusting entry count to %d",
+                (unsigned long long)getPersistentInfo()->getElapsedTime(), j9method, entry, newValue);
     }
 }
 
@@ -12266,8 +12266,8 @@ bool TR_JProfilingQueue::createCompReqAndQueueIt(TR::IlGeneratorMethodDetails &d
     // add at the end of queue
     enqueueCompReq(compReq);
     if (TR::Options::getJITCmdLineOptions()->getVerboseOption(TR_VerboseCompileRequest))
-        TR_VerboseLog::writeLineLocked(TR_Vlog_CR, "t=%u j9m=%p enqueued in JPQ. JPQ_SZ=%d",
-            (uint32_t)_compInfo->getPersistentInfo()->getElapsedTime(), j9method, getQSize());
+        TR_VerboseLog::writeLineLocked(TR_Vlog_CR, "t=%llu j9m=%p enqueued in JPQ. JPQ_SZ=%d",
+            (unsigned long long)_compInfo->getPersistentInfo()->getElapsedTime(), j9method, getQSize());
 
     // incStatsReqQueuedToLPQ(reason);
     return true;
@@ -12361,8 +12361,8 @@ bool TR::CompilationInfo::canProcessJProfilingRequest()
         }
         getJProfilingCompQueue().setAllowProcessing();
         if (TR::Options::getCmdLineOptions()->getVerboseOption(TR_VerbosePerformance)) {
-            TR_VerboseLog::writeLineLocked(TR_Vlog_INFO, "t=%6u Allowing generation of JProfiling bodies",
-                (uint32_t)getPersistentInfo()->getElapsedTime());
+            TR_VerboseLog::writeLineLocked(TR_Vlog_INFO, "t=%6llu Allowing generation of JProfiling bodies",
+                (unsigned long long)getPersistentInfo()->getElapsedTime());
         }
         return true;
     }
@@ -12432,8 +12432,8 @@ TR_MethodToBeCompiled *TR::CompilationInfo::addOutOfProcessMethodToBeCompiled(JI
             if (compInfoPT) {
                 compInfoPT->resumeCompilationThread();
                 if (TR::Options::getCmdLineOptions()->getVerboseOption(TR_VerboseCompilationThreads)) {
-                    TR_VerboseLog::writeLineLocked(TR_Vlog_INFO, "t=%6u Activate compThread %d Qweight=%d active=%d",
-                        (uint32_t)getPersistentInfo()->getElapsedTime(), compInfoPT->getCompThreadId(),
+                    TR_VerboseLog::writeLineLocked(TR_Vlog_INFO, "t=%6llu Activate compThread %d Qweight=%d active=%d",
+                        (unsigned long long)getPersistentInfo()->getElapsedTime(), compInfoPT->getCompThreadId(),
                         getQueueWeight(), getNumCompThreadsActive());
                 }
             }

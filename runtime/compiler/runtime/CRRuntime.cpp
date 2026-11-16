@@ -577,16 +577,16 @@ void TR::CRRuntime::resetStartTime()
 
     if (TR::Options::isAnyVerboseOptionSet())
         TR_VerboseLog::writeLineLocked(TR_Vlog_CHECKPOINT_RESTORE,
-            "Start and elapsed time: startTime=%6u, elapsedTime=%6u", (uint32_t)persistentInfo->getStartTime(),
-            (uint32_t)persistentInfo->getElapsedTime());
+            "Start and elapsed time: startTime=%6llu, elapsedTime=%6llu",
+            (unsigned long long)persistentInfo->getStartTime(), (unsigned long long)persistentInfo->getElapsedTime());
 
     uint64_t crtTime = j9time_current_time_millis() - persistentInfo->getElapsedTime();
     persistentInfo->setStartTime(crtTime);
 
     if (TR::Options::isAnyVerboseOptionSet())
         TR_VerboseLog::writeLineLocked(TR_Vlog_CHECKPOINT_RESTORE,
-            "Reset start and elapsed time: startTime=%6u, elapsedTime=%6u", (uint32_t)persistentInfo->getStartTime(),
-            (uint32_t)persistentInfo->getElapsedTime());
+            "Reset start and elapsed time: startTime=%6llu, elapsedTime=%6llu",
+            (unsigned long long)persistentInfo->getStartTime(), (unsigned long long)persistentInfo->getElapsedTime());
 
     _restoreTime = persistentInfo->getElapsedTime();
 }
