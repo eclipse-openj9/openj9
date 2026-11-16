@@ -540,7 +540,6 @@ wrapHeapIterationCallback(J9JavaVM * vm, J9MM_IterateObjectDescriptor *objectDes
 		}
 
 #if defined(J9VM_OPT_VALHALLA_VALUE_TYPES)
-		/* The tags of value type objects are kept in valueTypeObjectTagTable. */
 		isValueType = J9_IS_J9CLASS_VALUETYPE(J9OBJECT_CLAZZ_VM(vm, object));
 		if (isValueType) {
 			originalTag = getValueTypeObjectTag(iteratorData->env, object);
@@ -552,9 +551,9 @@ wrapHeapIterationCallback(J9JavaVM * vm, J9MM_IterateObjectDescriptor *objectDes
 			originalTag = (NULL == objectTag) ? 0 : objectTag->tag;
 		}
 
-		if ( (iteratorData->filter == JVMTI_HEAP_OBJECT_EITHER) ||
-		     (iteratorData->filter == JVMTI_HEAP_OBJECT_TAGGED && 0 != originalTag) ||
-		     (iteratorData->filter == JVMTI_HEAP_OBJECT_UNTAGGED && 0 == originalTag) )
+		if ((iteratorData->filter == JVMTI_HEAP_OBJECT_EITHER) ||
+		    ((iteratorData->filter == JVMTI_HEAP_OBJECT_TAGGED) && (0 != originalTag)) ||
+		    ((iteratorData->filter == JVMTI_HEAP_OBJECT_UNTAGGED) && (0 == originalTag)))
 		{
 			jvmtiIterationControl rc;
 			J9JVMTIObjectTag * classTag;
@@ -577,7 +576,11 @@ wrapHeapIterationCallback(J9JavaVM * vm, J9MM_IterateObjectDescriptor *objectDes
 			if (isValueType) {
 #if defined(J9VM_OPT_VALHALLA_VALUE_TYPES)
 				if (tag != originalTag) {
-					setValueTypeObjectTag(vm->internalVMFunctions->currentVMThread(vm), iteratorData->env, object, tag);
+					jvmtiError err = setValueTypeObjectTag(vm->internalVMFunctions->currentVMThread(vm), iteratorData->env, object, tag);
+					if (JVMTI_ERROR_NONE != err) {
+						iteratorData->rc = err;
+						rc = JVMTI_ITERATION_ABORT;
+					}
 				}
 #endif /* defined(J9VM_OPT_VALHALLA_VALUE_TYPES) */
 			} else if (objectTag) {
@@ -633,6 +636,15 @@ wrapObjectIterationCallback(j9object_t *slotPtr, j9object_t referrer, void *user
 			return JVMTI_ITERATION_IGNORE;
 		}
 
+#if defined(J9VM_OPT_VALHALLA_VALUE_TYPES)
+		/* Ignore the global references owned by valueTypeObjectTagTable. They are
+		 * maintained internally by the VM and were not created by the user.
+		 */
+		if (isValueTypeTagGlobalRef(iteratorData->env, slotPtr, type)) {
+			return JVMTI_ITERATION_IGNORE;
+		}
+#endif /* defined(J9VM_OPT_VALHALLA_VALUE_TYPES) */
+
 		clazz = J9OBJECT_CLAZZ(vmThread, object);
 		entry.ref = J9VM_J9CLASS_TO_HEAPCLASS(clazz);
 		result = hashTableFind(iteratorData->env->objectTagTable, &entry);
@@ -656,7 +668,6 @@ wrapObjectIterationCallback(j9object_t *slotPtr, j9object_t referrer, void *user
 		entry.ref = object;
 		entry.tag = 0;
 #if defined(J9VM_OPT_VALHALLA_VALUE_TYPES)
-		/* The tags of value type objects are kept in valueTypeObjectTagTable. */
 		isValueType = J9_IS_J9CLASS_VALUETYPE(clazz);
 		if (isValueType) {
 			originalTag = getValueTypeObjectTag(iteratorData->env, object);
@@ -688,10 +699,14 @@ wrapObjectIterationCallback(j9object_t *slotPtr, j9object_t referrer, void *user
 		if (isValueType) {
 #if defined(J9VM_OPT_VALHALLA_VALUE_TYPES)
 			if (result->tag != originalTag) {
-				setValueTypeObjectTag(vmThread, iteratorData->env, object, result->tag);
+				jvmtiError err = setValueTypeObjectTag(vmThread, iteratorData->env, object, result->tag);
+				if (JVMTI_ERROR_NONE != err) {
+					iteratorData->rc = err;
+					returnCode = JVMTI_ITERATION_ABORT;
+				}
 			}
 #endif /* defined(J9VM_OPT_VALHALLA_VALUE_TYPES) */
-		} else if ( &entry == result ) {
+		} else if (&entry == result) {
 			/* Tag wasn't set, but now is... */
 			if (result->tag != 0) {
 				hashTableAdd(iteratorData->env->objectTagTable, result);

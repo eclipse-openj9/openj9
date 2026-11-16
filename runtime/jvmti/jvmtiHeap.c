@@ -595,6 +595,17 @@ followReferencesCallback(j9object_t *slotPtr, j9object_t referrer, void *userDat
 		return JVMTI_ITERATION_IGNORE;
 	}
 
+#if defined(J9VM_OPT_VALHALLA_VALUE_TYPES)
+	/* Ignore the global references owned by valueTypeObjectTagTable. These references
+	 * are maintained internally by the VM, not created by the user. Reporting them as
+	 * roots would make the tagged objects appear reachable. Modifying their tags in
+	 * this callback would also affect the global reference pool being walked.
+	 */
+	if (isValueTypeTagGlobalRef(iteratorData->env, slotPtr, type)) {
+		return JVMTI_ITERATION_IGNORE;
+	}
+#endif /* defined(J9VM_OPT_VALHALLA_VALUE_TYPES) */
+
 	iteratorData->object = object;
 	iteratorData->referrer = referrer;
 	
@@ -1000,15 +1011,22 @@ static void
 jvmtiFollowRefs_getTags(J9JVMTIHeapData * iteratorData, j9object_t  referrer, j9object_t  object) 
 {
 	J9JVMTIObjectTag entry, *result;
-	J9Class *clazz;
+	/* get the class (of object) tag */
+	J9Class *clazz = J9OBJECT_CLAZZ(iteratorData->currentThread, object);
 
 	/* get the object tag */
-	entry.ref = object;
-	result = hashTableFind(iteratorData->env->objectTagTable, &entry);
-	iteratorData->tags.objectTag = (result == NULL) ? 0 : result->tag;
+#if defined(J9VM_OPT_VALHALLA_VALUE_TYPES)
+	/* Value type objects are looked up in valueTypeObjectTagTable, all others in objectTagTable. */
+	if (J9_IS_J9CLASS_VALUETYPE(clazz)) {
+		iteratorData->tags.objectTag = getValueTypeObjectTag(iteratorData->env, object);
+	} else
+#endif /* defined(J9VM_OPT_VALHALLA_VALUE_TYPES) */
+	{
+		entry.ref = object;
+		result = hashTableFind(iteratorData->env->objectTagTable, &entry);
+		iteratorData->tags.objectTag = (result == NULL) ? 0 : result->tag;
+	}
 	
-	/* get the class (of object) tag */
-	clazz = J9OBJECT_CLAZZ(iteratorData->currentThread, object);
 	entry.ref = J9VM_J9CLASS_TO_HEAPCLASS(clazz);
 	result = hashTableFind(iteratorData->env->objectTagTable, &entry);
 	iteratorData->tags.classTag = (result == NULL) ? 0 : result->tag;
@@ -1016,13 +1034,21 @@ jvmtiFollowRefs_getTags(J9JVMTIHeapData * iteratorData, j9object_t  referrer, j9
 	/* The referrer argument for stack slot events carries metadata rather then
 	 * the usual j9object, ignore it here */   
 	if ((referrer != NULL) && (iteratorData->event.type != J9JVMTI_HEAP_EVENT_STACK)) {
-		/* get the referrer object tag */
-		entry.ref = referrer;
-		result = hashTableFind(iteratorData->env->objectTagTable, &entry);
-		iteratorData->tags.referrerObjectTag = (result == NULL) ? 0 : result->tag;
-
 		/* get the referrer object class tag */
 		clazz = J9OBJECT_CLAZZ(iteratorData->currentThread, referrer);
+
+		/* get the referrer object tag */
+#if defined(J9VM_OPT_VALHALLA_VALUE_TYPES)
+		if (J9_IS_J9CLASS_VALUETYPE(clazz)) {
+			iteratorData->tags.referrerObjectTag = getValueTypeObjectTag(iteratorData->env, referrer);
+		} else
+#endif /* defined(J9VM_OPT_VALHALLA_VALUE_TYPES) */
+		{
+			entry.ref = referrer;
+			result = hashTableFind(iteratorData->env->objectTagTable, &entry);
+			iteratorData->tags.referrerObjectTag = (result == NULL) ? 0 : result->tag;
+		}
+
 		entry.ref = J9VM_J9CLASS_TO_HEAPCLASS(clazz);
 		result = hashTableFind(iteratorData->env->objectTagTable, &entry);
 		iteratorData->tags.referrerClassTag = (result == NULL) ? 0 : result->tag;
@@ -2005,32 +2031,45 @@ updateObjectTag(J9JVMTIHeapData * iteratorData, j9object_t object, jlong *origin
 {
 	J9JVMTIObjectTag entry;
 	J9JVMTIObjectTag *resultTag;
-	
-	/* The callback could have added or removed the tag. Modify the hashtable entry to
-	 * account for it */
-	if (*originalTag != 0) {
-		/* object was tagged before callback */
-		if (newTag) {
-			if (*originalTag != newTag) {
-				/* was and still is tagged, but the user has changed the tag */
+
+#if defined(J9VM_OPT_VALHALLA_VALUE_TYPES)
+	if (J9_IS_J9CLASS_VALUETYPE(J9OBJECT_CLAZZ(iteratorData->currentThread, object))) {
+		if (*originalTag != newTag) {
+			jvmtiError rc = setValueTypeObjectTag(iteratorData->currentThread, iteratorData->env, object, newTag);
+			if (JVMTI_ERROR_NONE == rc) {
+				*originalTag = newTag;
+			} else {
+				iteratorData->rc = rc;
+			}
+		}
+	} else
+#endif /* defined(J9VM_OPT_VALHALLA_VALUE_TYPES) */
+	{
+		/* Update objectTagTable to reflect tag changes made by the callback. */
+		if (*originalTag != 0) {
+			/* object was tagged before callback */
+			if (newTag) {
+				if (*originalTag != newTag) {
+					/* was and still is tagged, but the user has changed the tag */
+					entry.ref = object;
+					resultTag = hashTableFind(iteratorData->env->objectTagTable, &entry);
+					resultTag->tag = newTag;
+				}
+			} else {
+				/* no longer tagged, remove the table entry */
 				entry.ref = object;
-				resultTag = hashTableFind(iteratorData->env->objectTagTable, &entry);
-				resultTag->tag = newTag;
+				hashTableRemove(iteratorData->env->objectTagTable, &entry);
+				*originalTag = 0;
 			}
 		} else {
-			/* no longer tagged, remove the table entry */
-			entry.ref = object;
-			hashTableRemove(iteratorData->env->objectTagTable, &entry);
-			*originalTag = 0;
-		}
-	} else {
-		/* object was untagged before callback */
-		if (newTag) {
-			/* now tagged, add table entry */
-			entry.ref = object;
-			entry.tag = newTag;
-			resultTag = hashTableAdd(iteratorData->env->objectTagTable, &entry);
-			*originalTag = resultTag->tag;
+			/* object was untagged before callback */
+			if (newTag) {
+				/* now tagged, add table entry */
+				entry.ref = object;
+				entry.tag = newTag;
+				resultTag = hashTableAdd(iteratorData->env->objectTagTable, &entry);
+				*originalTag = resultTag->tag;
+			}
 		}
 	}
 }
