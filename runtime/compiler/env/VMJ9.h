@@ -1309,6 +1309,22 @@ public:
     virtual OMR::KnownObjectTable::Index getConvertedMethodHandle(TR::Compilation *comp,
         TR::KnownObjectTable::Index mhIndex, TR::KnownObjectTable::Index desiredTypeIndex);
 
+    /**
+     * \brief
+     *   Conservatively tell whether a reference of class \p fromClass can be passed where \p toClass is
+     *   expected, i.e. whether \p fromClass is a subtype of \p toClass in a way that doesn't depend on
+     *   anything that could be unloaded.
+     *
+     *   If both classes are permanent for const provenance purposes (which includes primitives and boxes),
+     *   no anonymous class or class loader checks are needed. Otherwise neither class may be anonymous and
+     *   both must have the same class loader. Primitive classes are only accepted if identical.
+     *
+     * \param fromClass the class of the value being passed
+     * \param toClass the class of the parameter it is being passed to
+     * \param comp the compilation object
+     */
+    virtual bool isTypeReachable(TR_OpaqueClassBlock *fromClass, TR_OpaqueClassBlock *toClass, TR::Compilation *comp);
+
     /*
      * \brief
      *    tell whether it's possible to dereference a field given the field symbol reference at compile time

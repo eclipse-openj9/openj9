@@ -5045,35 +5045,75 @@ bool TR_J9VMBase::isMethodHandleExpectedType(TR::Compilation *comp, TR::KnownObj
 OMR::KnownObjectTable::Index TR_J9VMBase::getConvertedMethodHandle(TR::Compilation *comp,
     TR::KnownObjectTable::Index mhIndex, TR::KnownObjectTable::Index desiredTypeIndex)
 {
-    /* Individual type compatibility checks on each type in the MT are not needed. Since we only fold
-     * when we have a populated cache, and a call to asType would make <desiredType> and the asType result's
-     * MT match, we only need to check for MT pointer equality.
-     */
     TR::KnownObjectTable *knot = comp->getKnownObjectTable();
     if (!knot)
         return TR::KnownObjectTable::UNKNOWN;
 
     TR::VMAccessCriticalSection vmAccess(this);
 
-    /* We shouldn't need to check for anonymous classes or for same class loaders for the Hard Cache case.
-     * The java.lang.invoke infrastructure only sets this cache when it is safe to do so.
-     *
-     * If we find that the normal asTypeCache doesn't get many hits, we should look into adding SoftCache checks.
-     */
     uintptr_t mhObject = knot->getPointer(mhIndex);
+    uintptr_t mtObject = getReferenceField(mhObject, "type", "Ljava/lang/invoke/MethodType;");
     uintptr_t cachedMT = 0;
     uintptr_t cachedMH = getReferenceField(mhObject, "asTypeCache", "Ljava/lang/invoke/MethodHandle;");
     if (cachedMH != 0) {
         cachedMT = getReferenceField(cachedMH, "type", "Ljava/lang/invoke/MethodType;");
     }
 
+    if (cachedMH == 0)
+        return TR::KnownObjectTable::UNKNOWN;
+
     uintptr_t desiredMTObject = knot->getPointer(desiredTypeIndex);
     // there is only one MT instance per unique signature, so this check is valid
-    if (desiredMTObject == cachedMT) {
-        logprintf(comp->getOption(TR_TraceOptDetails), comp->log(), "(Hard) cache match\n");
-        return knot->getOrCreateIndex(cachedMH);
+    if (desiredMTObject != cachedMT) {
+        logprintf(comp->getOption(TR_TraceOptDetails), comp->log(), "MethodTypes are not compatible\n");
+        return TR::KnownObjectTable::UNKNOWN;
     }
-    return TR::KnownObjectTable::UNKNOWN;
+
+    uintptr_t originalRType = getReferenceField(mtObject, "rtype", "Ljava/lang/Class;");
+    uintptr_t desiredRType = getReferenceField(desiredMTObject, "rtype", "Ljava/lang/Class;");
+    if (!isTypeReachable(getClassFromJavaLangClass(desiredRType), getClassFromJavaLangClass(originalRType), comp))
+        return TR::KnownObjectTable::UNKNOWN;
+
+    uintptr_t originalPTypes = getReferenceField(mtObject, "ptypes", "[Ljava/lang/Class;");
+    uintptr_t desiredPTypes = getReferenceField(desiredMTObject, "ptypes", "[Ljava/lang/Class;");
+    intptr_t numParams = getArrayLengthInElements(originalPTypes);
+    if (numParams != getArrayLengthInElements(desiredPTypes))
+        return TR::KnownObjectTable::UNKNOWN;
+
+    for (intptr_t i = 0; i < numParams; i++) {
+        TR_OpaqueClassBlock *originalPClass = getClassFromJavaLangClass(getReferenceElement(originalPTypes, i));
+        TR_OpaqueClassBlock *desiredPClass = getClassFromJavaLangClass(getReferenceElement(desiredPTypes, i));
+        if (!isTypeReachable(desiredPClass, originalPClass, comp))
+            return TR::KnownObjectTable::UNKNOWN;
+    }
+
+    logprintf(comp->getOption(TR_TraceOptDetails), comp->log(), "(Hard) cache type-compatible match\n");
+    return knot->getOrCreateIndex(cachedMH);
+}
+
+bool TR_J9VMBase::isTypeReachable(TR_OpaqueClassBlock *desiredClass, TR_OpaqueClassBlock *originalClass,
+    TR::Compilation *comp)
+{
+    if (desiredClass == originalClass)
+        return true;
+
+    J9Class *desired = TR::Compiler->cls.convertClassOffsetToClassPtr(desiredClass);
+    J9Class *original = TR::Compiler->cls.convertClassOffsetToClassPtr(originalClass);
+    // superclass is ok
+    if (instanceOfOrCheckCast(original, desired))
+        return true;
+
+    // permanent types are ok
+    J9::ConstProvenanceGraph *cpg = comp->constProvenanceGraph();
+    if (cpg->place(desiredClass).kind() == J9::ConstProvenanceGraph::PlaceKind_PermanentRoot)
+        return true;
+
+    // subclass is only ok if named and defined by same loader
+    if (instanceOfOrCheckCast(desired, original)) {
+        return !isAnonymousClass(desiredClass) && sameClassLoaders(desiredClass, originalClass);
+    }
+
+    return false;
 }
 
 /**
