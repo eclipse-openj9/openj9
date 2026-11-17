@@ -3007,7 +3007,7 @@ JavaCoreDumpWriter::writeMemoryDisclaimInfoSection(void)
 	_OutputStream.writeCharacters(info.runtimeAssumptionDisclaimEnabled ? "enabled\n" : "disabled\n");
 	_OutputStream.writeCharacters("2CIDISCLCODE   Code cache disclaim:               ");
 	_OutputStream.writeCharacters(info.codeCacheDisclaimEnabled ? "enabled\n" : "disabled\n");
-	_OutputStream.writeCharacters("2CIDISCLCODE   AOT Code cache disclaim:               ");
+	_OutputStream.writeCharacters("2CIDISCLAOTC   AOT code cache disclaim:           ");
 	_OutputStream.writeCharacters(info.AOTCodeCacheDisclaimEnabled ? "enabled\n" : "disabled\n");
 	_OutputStream.writeCharacters("2CIDISCLSCC    Shared class cache disclaim:       ");
 	_OutputStream.writeCharacters(info.sccDisclaimEnabled ? "enabled\n" : "disabled\n");
