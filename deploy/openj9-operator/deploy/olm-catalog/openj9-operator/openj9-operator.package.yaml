@@ -1,0 +1,5 @@
+channels:
+- currentCSV: openj9-operator.v0.6.0
+  name: alpha
+defaultChannel: alpha
+packageName: openj9-operator
