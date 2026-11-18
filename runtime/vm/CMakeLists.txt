@@ -211,6 +211,19 @@ set(main_sources
 	${CMAKE_CURRENT_BINARY_DIR}/ut_j9vm.c
 )
 
+if(J9VM_OPT_SNAPSHOTS)
+	list(APPEND main_sources
+		dlmalloc.c
+		suballocator.cpp
+	)
+	set_property(
+			SOURCE
+			dlmalloc.c
+			suballocator.cpp
+		APPEND PROPERTY COMPILE_FLAGS "-DMSPACES=1 -DONLY_MSPACES=1 -DUSE_LOCKS=1"
+	)
+endif()
+
 if(J9VM_OPT_CRIU_SUPPORT)
 	list(APPEND main_sources
 		CRIUHelpers.cpp
