@@ -733,7 +733,7 @@ TR::CFG &TR_J9EstimateCodeSize::processBytecodeAndGenerateCFG(TR_CallTarget *cal
                             _recursionDepth, i, tracer()->traceSignature(resolvedMethod));
                     }
                 }
-                /// if (!resolvedMethod || isUnresolvedInCP || resolvedMethod->isCold(comp(), true))
+                // if (!resolvedMethod || isUnresolvedInCP || resolvedMethod->isCold(comp(), true))
                 if ((isUnresolvedInCP && !resolvedMethod) || (resolvedMethod && resolvedMethod->isCold(comp(), true))) {
                     if (tracer()->heuristicLevel()) {
                         if (resolvedMethod) {
@@ -1625,7 +1625,7 @@ bool TR_J9EstimateCodeSize::realEstimateCodeSize(TR_CallTarget *calltarget, TR_C
     int32_t sizeThreshold = _sizeThreshold;
     if (isCandidate)
         sizeThreshold = std::max(4096, sizeThreshold);
-    /// if(_analyzedSize > _sizeThreshold)   // even optimistically we've blown our budget
+    // if(_analyzedSize > _sizeThreshold)   // even optimistically we've blown our budget
     heuristicTrace(tracer(),
         "--- Depth %d: Checking Analyzed size vs Size Threshold: _analyzedSize %d _sizeThreshold %d sizeThreshold %d ",
         _recursionDepth, _analyzedSize, _sizeThreshold, sizeThreshold);

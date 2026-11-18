@@ -3359,7 +3359,7 @@ void J9::CodeGenerator::yankCompressedRefs(TR::TreeTop *tt, TR::Node *parent, in
             TR_BitVector symbolReferencesInNode(self()->comp()->getSymRefCount(), self()->comp()->trMemory(),
                 stackAlloc);
 
-            ////bool canYank = collectSymRefs(node, &symbolReferencesInNode, secondVisitCount);
+            //bool canYank = collectSymRefs(node, &symbolReferencesInNode, secondVisitCount);
             // since symRefs need to be collected for each treetop, we'll need a fresh visitCount
             // for every walk of a tree
             //

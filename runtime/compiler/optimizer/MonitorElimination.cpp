@@ -744,15 +744,15 @@ bool TR::MonitorElimination::findRedundantMonitors()
             return false;
         }
 
-        /////// If no paths were found out of this block and this is a real monitor,
-        /////// there is a missing monitor exit
-        ///////
-        /////if (!morePathsFound && container)
-        /////   {
-        /////   if (trace())
-        /////      log->printf("No monitor exit for monitor enter at [%p]\n", monitor->getMonitorNode());
-        /////   return false;
-        /////   }
+        // If no paths were found out of this block and this is a real monitor,
+        // there is a missing monitor exit
+        //
+        //if (!morePathsFound && container)
+        //   {
+        //   if (trace())
+        //      log->printf("No monitor exit for monitor enter at [%p]\n", monitor->getMonitorNode());
+        //   return false;
+        //   }
     }
 
     // All done
