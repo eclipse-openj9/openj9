@@ -103,6 +103,8 @@
 
 #define LOCAL_OBJECTS_COLLECTABLE 1
 
+#define DUMMY
+
 static bool blockIsInLoop(TR::Block *block)
 {
     for (TR_Structure *s = block->getStructureOf()->getParent(); s; s = s->getParent()) {
