@@ -82,7 +82,6 @@ bool J9::MethodSymbol::isPureFunction()
         case TR::java_lang_Math_sqrt:
         case TR::java_lang_Math_tan:
         case TR::java_lang_Math_tanh:
-        case TR::java_lang_ref_Reference_reachabilityFence:
         case TR::java_lang_StrictMath_acos:
         case TR::java_lang_StrictMath_asin:
         case TR::java_lang_StrictMath_atan:
