@@ -168,8 +168,9 @@ public:
     // these helpers are guaranteed to never throw if the receiving object is not null,
     // so we explicit generate NULLCHKs and assume the helpers will never throw
     TR::SymbolReference *findOrCreateGetFlattenableFieldSymbolRef(TR::ResolvedMethodSymbol *owningMethodSymbol = NULL);
-    TR::SymbolReference *findOrCreateWithFlattenableFieldSymbolRef(TR::ResolvedMethodSymbol *owningMethodSymbol = NULL);
     TR::SymbolReference *findOrCreatePutFlattenableFieldSymbolRef(TR::ResolvedMethodSymbol *owningMethodSymbol = NULL);
+    TR::SymbolReference *findOrCreateResolveFlattenableFieldSymbolRef(
+        TR::ResolvedMethodSymbol *owningMethodSymbol = NULL);
     TR::SymbolReference *findOrCreateGetFlattenableStaticFieldSymbolRef(
         TR::ResolvedMethodSymbol *owningMethodSymbol = NULL);
     TR::SymbolReference *findOrCreatePutFlattenableStaticFieldSymbolRef(
