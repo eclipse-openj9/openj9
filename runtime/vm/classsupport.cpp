@@ -907,6 +907,8 @@ waitForContendedLoadClass(J9VMThread* vmThread, J9ContendedLoadTableEntry *table
 	Trc_VM_waitForContendedLoadClass_waited(vmThread, vmThread, tableEntry->classLoader, classNameLength, className, status);
 	foundClass = hashClassTableAt(tableEntry->classLoader, className, classNameLength, 0);
 	omrthread_monitor_exit(vm->classTableMutex);
+	internalAcquireVMAccess(vmThread);
+	Trc_VM_waitForContendedLoadClass_acquired_vm_access(vmThread, vmThread, tableEntry->classLoader, classNameLength, className);
 #if defined(J9VM_OPT_SNAPSHOTS)
 	if ((NULL != foundClass) && IS_RESTORE_RUN(vm)) {
 		if (!loadWarmClassFromSnapshot(vmThread, foundClass)) {
@@ -914,8 +916,6 @@ waitForContendedLoadClass(J9VMThread* vmThread, J9ContendedLoadTableEntry *table
 		}
 	}
 #endif /* defined(J9VM_OPT_SNAPSHOTS) */
-	internalAcquireVMAccess(vmThread);
-	Trc_VM_waitForContendedLoadClass_acquired_vm_access(vmThread, vmThread, tableEntry->classLoader, classNameLength, className);
 	for (i = 0; i < recursionCount; ++i) {
 		objectMonitorEnter(vmThread, tableEntry->classLoader->classLoaderObject);
 	}
@@ -1094,6 +1094,35 @@ done:
 	return rc;
 }
 
+/**
+ * Enter the RCP restore monitor without blocking on it while holding VM access,
+ * and without blocking for VM access while holding the RCP monitor.
+ *
+ * The caller must have VM access and must not own classTableMutex.
+ *
+ * @param[in] currentThread the current VM thread
+ */
+static void
+enterWarmClassRestoreMonitor(J9VMThread *currentThread)
+{
+	J9JavaVM *vm = currentThread->javaVM;
+	omrthread_monitor_t monitor = vm->rcpCacheMutex;
+
+	Assert_VM_mustHaveVMAccess(currentThread);
+	Assert_VM_mustNotOwnMonitor(vm->classTableMutex);
+	while (0 != omrthread_monitor_try_enter(monitor)) {
+		internalReleaseVMAccess(currentThread);
+		omrthread_monitor_enter(monitor);
+		if (0 == internalTryAcquireVMAccess(currentThread)) {
+			return;
+		}
+
+		/* Never block for VM access while holding the RCP monitor. */
+		omrthread_monitor_exit(monitor);
+		internalAcquireVMAccess(currentThread);
+	}
+}
+
 BOOLEAN
 loadWarmClassFromSnapshot(J9VMThread *currentThread, J9Class *clazz)
 {
@@ -1101,7 +1130,7 @@ loadWarmClassFromSnapshot(J9VMThread *currentThread, J9Class *clazz)
 	J9JavaVM *vm = currentThread->javaVM;
 
 	if (J9_ARE_ANY_BITS_SET(clazz->classFlags, J9ClassIsFrozen)) {
-		omrthread_monitor_enter(vm->rcpCacheMutex);
+		enterWarmClassRestoreMonitor(currentThread);
 		if (J9_ARE_ANY_BITS_SET(clazz->classFlags, J9ClassIsFrozen)) {
 			rc = loadWarmClassFromSnapshotInternal(currentThread, clazz);
 		}
@@ -1198,15 +1227,16 @@ loadNonArrayClass(J9VMThread* vmThread, J9Module *j9module, U_8* className, UDAT
 				/* check again if somebody else already loaded the class */
 				foundClass = hashClassTableAt(classLoader, className, classNameLength, options);
 				if (NULL != foundClass) {
+					omrthread_monitor_exit(vm->classTableMutex);
 #if defined(J9VM_OPT_SNAPSHOTS)
 					if (IS_RESTORE_RUN(vm)
 						&& !loadWarmClassFromSnapshot(vmThread, foundClass)
 					) {
 						foundClass = NULL;
+						omrthread_monitor_enter(vm->classTableMutex);
 					} else
 #endif /* defined(J9VM_OPT_SNAPSHOTS) */
 					{
-						omrthread_monitor_exit(vm->classTableMutex);
 						goto done;
 					}
 				}
