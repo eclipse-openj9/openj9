@@ -198,7 +198,7 @@ MM_CopyForwardScheme::MM_CopyForwardScheme(MM_EnvironmentVLHGC *env, MM_HeapRegi
 	, _shouldScanFinalizableObjects(false)
 	, _objectAlignmentInBytes(env->getObjectAlignmentInBytes())
 	, _compressedSurvivorTable(NULL)
-	, _regionShouldMark(NULL)
+	, _regionFlags(NULL)
 {
 	_typeId = __FUNCTION__;
 }
@@ -339,11 +339,13 @@ MM_CopyForwardScheme::initialize(MM_EnvironmentVLHGC *env)
 		return false;
 	}
 
-	_regionShouldMark  = (bool *)env->getForge()->allocate(_regionManager->getTableRegionCount() * sizeof(bool), MM_AllocationCategory::FIXED, J9_GET_CALLSITE());
-	if (NULL == _regionShouldMark) {
+	/* Encoded age (max age + 1) must not collide with REGION_NOT_EVACUATE. */
+	Assert_MM_true(_extensions->tarokRegionMaxAge + 1 < REGION_NOT_EVACUATE);
+	_regionFlags  = (uint8_t *)env->getForge()->allocate(_regionManager->getTableRegionCount() * sizeof(uint8_t), MM_AllocationCategory::FIXED, J9_GET_CALLSITE());
+	if (NULL == _regionFlags) {
 		return false;
 	}
-	memset(_regionShouldMark, 0, _regionManager->getTableRegionCount() * sizeof(bool));
+	memset(_regionFlags, REGION_NOT_EVACUATE, _regionManager->getTableRegionCount() * sizeof(uint8_t));
 
 	/* Unfortunatelly, MM_GlobalAllocationManagerTarok has not be instantiated yet, so managedContextCount is calculated from scratch. */
 	_singleAllocationContext = (1 == MM_GlobalAllocationManagerTarok::calculateIdealManagedContextCount(_extensions));
@@ -395,19 +397,19 @@ MM_CopyForwardScheme::tearDown(MM_EnvironmentVLHGC *env)
 		_compressedSurvivorTable = NULL;
 	}
 
-	if (NULL != _regionShouldMark) {
-		env->getForge()->free(_regionShouldMark);
-		_regionShouldMark = NULL;
+	if (NULL != _regionFlags) {
+		env->getForge()->free(_regionFlags);
+		_regionFlags = NULL;
 	}
 }
 
 MM_AllocationContextTarok *
-MM_CopyForwardScheme::getPreferredAllocationContext(MM_AllocationContextTarok *suggestedContext, J9Object *objectPtr)
+MM_CopyForwardScheme::getPreferredAllocationContext(MM_AllocationContextTarok *suggestedContext, MM_AllocationContextTarok *sourceContext)
 {
 	MM_AllocationContextTarok *preferredContext = suggestedContext;
 
 	if (preferredContext == _commonContext) {
-		preferredContext = getContextForHeapAddress(objectPtr);
+		preferredContext = sourceContext;
 	} /* no code beyond this point without modifying else statement below */
 	return preferredContext;
 }
@@ -497,7 +499,19 @@ MM_CopyForwardScheme::preProcessRegions(MM_EnvironmentVLHGC *env)
 	while (NULL != (region = regionIterator.nextRegion())) {
 		region->_copyForwardData._survivor = false;
 		region->_copyForwardData._freshSurvivor = false;
-		_regionShouldMark[_regionManager->mapDescriptorToRegionTableIndex(region)] = region->_markData._shouldMark;
+		uint8_t regionFlags = REGION_NOT_EVACUATE;
+		if (region->_markData._shouldMark) {
+			uintptr_t age = region->getAge();
+			if (region->isEden()) {
+				Assert_MM_true(0 == age);
+				regionFlags = age;
+			} else {
+				/* Non-eden age 0 or ages above 0 is encoded with +1 value. */
+				Assert_MM_true((age + 1) < REGION_NOT_EVACUATE);
+				regionFlags = (uint8_t)(age + 1);
+			}
+		}
+		_regionFlags[_regionManager->mapDescriptorToRegionTableIndex(region)] = regionFlags;
 		if (region->containsObjects()) {
 			region->_copyForwardData._initialLiveSet = true;
 			region->_copyForwardData._evacuateSet = region->_markData._shouldMark;
@@ -645,9 +659,24 @@ MM_CopyForwardScheme::isObjectInEvacuateMemory(J9Object *objectPtr)
 MMINLINE bool
 MM_CopyForwardScheme::isObjectInEvacuateMemoryNoCheck(J9Object *objectPtr)
 {
-	uintptr_t heapDelta = (uintptr_t)objectPtr - (uintptr_t)_heapBase;
-	uintptr_t regionIndex = heapDelta >> _regionShift;
-	return _regionShouldMark[regionIndex];
+	uintptr_t regionIndex = ((uintptr_t)objectPtr - (uintptr_t)_heapBase) >> _regionShift;
+	return REGION_NOT_EVACUATE != _regionFlags[regionIndex];
+}
+
+MMINLINE bool
+MM_CopyForwardScheme::isEvacuateObjectInEdenNoCheck(J9Object *objectPtr)
+{
+	uintptr_t regionIndex = ((uintptr_t)objectPtr - (uintptr_t)_heapBase) >> _regionShift;
+	return 0 == _regionFlags[regionIndex];
+}
+
+MMINLINE uintptr_t
+MM_CopyForwardScheme::getEvacuateObjectAgeNoCheck(J9Object *objectPtr)
+{
+	uintptr_t regionIndex = ((uintptr_t)objectPtr - (uintptr_t)_heapBase) >> _regionShift;
+	uint8_t regionFlags = _regionFlags[regionIndex];
+	/* 0 (Eden) and 1 (non-Eden) both mean age 0; 2 and more is age + 1 */
+	return (regionFlags > 0) ? (uintptr_t)(regionFlags - 1) : 0;
 }
 
 MMINLINE bool
@@ -808,7 +837,7 @@ MM_CopyForwardScheme::acquireEmptyRegion(MM_EnvironmentVLHGC *env, MM_ReservedRe
 			/* Might have been set by a PGC in past, and meanwhile removed from the active region list (via heap contraction),
 			 * so that it would be missed to clear at the start of PGC (as any other active region in the list would). */
 			newRegion->_markData._shouldMark = false;
-			_regionShouldMark[_regionManager->mapDescriptorToRegionTableIndex(newRegion)] = false;
+			_regionFlags[_regionManager->mapDescriptorToRegionTableIndex(newRegion)] = REGION_NOT_EVACUATE;
 			newRegion->_reclaimData._shouldReclaim = false;
 
 			/*
@@ -1134,30 +1163,42 @@ MM_CopyForwardScheme::getDesiredCopyCacheSize(MM_EnvironmentVLHGC *env, uintptr_
 }
 
 MM_CopyScanCacheVLHGC *
-MM_CopyForwardScheme::reserveMemoryForCopy(MM_EnvironmentVLHGC *env, J9Object *objectToEvacuate, MM_AllocationContextTarok **reservingContext, uintptr_t objectReserveSizeInBytes)
+MM_CopyForwardScheme::reserveMemoryForCopy(MM_EnvironmentVLHGC *env, J9Object *objectToEvacuate, MM_AllocationContextTarok **reservingContext, uintptr_t objectReserveSizeInBytes, uintptr_t *sourceCompactGroup)
 {
 	void *addrBase = NULL;
 	void *addrTop = NULL;
 	uintptr_t minimumRequiredCacheSize = objectReserveSizeInBytes;
 	uintptr_t minimumSingleObjectAllocateSize = _extensions->tlhSurvivorDiscardThreshold;
 
-	MM_HeapRegionDescriptorVLHGC *region = (MM_HeapRegionDescriptorVLHGC *)_regionManager->tableDescriptorForAddress(objectToEvacuate);
+	/* age of the source region, from the cached lookup (the object is known to be in evacuate memory) */
+	uintptr_t age = getEvacuateObjectAgeNoCheck(objectToEvacuate);
 
 	uintptr_t compactGroup = 0;
 
 	if (_singleAllocationContext) {
-		compactGroup = MM_CompactGroupManager::getCompactGroupNumberForSingleContext(region);
+		compactGroup = MM_CompactGroupManager::getCompactGroupNumberForAge(age);
+		/* Single context: source and destination compact groups are the same */
+		*sourceCompactGroup = compactGroup;
 	} else {
-		*reservingContext = getPreferredAllocationContext(*reservingContext, objectToEvacuate);
+		/* With multiple contexts the source compact group depends on the owning context of the source region, which is not cached */
+		MM_AllocationContextTarok *sourceContext = getContextForHeapAddress(objectToEvacuate);
+		*sourceCompactGroup = MM_CompactGroupManager::getCompactGroupNumberForAge(env, age, sourceContext);
 
-		compactGroup = MM_CompactGroupManager::getCompactGroupNumberInContext(env, region, *reservingContext);
+		*reservingContext = getPreferredAllocationContext(*reservingContext, sourceContext);
+		/* Destination compact group (compactGroup) is based on the reserving context, which may differ from the source region's owning context */
+		compactGroup = MM_CompactGroupManager::getCompactGroupNumberForAge(env, age, *reservingContext);
 	}
 
 	MM_CopyForwardCompactGroup *copyForwardCompactGroup = &env->_copyForwardCompactGroups[compactGroup];
-	
-	Assert_MM_true(compactGroup < _compactGroupMaxCount);
 
 	MM_CopyScanCacheVLHGC *copyCache = copyForwardCompactGroup->_copyCache;
+
+	if (_extensions->tarokEnableExpensiveAssertions) {
+		Assert_MM_true(compactGroup < _compactGroupMaxCount);
+		Assert_MM_true((NULL == copyCache) || (compactGroup == copyCache->_compactGroup));
+		MM_HeapRegionDescriptorVLHGC *sourceRegionDescriptor = (MM_HeapRegionDescriptorVLHGC *)_regionManager->tableDescriptorForAddress(objectToEvacuate);
+		Assert_MM_true(*sourceCompactGroup == MM_CompactGroupManager::getCompactGroupNumber(env, sourceRegionDescriptor));
+	}
 
 retry:
 	/* A survivor copy scan cache exists - check if there is room */
@@ -1982,7 +2023,8 @@ MM_CopyForwardScheme::copy(MM_EnvironmentVLHGC *env, MM_AllocationContextTarok *
 		}
 #endif /* J9VM_INTERP_NATIVE_SUPPORT */
 
-		copyCache = reserveMemoryForCopy(env, object, &reservingContext, objectReserveSizeInBytes);
+		uintptr_t sourceCompactGroup = 0;
+		copyCache = reserveMemoryForCopy(env, object, &reservingContext, objectReserveSizeInBytes, &sourceCompactGroup);
 
 		/* Check if memory was reserved successfully */
 		if (NULL == copyCache) {
@@ -2074,9 +2116,7 @@ MM_CopyForwardScheme::copy(MM_EnvironmentVLHGC *env, MM_AllocationContextTarok *
 					/* account for this as free memory */
 					env->_copyForwardCompactGroups[destinationCompactGroup]._freeMemoryMeasured += hotFieldPadSize;
 				}
-				MM_HeapRegionDescriptorVLHGC *sourceRegion = (MM_HeapRegionDescriptorVLHGC *)_regionManager->tableDescriptorForAddress(object);
-				uintptr_t sourceCompactGroup = MM_CompactGroupManager::getCompactGroupNumber(env, sourceRegion);
-				if (sourceRegion->isEden()) {
+				if (isEvacuateObjectInEdenNoCheck(object)) {
 					env->_copyForwardCompactGroups[sourceCompactGroup]._edenStats._liveObjects += 1;
 					env->_copyForwardCompactGroups[sourceCompactGroup]._edenStats._liveBytes += objectCopySizeInBytes;
 					env->_copyForwardCompactGroups[destinationCompactGroup]._edenStats._copiedObjects += 1;
