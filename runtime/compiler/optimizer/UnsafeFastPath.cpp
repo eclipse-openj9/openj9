@@ -285,7 +285,7 @@ bool TR_UnsafeFastPath::tryTransformUnsafeAtomicCallInVarHandleAccessMethod(TR::
     TR::MethodSymbol *symbol = node->getSymbol()->castToMethodSymbol();
     // Codegen will inline the call with the flag
     //
-    if (symbol->getMethod()->isUnsafeCAS()) {
+    if (TR_J9MethodBase::isUnsafeCAS(symbol->getMethod()->getRecognizedMethod())) {
         // codegen doesn't optimize CAS on a static field
         //
         if (isVarHandleOperationMethodOnNonStaticField(callerMethod)
@@ -494,7 +494,8 @@ int32_t TR_UnsafeFastPath::perform()
                     recognizedVarHandleOpMethod = caller;
 
                 if (isVarHandleOperationMethod(caller)
-                    && (isTransformableUnsafeAtomic(comp(), callee) || symbol->getMethod()->isUnsafeCAS())) {
+                    && (isTransformableUnsafeAtomic(comp(), callee)
+                        || TR_J9MethodBase::isUnsafeCAS(symbol->getMethod()->getRecognizedMethod()))) {
                     if (tryTransformUnsafeAtomicCallInVarHandleAccessMethod(tt, caller, callee)) {
                         transformed.add(node);
                         continue;

@@ -2750,7 +2750,7 @@ bool TR_J9InlinerPolicy::isInlineableJNI(TR_ResolvedMethod *method, TR::Node *ca
             && !comp->fej9()->traceableMethodsCanBeInlined()))
         return false;
 
-    if (method->convertToMethod()->isUnsafeWithObjectArg() || method->convertToMethod()->isUnsafeCAS()) {
+    if (TR_J9MethodBase::isUnsafeWithObjectArg(recognizedMethod) || TR_J9MethodBase::isUnsafeCAS(recognizedMethod)) {
         // In Java9 sun/misc/Unsafe methods are simple Java wrappers to JNI
         // methods in jdk.internal, and the enum values above match both. Only
         // return true for the methods that are native.
