@@ -67,8 +67,9 @@ static bool handleOpenSSLConnectionError(int connfd, SSL *&ssl, BIO *&bio, const
         }
     }
     if (TR::Options::getVerboseOption(TR_VerboseJITServer))
-        TR_VerboseLog::writeLineLocked(TR_Vlog_JITServer, "t=%lu %s: errno=%d sslError=%d errorString=%s",
-            (unsigned long)compInfo->getPersistentInfo()->getElapsedTime(), errMsg, errnoCopy, sslError, errorString);
+        TR_VerboseLog::writeLineLocked(TR_Vlog_JITServer, "t=%llu %s: errno=%d sslError=%d errorString=%s",
+            (unsigned long long)compInfo->getPersistentInfo()->getElapsedTime(), errMsg, errnoCopy, sslError,
+            errorString);
     // Print the error strings for all errors that OpenSSL has recorded and empty the error queue
     (*OERR_print_errors_fp)(stderr);
 
@@ -83,8 +84,8 @@ static bool handleOpenSSLConnectionError(int connfd, SSL *&ssl, BIO *&bio, const
 static bool acceptOpenSSLConnection(SSL_CTX *sslCtx, int connfd, BIO *&bio, TR::CompilationInfo *compInfo)
 {
     if (TR::Options::getVerboseOption(TR_VerboseJITServer))
-        TR_VerboseLog::writeLineLocked(TR_Vlog_JITServer, "t=%lu Accepting SSL connection on socket 0x%x",
-            (unsigned long)compInfo->getPersistentInfo()->getElapsedTime(), connfd);
+        TR_VerboseLog::writeLineLocked(TR_Vlog_JITServer, "t=%llu Accepting SSL connection on socket 0x%x",
+            (unsigned long long)compInfo->getPersistentInfo()->getElapsedTime(), connfd);
     SSL *ssl = NULL;
     bio = (*OBIO_new_ssl)(sslCtx, false);
     if (!bio)
@@ -104,8 +105,8 @@ static bool acceptOpenSSLConnection(SSL_CTX *sslCtx, int connfd, BIO *&bio, TR::
 
     if (TR::Options::getVerboseOption(TR_VerboseJITServer))
         TR_VerboseLog::writeLineLocked(TR_Vlog_JITServer,
-            "t=%lu SSL connection on socket 0x%x, Version: %s, Cipher: %s",
-            (unsigned long)compInfo->getPersistentInfo()->getElapsedTime(), connfd, (*OSSL_get_version)(ssl),
+            "t=%llu SSL connection on socket 0x%x, Version: %s, Cipher: %s",
+            (unsigned long long)compInfo->getPersistentInfo()->getElapsedTime(), connfd, (*OSSL_get_version)(ssl),
             (*OSSL_get_cipher)(ssl));
     return true;
 }
@@ -198,8 +199,8 @@ void TR_Listener::serveRemoteCompilationRequests(BaseCompileDispatcher *compiler
     if (sockfd >= 0) {
         info->setJITServerPort(boundPort);
         if (TR::Options::getVerboseOption(TR_VerboseJITServer)) {
-            TR_VerboseLog::writeLineLocked(TR_Vlog_JITServer, "t=%lu Communication socket opened on port %u",
-                (unsigned long)compInfo->getPersistentInfo()->getElapsedTime(), boundPort);
+            TR_VerboseLog::writeLineLocked(TR_Vlog_JITServer, "t=%llu Communication socket opened on port %u",
+                (unsigned long long)compInfo->getPersistentInfo()->getElapsedTime(), boundPort);
         }
     } else {
         fprintf(stderr, "Failed to open server socket on port %d\n", port);
@@ -215,8 +216,8 @@ void TR_Listener::serveRemoteCompilationRequests(BaseCompileDispatcher *compiler
         if (healthSockfd >= 0) {
             info->setJITServerHealthPort(boundHealthPort);
             if (TR::Options::getVerboseOption(TR_VerboseJITServer)) {
-                TR_VerboseLog::writeLineLocked(TR_Vlog_JITServer, "t=%lu Health socket opened on port %u",
-                    (unsigned long)compInfo->getPersistentInfo()->getElapsedTime(), boundHealthPort);
+                TR_VerboseLog::writeLineLocked(TR_Vlog_JITServer, "t=%llu Health socket opened on port %u",
+                    (unsigned long long)compInfo->getPersistentInfo()->getElapsedTime(), boundHealthPort);
             }
         } else {
             fprintf(stderr, "Failed to open health socket on port %d\n", healthPort);

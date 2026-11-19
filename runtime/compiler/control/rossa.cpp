@@ -388,8 +388,8 @@ extern "C" IDATA j9jit_testarossa_err(struct J9JITConfig *jitConfig, J9VMThread 
             compInfo->getPersistentInfo()->setDisableFurtherCompilation(true);
             if (TR::Options::getCmdLineOptions()->getVerboseOption(TR_VerbosePerformance)) {
                 TR_VerboseLog::writeLineLocked(TR_Vlog_PERF,
-                    "t=%6u Disable further compilation due to OOM while creating an optimization plan",
-                    (uint32_t)compInfo->getPersistentInfo()->getElapsedTime());
+                    "t=%6llu Disable further compilation due to OOM while creating an optimization plan",
+                    (unsigned long long)compInfo->getPersistentInfo()->getElapsedTime());
             }
         }
     }
@@ -656,8 +656,8 @@ extern "C" void disableJit(J9JITConfig *jitConfig)
             persistentInfo->setLastTimeSamplerThreadWasSuspended(persistentInfo->getElapsedTime());
             if (TR::Options::getVerboseOption(TR_VerbosePerformance)) {
                 TR_VerboseLog::writeLineLocked(TR_Vlog_PERF,
-                    "t=%u\tSampling thread suspended and changed frequency to %d ms", persistentInfo->getElapsedTime(),
-                    jitConfig->samplingFrequency);
+                    "t=%llu\tSampling thread suspended and changed frequency to %d ms",
+                    (unsigned long long)persistentInfo->getElapsedTime(), jitConfig->samplingFrequency);
             }
         }
         // TODO: what are the implications of remaining in an appropriate JIT state?
@@ -708,8 +708,8 @@ extern "C" void enableJit(J9JITConfig *jitConfig)
             j9thread_interrupt(jitConfig->samplerThread); // interrupt the sampler to look at its new state
             if (TR::Options::getVerboseOption(TR_VerbosePerformance)) {
                 TR_VerboseLog::writeLineLocked(TR_Vlog_SAMPLING,
-                    "t=%u\tSampling thread interrupted and changed frequency to %d ms",
-                    persistentInfo->getElapsedTime(), jitConfig->samplingFrequency);
+                    "t=%llu\tSampling thread interrupted and changed frequency to %d ms",
+                    (unsigned long long)persistentInfo->getElapsedTime(), jitConfig->samplingFrequency);
             }
         }
 

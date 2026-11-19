@@ -5377,8 +5377,8 @@ void TR_J9VMBase::setHasFailedCodeCacheAllocation()
     if (!_compInfo->getRampDownMCT()) {
         _compInfo->setRampDownMCT();
         if (TR::Options::getCmdLineOptions()->getVerboseOption(TR_VerboseCompilationThreads)) {
-            TR_VerboseLog::writeLineLocked(TR_Vlog_INFO, "t=%u setRampDownMCT",
-                (uint32_t)_compInfo->getPersistentInfo()->getElapsedTime());
+            TR_VerboseLog::writeLineLocked(TR_Vlog_INFO, "t=%llu setRampDownMCT",
+                (unsigned long long)_compInfo->getPersistentInfo()->getElapsedTime());
         }
     }
 }

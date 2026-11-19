@@ -2337,8 +2337,9 @@ ClientSessionData *ClientSessionHT::findOrCreateClientSession(uint64_t clientUID
             if (TR::Options::getVerboseOption(TR_VerboseJITServer)
                 || TR::Options::getVerboseOption(TR_VerboseJITServerConns)) {
                 TR_VerboseLog::writeLineLocked(TR_Vlog_JITServer,
-                    "t=%6u A new client (clientUID=%llu) connected. Server allocated a new client session.",
-                    (uint32_t)_compInfo->getPersistentInfo()->getElapsedTime(), (unsigned long long)clientUID);
+                    "t=%6llu A new client (clientUID=%llu) connected. Server allocated a new client session.",
+                    (unsigned long long)_compInfo->getPersistentInfo()->getElapsedTime(),
+                    (unsigned long long)clientUID);
             }
         } else {
             if (TR::Options::getVerboseOption(TR_VerboseJITServer))
@@ -2430,10 +2431,11 @@ void ClientSessionHT::purgeOldDataIfNeeded()
             if (iter->second->getInUse() == 0 && crtTime - iter->second->getTimeOflastAccess() > oldAge) {
                 if (TR::Options::getVerboseOption(TR_VerboseJITServer))
                     TR_VerboseLog::writeLineLocked(TR_Vlog_JITServer,
-                        "t=%u Server will purge session data for clientUID %llu of age %lld. Number of clients before "
+                        "t=%llu Server will purge session data for clientUID %llu of age %lld. Number of clients "
+                        "before "
                         "purge: %u",
-                        (uint32_t)_compInfo->getPersistentInfo()->getElapsedTime(), (unsigned long long)iter->first,
-                        (long long)oldAge, size());
+                        (unsigned long long)_compInfo->getPersistentInfo()->getElapsedTime(),
+                        (unsigned long long)iter->first, (long long)oldAge, size());
                 ClientSessionData::destroy(iter->second); // delete the client data
                 _clientSessionMap.erase(iter); // delete the mapping from the hashtable
             }

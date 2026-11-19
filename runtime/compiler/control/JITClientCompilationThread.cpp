@@ -253,8 +253,8 @@ static bool handleResponse(JITServer::MessageType response, JITServer::ClientStr
             client->write(response, ranges, unloadedClasses->getMaxRanges(), serializedCHTable, dltedMethods);
 
             if ((previousUID != serverUID) && TR::Options::getVerboseOption(TR_VerboseJITServerConns)) {
-                TR_VerboseLog::writeLineLocked(TR_Vlog_JITServer, "t=%6u Connected to a server (serverUID=%llu)",
-                    (uint32_t)compInfo->getPersistentInfo()->getElapsedTime(), (unsigned long long)serverUID);
+                TR_VerboseLog::writeLineLocked(TR_Vlog_JITServer, "t=%6llu Connected to a server (serverUID=%llu)",
+                    (unsigned long long)compInfo->getPersistentInfo()->getElapsedTime(), (unsigned long long)serverUID);
             }
         } break;
         case MessageType::ClientSessionData_getPermanentLoaders: {
@@ -3013,8 +3013,8 @@ void updateCompThreadActivationPolicy(TR::CompilationInfoPerThreadBase *compInfo
     if (curPolicy != newPolicy
         && (TR::Options::getCmdLineOptions()->getVerboseOption(TR_VerboseCompilationThreads)
             || TR::Options::getCmdLineOptions()->getVerboseOption(TR_VerboseJITServer))) {
-        TR_VerboseLog::writeLineLocked(TR_Vlog_JITServer, "t=%6u client has begun %s activation policy",
-            (uint32_t)compInfo->getPersistentInfo()->getElapsedTime(),
+        TR_VerboseLog::writeLineLocked(TR_Vlog_JITServer, "t=%6llu client has begun %s activation policy",
+            (unsigned long long)compInfo->getPersistentInfo()->getElapsedTime(),
             JITServer::compThreadActivationPolicyNames[newPolicy]);
     }
 }

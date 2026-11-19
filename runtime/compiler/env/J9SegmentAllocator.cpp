@@ -124,8 +124,9 @@ void SegmentAllocator::preventAllocationOfBTLMemory(J9MemorySegment *&segment, J
             if (!compInfo->getRampDownMCT()) {
                 compInfo->setRampDownMCT();
                 if (TR::Options::getCmdLineOptions()->getVerboseOption(TR_VerboseCompilationThreads)) {
-                    TR_VerboseLog::writeLineLocked(TR_Vlog_INFO, "t=%u setRampDownMCT because JIT allocated BTL memory",
-                        (uint32_t)compInfo->getPersistentInfo()->getElapsedTime());
+                    TR_VerboseLog::writeLineLocked(TR_Vlog_INFO,
+                        "t=%llu setRampDownMCT because JIT allocated BTL memory",
+                        (unsigned long long)compInfo->getPersistentInfo()->getElapsedTime());
                 }
             } else {
                 // Perhaps we should consider lowering the compilation aggressiveness

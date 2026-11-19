@@ -462,8 +462,8 @@ int32_t CpuSelfThreadUtilization::computeThreadCpuUtilOverLastNns(int64_t validI
 void CpuSelfThreadUtilization::printInfoToVlog() const
 {
     TR_VerboseLog::writeLineLocked(TR_Vlog_INFO,
-        "t=%6u CPUid=%d: lastCheckPoint=%u, lastCpuUtil=%3d (interval=%d ms) prevCpuUtil=%3d (interval=%d ms)",
-        (uint32_t)_persistentInfo->getElapsedTime(), getId(), getLowResolutionClockAtLastUpdate(),
+        "t=%6llu CPUid=%d: lastCheckPoint=%u, lastCpuUtil=%3d (interval=%d ms) prevCpuUtil=%3d (interval=%d ms)",
+        (unsigned long long)_persistentInfo->getElapsedTime(), getId(), getLowResolutionClockAtLastUpdate(),
         getThreadLastCpuUtil(), (int32_t)(getLastMeasurementInterval() / 1000000), getThreadPrevCpuUtil(),
         (int32_t)(getSecondLastMeasurementInterval() / 1000000));
 }

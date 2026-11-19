@@ -315,8 +315,8 @@ void induceRecompilation_unwrapper(void **argsPtr, void **resultPtr)
         compInfo->getPersistentInfo()->setDisableFurtherCompilation(true);
         if (TR::Options::getCmdLineOptions()->getVerboseOption(TR_VerbosePerformance)) {
             TR_VerboseLog::writeLineLocked(TR_Vlog_PERF,
-                "t=%6u Disable further compilation due to OOM while inducing a recompilation",
-                (uint32_t)compInfo->getPersistentInfo()->getElapsedTime());
+                "t=%6llu Disable further compilation due to OOM while inducing a recompilation",
+                (unsigned long long)compInfo->getPersistentInfo()->getElapsedTime());
         }
     }
 }

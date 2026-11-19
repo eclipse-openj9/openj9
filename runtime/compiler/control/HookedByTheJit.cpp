@@ -777,8 +777,8 @@ static void turnOnInterpreterProfiling(J9JavaVM *javaVM, TR::CompilationInfo *co
             return;
         } else {
             if (TR::Options::getCmdLineOptions()->getOption(TR_VerboseInterpreterProfiling)) {
-                TR_VerboseLog::writeLineLocked(TR_Vlog_IPROFILER, "t=%6u IProfiler reactivated...",
-                    (uint32_t)compInfo->getPersistentInfo()->getElapsedTime());
+                TR_VerboseLog::writeLineLocked(TR_Vlog_IPROFILER, "t=%6llu IProfiler reactivated...",
+                    (unsigned long long)compInfo->getPersistentInfo()->getElapsedTime());
             }
         }
     }
@@ -1908,8 +1908,9 @@ static void jitHookClassesUnload(J9HookInterface **hookInterface, UDATA eventNum
     if (TR::Options::getCmdLineOptions()->getVerboseOption(TR_VerboseClassUnloading)) {
         static int32_t numLoadedClassesOld = 0;
         TR_VerboseLog::writeLineLocked(TR_Vlog_GC,
-            "t=%lu classLoaderID=%d. Unloaded classes=%u (Total=%d). Loaded classes since last unload op=%d (Total=%d)",
-            (unsigned long)compInfo->getPersistentInfo()->getElapsedTime(),
+            "t=%llu classLoaderID=%d. Unloaded classes=%u (Total=%d). Loaded classes since last unload op=%d "
+            "(Total=%d)",
+            (unsigned long long)compInfo->getPersistentInfo()->getElapsedTime(),
             (int)persistentInfo->getGlobalClassUnloadID(), (unsigned int)classUnloadCount,
             (int)persistentInfo->getNumUnloadedClasses(),
             (int)(persistentInfo->getNumLoadedClasses() - numLoadedClassesOld),
@@ -3458,8 +3459,7 @@ void lowerCompilationLimitsOnLowVirtualMemory(TR::CompilationInfo *compInfo, J9V
     if ((availableVirtualMemoryMB < (uint32_t)TR::Options::getLowVirtualMemoryMBThreshold() / 2)
         || (availableVirtualMemoryMB < (uint32_t)TR::Options::getLowVirtualMemoryMBThreshold()
             && compInfo->getPersistentInfo()->getNumLoadedClasses() >= TR::Options::_bigAppThreshold)) {
-        uint32_t crtTime
-            = (uint32_t)compInfo->getPersistentInfo()->getElapsedTime(); // 49 days resolution through casting
+        uint64_t crtTime = compInfo->getPersistentInfo()->getElapsedTime();
         static bool traceSent = false;
         // Generate a trace point
         if (TrcEnabled_Trc_JIT_LowUserVirtualMemory && !traceSent) {
@@ -3476,8 +3476,8 @@ void lowerCompilationLimitsOnLowVirtualMemory(TR::CompilationInfo *compInfo, J9V
             TR::Options::setScratchSpaceLimit(TR::Options::getScratchSpaceLimitKBWhenLowVirtualMemory() * 1024);
             if (TR::Options::getCmdLineOptions()->getVerboseOption(TR_VerbosePerformance)) {
                 TR_VerboseLog::writeLineLocked(TR_Vlog_PERF,
-                    "t=%6u WARNING: changed scratchSpaceLimit to %d KB because VMemAv=%u MB", crtTime,
-                    TR::Options::getScratchSpaceLimit() / 1024, availableVirtualMemoryMB);
+                    "t=%6llu WARNING: changed scratchSpaceLimit to %d KB because VMemAv=%u MB",
+                    (unsigned long long)crtTime, TR::Options::getScratchSpaceLimit() / 1024, availableVirtualMemoryMB);
             }
         }
 
@@ -3485,8 +3485,8 @@ void lowerCompilationLimitsOnLowVirtualMemory(TR::CompilationInfo *compInfo, J9V
         if (!compInfo->getRampDownMCT()) {
             compInfo->setRampDownMCT();
             if (TR::Options::getCmdLineOptions()->getVerboseOption(TR_VerboseCompilationThreads)) {
-                TR_VerboseLog::writeLineLocked(TR_Vlog_INFO, "t=%u setRampDownMCT because VMemAv=%u MB", crtTime,
-                    availableVirtualMemoryMB);
+                TR_VerboseLog::writeLineLocked(TR_Vlog_INFO, "t=%llu setRampDownMCT because VMemAv=%u MB",
+                    (unsigned long long)crtTime, availableVirtualMemoryMB);
             }
         }
 
@@ -3500,8 +3500,8 @@ void lowerCompilationLimitsOnLowVirtualMemory(TR::CompilationInfo *compInfo, J9V
             doDisableGCR = true;
         }
         if (doDisableGCR && TR::Options::getCmdLineOptions()->getVerboseOption(TR_VerbosePerformance)) {
-            TR_VerboseLog::writeLineLocked(TR_Vlog_PERF, "t=%6u WARNING: GCR disabled because VMemAv=%u MB", crtTime,
-                availableVirtualMemoryMB);
+            TR_VerboseLog::writeLineLocked(TR_Vlog_PERF, "t=%6llu WARNING: GCR disabled because VMemAv=%u MB",
+                (unsigned long long)crtTime, availableVirtualMemoryMB);
         }
 
         // Disable server mode
@@ -3515,8 +3515,8 @@ void lowerCompilationLimitsOnLowVirtualMemory(TR::CompilationInfo *compInfo, J9V
             doDisableServerMode = true;
         }
         if (doDisableServerMode && TR::Options::getCmdLineOptions()->getVerboseOption(TR_VerbosePerformance)) {
-            TR_VerboseLog::writeLineLocked(TR_Vlog_PERF, "t=%6u WARNING: server mode disabled because VMemAv=%u MB",
-                crtTime, availableVirtualMemoryMB);
+            TR_VerboseLog::writeLineLocked(TR_Vlog_PERF, "t=%6llu WARNING: server mode disabled because VMemAv=%u MB",
+                (unsigned long long)crtTime, availableVirtualMemoryMB);
         }
 
         // Turn off interpreter profiling
@@ -3527,8 +3527,8 @@ void lowerCompilationLimitsOnLowVirtualMemory(TR::CompilationInfo *compInfo, J9V
             compInfo->getPersistentInfo()->setDisableFurtherCompilation(true);
             if (TR::Options::getCmdLineOptions()->getVerboseOption(TR_VerbosePerformance)) {
                 TR_VerboseLog::writeLineLocked(TR_Vlog_PERF,
-                    "t=%6u WARNING: Disable non-essential compilations because VMemAv=%u MB", crtTime,
-                    availableVirtualMemoryMB);
+                    "t=%6llu WARNING: Disable non-essential compilations because VMemAv=%u MB",
+                    (unsigned long long)crtTime, availableVirtualMemoryMB);
             }
         }
     }
@@ -3669,8 +3669,8 @@ void jitHookClassLoadHelper(J9VMThread *vmThread, J9JITConfig *jitConfig, J9Clas
             TR::Options::_sampleThreshold /= 3; // divide by 3 to become more conservative (3% instead of 1%)
             TR::Options::_resetCountThreshold /= 3;
             if (TR::Options::getCmdLineOptions()->getVerboseOption(TR_VerbosePerformance)) {
-                TR_VerboseLog::writeLineLocked(TR_Vlog_PERF, "t=%6u INFO: Changed sampleThreshold to %d",
-                    (uint32_t)compInfo->getPersistentInfo()->getElapsedTime(), TR::Options::_sampleThreshold);
+                TR_VerboseLog::writeLineLocked(TR_Vlog_PERF, "t=%6llu INFO: Changed sampleThreshold to %d",
+                    (unsigned long long)compInfo->getPersistentInfo()->getElapsedTime(), TR::Options::_sampleThreshold);
             }
         }
     }
@@ -3997,11 +3997,11 @@ static void jitHookBytecodeProfiling(J9HookInterface **hook, UDATA eventNum, voi
                 // TODO: try to induce compilations for methods on the Java stack
             } else {
                 if (TR::Options::getCmdLineOptions()->getOption(TR_VerboseInterpreterProfiling)) {
-                    uint32_t t = (uint32_t)(crtTime - compInfo->getPersistentInfo()->getStartTime());
+                    uint64_t t = crtTime - compInfo->getPersistentInfo()->getStartTime();
                     TR_VerboseLog::writeLineLocked(TR_Vlog_PERF,
-                        "t=%u\tSampling thread avoided an interruption in DEEP_IDLE due to IProfiler buffer being "
+                        "t=%llu\tSampling thread avoided an interruption in DEEP_IDLE due to IProfiler buffer being "
                         "received",
-                        t);
+                        (unsigned long long)t);
                 }
             }
         }
@@ -4031,8 +4031,9 @@ static void jitHookBytecodeProfiling(J9HookInterface **hook, UDATA eventNum, voi
     checkAndTurnOffProfilingHook(compInfo);
     if (iProfiler->getProfilerMemoryFootprint() >= TR::Options::_iProfilerMemoryConsumptionLimit) {
         if (TR::Options::getCmdLineOptions()->getOption(TR_VerboseInterpreterProfiling)) {
-            TR_VerboseLog::writeLineLocked(TR_Vlog_IPROFILER, "t=%6u IProfiler exceeded memory limit %d",
-                (uint32_t)compInfo->getPersistentInfo()->getElapsedTime(), iProfiler->getProfilerMemoryFootprint());
+            TR_VerboseLog::writeLineLocked(TR_Vlog_IPROFILER, "t=%6llu IProfiler exceeded memory limit %d",
+                (unsigned long long)compInfo->getPersistentInfo()->getElapsedTime(),
+                iProfiler->getProfilerMemoryFootprint());
         }
         turnOffInterpreterProfiling(jitConfig);
         // Generate a trace point
@@ -4046,8 +4047,8 @@ static void jitHookBytecodeProfiling(J9HookInterface **hook, UDATA eventNum, voi
         if (interpreterProfilingRecordsCount >= TR::Options::_iprofilerSamplesBeforeTurningOff) {
             (*hook)->J9HookUnregister(hook, J9HOOK_VM_PROFILING_BYTECODE_BUFFER_FULL, jitHookBytecodeProfiling, NULL);
             if (TR::Options::getCmdLineOptions()->getOption(TR_VerboseInterpreterProfiling)) {
-                TR_VerboseLog::writeLineLocked(TR_Vlog_IPROFILER, "t=%6u IProfiler stopped after %d records",
-                    (uint32_t)compInfo->getPersistentInfo()->getElapsedTime(), TEST_records + records);
+                TR_VerboseLog::writeLineLocked(TR_Vlog_IPROFILER, "t=%6llu IProfiler stopped after %d records",
+                    (unsigned long long)compInfo->getPersistentInfo()->getElapsedTime(), TEST_records + records);
             }
             interpreterProfilingState = IPROFILING_STATE_OFF;
         }
@@ -4415,8 +4416,8 @@ void disclaimSharedClassCache(TR_J9SharedCache *sharedCache, uint64_t crtElapsed
     size_t rssAfter = getRSS_Kb();
     if (TR::Options::getCmdLineOptions()->getVerboseOption(TR_VerbosePerformance))
         TR_VerboseLog::writeLineLocked(TR_Vlog_PERF,
-            "t=%u JIT disclaimed %d SCC segments  RSS before=%zu KB, RSS after=%zu KB, delta=%zd KB = %5.2f%%",
-            (uint32_t)crtElapsedTime, numDisclaimed, rssBefore, rssAfter, rssBefore - rssAfter,
+            "t=%llu JIT disclaimed %d SCC segments  RSS before=%zu KB, RSS after=%zu KB, delta=%zd KB = %5.2f%%",
+            (unsigned long long)crtElapsedTime, numDisclaimed, rssBefore, rssAfter, rssBefore - rssAfter,
             ((long)(rssAfter - rssBefore) * 100.0 / rssBefore));
 }
 #endif // defined(J9VM_OPT_SHARED_CLASSES) && defined(LINUX)
@@ -4428,8 +4429,8 @@ void disclaimDataCaches(uint64_t crtElapsedTime)
     size_t rssAfter = getRSS_Kb();
     if (TR::Options::getCmdLineOptions()->getVerboseOption(TR_VerbosePerformance))
         TR_VerboseLog::writeLineLocked(TR_Vlog_PERF,
-            "t=%u JIT disclaimed %d Data Cache segments  RSS before=%zu KB, RSS after=%zu KB, delta=%zd KB = %5.2f%%",
-            (uint32_t)crtElapsedTime, numDisclaimed, rssBefore, rssAfter, rssBefore - rssAfter,
+            "t=%llu JIT disclaimed %d Data Cache segments  RSS before=%zu KB, RSS after=%zu KB, delta=%zd KB = %5.2f%%",
+            (unsigned long long)crtElapsedTime, numDisclaimed, rssBefore, rssAfter, rssBefore - rssAfter,
             ((long)(rssAfter - rssBefore) * 100.0 / rssBefore));
 }
 
@@ -4443,10 +4444,10 @@ void disclaimIProfilerSegments(uint64_t crtElapsedTime)
         size_t rssAfter = getRSS_Kb();
         if (TR::Options::getCmdLineOptions()->getVerboseOption(TR_VerbosePerformance))
             TR_VerboseLog::writeLineLocked(TR_Vlog_PERF,
-                "t=%u JIT disclaimed %d IProfiler segments out of %d. RSS before=%zu KB, RSS after=%zu KB, delta=%zd "
+                "t=%llu JIT disclaimed %d IProfiler segments out of %d. RSS before=%zu KB, RSS after=%zu KB, delta=%zd "
                 "KB = %5.2f%%",
-                (uint32_t)crtElapsedTime, numSegDisclaimed, iprofilerAllocator->getNumSegments(), rssBefore, rssAfter,
-                rssBefore - rssAfter, ((long)(rssAfter - rssBefore) * 100.0 / rssBefore));
+                (unsigned long long)crtElapsedTime, numSegDisclaimed, iprofilerAllocator->getNumSegments(), rssBefore,
+                rssAfter, rssBefore - rssAfter, ((long)(rssAfter - rssBefore) * 100.0 / rssBefore));
     }
 }
 
@@ -4460,10 +4461,10 @@ void disclaimRuntimeAssumptionSegments(uint64_t crtElapsedTime)
         size_t rssAfter = getRSS_Kb();
         if (TR::Options::getCmdLineOptions()->getVerboseOption(TR_VerbosePerformance))
             TR_VerboseLog::writeLineLocked(TR_Vlog_PERF,
-                "t=%u JIT disclaimed %d RuntimeAssumption segments out of %d. RSS before=%zu KB, RSS after=%zu KB, "
+                "t=%llu JIT disclaimed %d RuntimeAssumption segments out of %d. RSS before=%zu KB, RSS after=%zu KB, "
                 "delta=%zd KB = %5.2f%%",
-                (uint32_t)crtElapsedTime, numSegDisclaimed, raAllocator->getNumSegments(), rssBefore, rssAfter,
-                rssBefore - rssAfter, ((long)(rssAfter - rssBefore) * 100.0 / rssBefore));
+                (unsigned long long)crtElapsedTime, numSegDisclaimed, raAllocator->getNumSegments(), rssBefore,
+                rssAfter, rssBefore - rssAfter, ((long)(rssAfter - rssBefore) * 100.0 / rssBefore));
     }
 }
 
@@ -4474,8 +4475,8 @@ void disclaimCodeCaches(uint64_t crtElapsedTime)
     size_t rssAfter = getRSS_Kb();
     if (TR::Options::getCmdLineOptions()->getVerboseOption(TR_VerbosePerformance))
         TR_VerboseLog::writeLineLocked(TR_Vlog_PERF,
-            "t=%u JIT disclaimed %d Code Caches RSS before=%zu KB, RSS after=%zu KB, delta=%zd KB = %5.2f%%",
-            (uint32_t)crtElapsedTime, numDisclaimed, rssBefore, rssAfter, rssBefore - rssAfter,
+            "t=%llu JIT disclaimed %d Code Caches RSS before=%zu KB, RSS after=%zu KB, delta=%zd KB = %5.2f%%",
+            (unsigned long long)crtElapsedTime, numDisclaimed, rssBefore, rssAfter, rssBefore - rssAfter,
             ((long)(rssAfter - rssBefore) * 100.0 / rssBefore));
 }
 
@@ -4486,8 +4487,8 @@ void disclaimAOTCodeCaches(uint64_t crtElapsedTime)
     size_t rssAfter = getRSS_Kb();
     if (TR::Options::getCmdLineOptions()->getVerboseOption(TR_VerbosePerformance))
         TR_VerboseLog::writeLineLocked(TR_Vlog_PERF,
-            "t=%u JIT disclaimed %d AOT Code Caches RSS before=%zu KB, RSS after=%zu KB, delta=%zd KB = %5.2f%%",
-            (uint32_t)crtElapsedTime, numDisclaimed, rssBefore, rssAfter, rssBefore - rssAfter,
+            "t=%llu JIT disclaimed %d AOT Code Caches RSS before=%zu KB, RSS after=%zu KB, delta=%zd KB = %5.2f%%",
+            (unsigned long long)crtElapsedTime, numDisclaimed, rssBefore, rssAfter, rssBefore - rssAfter,
             ((long)(rssAfter - rssBefore) * 100.0 / rssBefore));
 }
 
@@ -4958,8 +4959,8 @@ static void jitStateLogic(J9JITConfig *jitConfig, TR::CompilationInfo *compInfo,
                 persistentInfo->_countForRecompile = 1; // flip the bit
                 // write a message in the vlog
                 if (TR::Options::isAnyVerboseOptionSet(TR_VerboseJitState, TR_VerbosePerformance))
-                    TR_VerboseLog::writeLineLocked(TR_Vlog_INFO, "t=%6u GCR enabled; GCR queued=%d",
-                        (uint32_t)crtElapsedTime, compInfo->getNumGCRRequestsQueued());
+                    TR_VerboseLog::writeLineLocked(TR_Vlog_INFO, "t=%6llu GCR enabled; GCR queued=%d",
+                        (unsigned long long)crtElapsedTime, compInfo->getNumGCRRequestsQueued());
             }
         } else // GCR counting is already enabled; see if we need to disable it
         {
@@ -4972,8 +4973,8 @@ static void jitStateLogic(J9JITConfig *jitConfig, TR::CompilationInfo *compInfo,
                 persistentInfo->_countForRecompile = 0; // disable counting
                 // write a message in the vlog
                 if (TR::Options::isAnyVerboseOptionSet(TR_VerboseJitState, TR_VerbosePerformance))
-                    TR_VerboseLog::writeLineLocked(TR_Vlog_INFO, "t=%6u GCR disabled; GCR queued=%d",
-                        (uint32_t)crtElapsedTime, compInfo->getNumGCRRequestsQueued());
+                    TR_VerboseLog::writeLineLocked(TR_Vlog_INFO, "t=%6llu GCR disabled; GCR queued=%d",
+                        (unsigned long long)crtElapsedTime, compInfo->getNumGCRRequestsQueued());
             }
         }
     }
@@ -5026,8 +5027,8 @@ static void jitStateLogic(J9JITConfig *jitConfig, TR::CompilationInfo *compInfo,
     {
         if (TR::Options::getCmdLineOptions()->getVerboseOption(TR_VerbosePerformance))
             TR_VerboseLog::writeLineLocked(TR_Vlog_INFO,
-                "t=%6u Starvation status changed to %d QWeight=%d CompCPUUtil=%d CompThreadsActive=%d",
-                (uint32_t)crtElapsedTime, starvation, compInfo->getOverallQueueWeight(),
+                "t=%6llu Starvation status changed to %d QWeight=%d CompCPUUtil=%d CompThreadsActive=%d",
+                (unsigned long long)crtElapsedTime, starvation, compInfo->getOverallQueueWeight(),
                 compInfo->getTotalCompThreadCpuUtilWhenStarvationComputed(),
                 compInfo->getNumActiveCompThreadsWhenStarvationComputed());
         compInfo->setStarvationDetected(newStarvationStatus);
@@ -5040,8 +5041,8 @@ static void jitStateLogic(J9JITConfig *jitConfig, TR::CompilationInfo *compInfo,
         if (newSleepNano != oldSleepNano) {
             compInfo->setAppSleepNano(newSleepNano);
             if (TR::Options::getCmdLineOptions()->getVerboseOption(TR_VerbosePerformance))
-                TR_VerboseLog::writeLineLocked(TR_Vlog_INFO, "t=%6u SleepTime changed from %d to %d QWeight=%d",
-                    (uint32_t)crtElapsedTime, oldSleepNano, newSleepNano, compInfo->getOverallQueueWeight());
+                TR_VerboseLog::writeLineLocked(TR_Vlog_INFO, "t=%6llu SleepTime changed from %d to %d QWeight=%d",
+                    (unsigned long long)crtElapsedTime, oldSleepNano, newSleepNano, compInfo->getOverallQueueWeight());
         }
     }
 
@@ -5063,9 +5064,9 @@ static void jitStateLogic(J9JITConfig *jitConfig, TR::CompilationInfo *compInfo,
         uint32_t failRate = iProfiler->getReadSampleFailureRate();
         if (TR::Options::getCmdLineOptions()->getVerboseOption(TR_VerboseJitState)) {
             TR_VerboseLog::writeLineLocked(TR_Vlog_IPROFILER,
-                "t=%6u IProfiler current fail rate = %u total=%u fail=%u samplesInBuffer=%u", (uint32_t)crtElapsedTime,
-                failRate, iProfiler->getTotalReadSampleRequests(), iProfiler->getFailedReadSampleRequests(),
-                iProfiler->numSamplesInHistoryBuffer());
+                "t=%6llu IProfiler current fail rate = %u total=%u fail=%u samplesInBuffer=%u",
+                (unsigned long long)crtElapsedTime, failRate, iProfiler->getTotalReadSampleRequests(),
+                iProfiler->getFailedReadSampleRequests(), iProfiler->numSamplesInHistoryBuffer());
         }
         if (crtElapsedTime - lastTimeInJITStartupMode > TR::Options::_waitTimeToStartIProfiler
             || (int32_t)failRate > TR::Options::_iprofilerFailRateThreshold) {
@@ -5073,7 +5074,8 @@ static void jitStateLogic(J9JITConfig *jitConfig, TR::CompilationInfo *compInfo,
             IProfilerOffSinceStartup = false;
             turnOnInterpreterProfiling(jitConfig->javaVM, compInfo);
             if (TR::Options::isAnyVerboseOptionSet(TR_VerboseJitState, TR_VerbosePerformance)) {
-                TR_VerboseLog::writeLineLocked(TR_Vlog_IPROFILER, "t=%6u IProfiler enabled", (uint32_t)crtElapsedTime);
+                TR_VerboseLog::writeLineLocked(TR_Vlog_IPROFILER, "t=%6llu IProfiler enabled",
+                    (unsigned long long)crtElapsedTime);
             }
         }
         iProfiler->advanceEpochForHistoryBuffer();
@@ -5187,8 +5189,8 @@ static void jitStateLogic(J9JITConfig *jitConfig, TR::CompilationInfo *compInfo,
             // Print a message in the vlog
             if (TR::Options::getCmdLineOptions()->isAnyVerboseOptionSet(TR_VerboseJitState, TR_VerboseCompileEnd,
                     TR_VerbosePerformance)) {
-                TR_VerboseLog::writeLineLocked(TR_Vlog_JITSTATE, "t=%6u VM changed state to NOT_STARTUP",
-                    (uint32_t)crtElapsedTime);
+                TR_VerboseLog::writeLineLocked(TR_Vlog_JITSTATE, "t=%6llu VM changed state to NOT_STARTUP",
+                    (unsigned long long)crtElapsedTime);
             }
             // Release AOT data caches to normal compilations
             TR_DataCacheManager::getManager()->startupOver();
@@ -5216,8 +5218,8 @@ static void jitStateLogic(J9JITConfig *jitConfig, TR::CompilationInfo *compInfo,
                 && persistentInfo->getInlinerTemporarilyRestricted()) {
                 persistentInfo->setInlinerTemporarilyRestricted(false);
                 if (TR::Options::getCmdLineOptions()->getVerboseOption(TR_VerbosePerformance)) {
-                    TR_VerboseLog::writeLineLocked(TR_Vlog_PERF, "t=%6u Stopped restricting the inliner",
-                        (uint32_t)crtElapsedTime);
+                    TR_VerboseLog::writeLineLocked(TR_Vlog_PERF, "t=%6llu Stopped restricting the inliner",
+                        (unsigned long long)crtElapsedTime);
                 }
             }
 
@@ -5226,8 +5228,8 @@ static void jitStateLogic(J9JITConfig *jitConfig, TR::CompilationInfo *compInfo,
                 && TR::Options::sharedClassCache()) {
                 if (TR::Options::getCmdLineOptions()->isAnyVerboseOptionSet(TR_VerboseJitState,
                         TR_VerbosePerformance)) {
-                    TR_VerboseLog::writeLineLocked(TR_Vlog_INFO, "t=%6u JIT counts: %d %d %d  AOT counts: %d %d %d",
-                        (uint32_t)crtElapsedTime, TR::Options::getCmdLineOptions()->getInitialCount(),
+                    TR_VerboseLog::writeLineLocked(TR_Vlog_INFO, "t=%6llu JIT counts: %d %d %d  AOT counts: %d %d %d",
+                        (unsigned long long)crtElapsedTime, TR::Options::getCmdLineOptions()->getInitialCount(),
                         TR::Options::getCmdLineOptions()->getInitialBCount(),
                         TR::Options::getCmdLineOptions()->getInitialMILCount(),
                         TR::Options::getAOTCmdLineOptions()->getInitialCount(),
@@ -5244,8 +5246,8 @@ static void jitStateLogic(J9JITConfig *jitConfig, TR::CompilationInfo *compInfo,
                 if (TR::Options::getCmdLineOptions()->isAnyVerboseOptionSet(TR_VerboseJitState,
                         TR_VerbosePerformance)) {
                     TR_VerboseLog::writeLineLocked(TR_Vlog_PERF,
-                        "t=%6u JIT changed invocation counts to: JIT: %d %d %d  AOT: %d %d %d",
-                        (uint32_t)crtElapsedTime, TR::Options::getCmdLineOptions()->getInitialCount(),
+                        "t=%6llu JIT changed invocation counts to: JIT: %d %d %d  AOT: %d %d %d",
+                        (unsigned long long)crtElapsedTime, TR::Options::getCmdLineOptions()->getInitialCount(),
                         TR::Options::getCmdLineOptions()->getInitialBCount(),
                         TR::Options::getCmdLineOptions()->getInitialMILCount(),
                         TR::Options::getAOTCmdLineOptions()->getInitialCount(),
@@ -5283,8 +5285,8 @@ static void jitStateLogic(J9JITConfig *jitConfig, TR::CompilationInfo *compInfo,
                 j9thread_monitor_exit(javaVM->vmThreadListMutex);
 
                 if (TR::Options::isAnyVerboseOptionSet(TR_VerboseJitState, TR_VerbosePerformance)) {
-                    TR_VerboseLog::writeLineLocked(TR_Vlog_JITSTATE, "t=%6u Changing maxIProfilingCount to %d",
-                        (uint32_t)crtElapsedTime, newIprofilerMaxCount);
+                    TR_VerboseLog::writeLineLocked(TR_Vlog_JITSTATE, "t=%6llu Changing maxIProfilingCount to %d",
+                        (unsigned long long)crtElapsedTime, newIprofilerMaxCount);
                 }
             }
         } // if (interpreterProfilingWasOnAtStartup)
@@ -5340,9 +5342,9 @@ static void jitStateLogic(J9JITConfig *jitConfig, TR::CompilationInfo *compInfo,
 
         if (TR::Options::isAnyVerboseOptionSet(TR_VerboseJitState, TR_VerbosePerformance)) {
             TR_VerboseLog::writeLineLocked(TR_Vlog_JITSTATE,
-                "t=%6u JIT changed state from %s to %s cSmpl=%3u iSmpl=%3u comp=%3u recomp=%3u, Q_SZ=%3d CLP=%s "
+                "t=%6llu JIT changed state from %s to %s cSmpl=%3u iSmpl=%3u comp=%3u recomp=%3u, Q_SZ=%3d CLP=%s "
                 "jvmCPU=%d%%",
-                (uint32_t)crtElapsedTime, jitStateNames[oldState], jitStateNames[newState],
+                (unsigned long long)crtElapsedTime, jitStateNames[oldState], jitStateNames[newState],
                 compInfo->_intervalStats._compiledMethodSamples, compInfo->_intervalStats._interpretedMethodSamples,
                 compInfo->_intervalStats._numFirstTimeCompilationsInInterval,
                 compInfo->_intervalStats._numRecompilationsInInterval, compInfo->getMethodQueueSize(),
@@ -5386,8 +5388,8 @@ static void jitStateLogic(J9JITConfig *jitConfig, TR::CompilationInfo *compInfo,
             javaVM->internalVMFunctions->jvmPhaseChange(javaVM, J9VM_PHASE_LATE_SCC_DISCLAIM);
             lateDisclaimNeeded = false;
             if (TR::Options::getCmdLineOptions()->getVerboseOption(TR_VerbosePerformance)) {
-                TR_VerboseLog::writeLineLocked(TR_Vlog_PERF, "t=%u JIT issuing late SCC disclaim",
-                    (uint32_t)crtElapsedTime);
+                TR_VerboseLog::writeLineLocked(TR_Vlog_PERF, "t=%llu JIT issuing late SCC disclaim",
+                    (unsigned long long)crtElapsedTime);
             }
         }
     }
@@ -5396,9 +5398,9 @@ static void jitStateLogic(J9JITConfig *jitConfig, TR::CompilationInfo *compInfo,
 
     if (TR::Options::getCmdLineOptions()->getVerboseOption(TR_VerboseJitState)) {
         TR_VerboseLog::writeLineLocked(TR_Vlog_JITSTATE,
-            "t=%6u oldState=%s newState=%s cls=%3u ssn=%u tsn=%3u cSmpl=%3u iSmpl=%3u comp=%3u recomp=%3u, Q_SZ=%3d "
+            "t=%6llu oldState=%s newState=%s cls=%3u ssn=%u tsn=%3u cSmpl=%3u iSmpl=%3u comp=%3u recomp=%3u, Q_SZ=%3d "
             "VMSTATE=%d jvmCPU=%d%%",
-            (uint32_t)crtElapsedTime, jitStateNames[oldState], jitStateNames[newState],
+            (unsigned long long)crtElapsedTime, jitStateNames[oldState], jitStateNames[newState],
             numClassesLoadedInIntervalNormalized, samplesSentNormalized, totalSamplesNormalized,
             compInfo->_intervalStats._compiledMethodSamples, compInfo->_intervalStats._interpretedMethodSamples,
             compInfo->_intervalStats._numFirstTimeCompilationsInInterval,
@@ -5445,9 +5447,9 @@ bool CPUThrottleEnabled(TR::CompilationInfo *compInfo, uint64_t crtTime)
             compInfo->setExceedsCompCpuEntitlement(TR_no);
             if (TR::Options::getCmdLineOptions()->getVerboseOption(TR_VerbosePerformance))
                 TR_VerboseLog::writeLineLocked(TR_Vlog_INFO,
-                    "t=%6u Changed throttling value for compilation threads to NO because throttling reached "
+                    "t=%6llu Changed throttling value for compilation threads to NO because throttling reached "
                     "expiration time",
-                    (uint32_t)crtTime);
+                    (unsigned long long)crtTime);
         }
         return false;
     }
@@ -5485,7 +5487,7 @@ static void DoCalculateOverallCompCPUUtilization(TR::CompilationInfo *compInfo, 
     // Print the overall comp CPU utilization if the right verbose option is specified
     if (TR::Options::isAnyVerboseOptionSet(TR_VerboseCompilationThreads, TR_VerboseCompilationThreadsDetails)) {
         TR_VerboseLog::CriticalSection vlogLock;
-        TR_VerboseLog::write(TR_Vlog_INFO, "t=%6u TotalCompCpuUtil=%3d%%.", static_cast<uint32_t>(crtTime),
+        TR_VerboseLog::write(TR_Vlog_INFO, "t=%6llu TotalCompCpuUtil=%3d%%.", (unsigned long long)crtTime,
             totalCompCPUUtilization);
         TR::CompilationInfoPerThread * const *arrayOfCompInfoPT = compInfo->getArrayOfCompilationInfoPerThread();
         for (int32_t i = compInfo->getFirstCompThreadID(); i <= compInfo->getLastCompThreadID(); i++) {
@@ -5546,8 +5548,8 @@ void CPUThrottleLogic(TR::CompilationInfo *compInfo, uint64_t crtTime)
             && oldThrottleValue != compInfo->exceedsCompCpuEntitlement()) // did the value change?
         {
             TR_VerboseLog::writeLineLocked(TR_Vlog_INFO,
-                "t=%6u Changed throttling value for compilation threads to %s because compCPUUtil=%d",
-                (uint32_t)crtTime,
+                "t=%6llu Changed throttling value for compilation threads to %s because compCPUUtil=%d",
+                (unsigned long long)crtTime,
                 compInfo->exceedsCompCpuEntitlement() == TR_yes         ? "YES"
                     : compInfo->exceedsCompCpuEntitlement() == TR_maybe ? "MAYBE"
                                                                         : "NO",
@@ -5648,8 +5650,8 @@ static void classLoadPhaseLogic(J9JITConfig *jitConfig, TR::CompilationInfo *com
                     TR::Options::getAOTCmdLineOptions()->setOption(
                         TR_DisableSelectiveNoOptServer); // Turn this feature off
                     if (TR::Options::getCmdLineOptions()->getVerboseOption(TR_VerbosePerformance))
-                        TR_VerboseLog::writeLineLocked(TR_Vlog_INFO, "t=%u selectiveNoOptServer feature turned off",
-                            crtElapsedTime);
+                        TR_VerboseLog::writeLineLocked(TR_Vlog_INFO, "t=%llu selectiveNoOptServer feature turned off",
+                            (unsigned long long)crtElapsedTime);
                 }
             }
             numTicksCapped++;
@@ -5825,7 +5827,7 @@ void getOutOfIdleStatesUnlocked(TR::CompilationInfo::TR_SamplerStates expectedSt
             if (vm->internalVMFunctions->updateVMRuntimeState(vm, J9VM_RUNTIME_STATE_ACTIVE)
                 && (TR::Options::getVerboseOption(TR_VerbosePerformance)))
                 TR_VerboseLog::writeLineLocked(TR_Vlog_PERF,
-                    "t=%u\tSampling thread interrupted and changed VM state to %u", (uint32_t)crtTime,
+                    "t=%llu\tSampling thread interrupted and changed VM state to %u", (unsigned long long)crtTime,
                     J9VM_RUNTIME_STATE_ACTIVE);
         }
     }
@@ -5834,9 +5836,9 @@ void getOutOfIdleStatesUnlocked(TR::CompilationInfo::TR_SamplerStates expectedSt
     j9thread_interrupt(jitConfig->samplerThread);
     if (TR::Options::getVerboseOption(TR_VerbosePerformance)) {
         TR_VerboseLog::writeLineLocked(TR_Vlog_PERF,
-            "t=%u\tSampling thread interrupted and changed state to %s and frequency to %d ms due to %s",
-            (uint32_t)crtTime, samplerThreadStateNames[compInfo->getSamplerState()], jitConfig->samplingFrequency,
-            reason);
+            "t=%llu\tSampling thread interrupted and changed state to %s and frequency to %d ms due to %s",
+            (unsigned long long)crtTime, samplerThreadStateNames[compInfo->getSamplerState()],
+            jitConfig->samplingFrequency, reason);
     }
 }
 
@@ -6018,15 +6020,15 @@ void samplerThreadStateLogic(TR::CompilationInfo *compInfo, TR_FrontEnd *fe, int
     if (newVMState != currentVMState) {
         if (vm->internalVMFunctions->updateVMRuntimeState(vm, newVMState)
             && (TR::Options::getVerboseOption(TR_VerbosePerformance)))
-            TR_VerboseLog::writeLineLocked(TR_Vlog_PERF, "t=%u\tSampling thread changed VM state to %u",
-                (uint32_t)crtTime, newVMState);
+            TR_VerboseLog::writeLineLocked(TR_Vlog_PERF, "t=%llu\tSampling thread changed VM state to %u",
+                (unsigned long long)crtTime, newVMState);
     }
     // Check whether state has changed
     if (samplerState != newSamplerState) {
         compInfo->setSamplerState(newSamplerState);
         if (TR::Options::getVerboseOption(TR_VerbosePerformance)) {
             TR_VerboseLog::writeLineLocked(TR_Vlog_PERF,
-                "t=%u\tSampling thread changed state to %s and frequency to %d ms", (uint32_t)crtTime,
+                "t=%llu\tSampling thread changed state to %s and frequency to %d ms", (unsigned long long)crtTime,
                 samplerThreadStateNames[compInfo->getSamplerState()], jitConfig->samplingFrequency);
         }
     }
@@ -6691,8 +6693,8 @@ static int32_t J9THREAD_PROC samplerThreadProc(void *entryarg)
                                 J9MemoryInfo memInfo;
                                 if (j9sysinfo_get_memory_info(&memInfo) == 0
                                     && memInfo.availVirtual != J9PORT_MEMINFO_NOT_AVAILABLE) {
-                                    TR_VerboseLog::writeLineLocked(TR_Vlog_MEMORY, "t=%6u VMemAv=%u MB",
-                                        (uint32_t)crtTime, (uint32_t)(memInfo.availVirtual >> 20));
+                                    TR_VerboseLog::writeLineLocked(TR_Vlog_MEMORY, "t=%6llu VMemAv=%u MB",
+                                        (unsigned long long)crtTime, (uint32_t)(memInfo.availVirtual >> 20));
                                 }
                             }
 #endif
@@ -6714,7 +6716,8 @@ static int32_t J9THREAD_PROC samplerThreadProc(void *entryarg)
                     > persistentInfo->getLastDebugCounterResetSeconds()
                 && TR::Options::getCmdLineOptions()->getDebugCounterWarmupSeconds() <= crtTime / 1000) {
                 if (TR::Options::isAnyVerboseOptionSet())
-                    TR_VerboseLog::writeLineLocked(TR_Vlog_INFO, "Reset debug counters at t=%dms", (int)crtTime);
+                    TR_VerboseLog::writeLineLocked(TR_Vlog_INFO, "Reset debug counters at t=%llums",
+                        (unsigned long long)crtTime);
                 persistentInfo->setLastDebugCounterResetSeconds(crtTime / 1000);
                 if (dynamicCounters)
                     dynamicCounters->resetAll();
@@ -6747,8 +6750,8 @@ static int32_t J9THREAD_PROC samplerThreadProc(void *entryarg)
                         persistentInfo->_countForRecompile = 0; // disable counting
                         // write a message in the vlog
                         if (TR::Options::isAnyVerboseOptionSet(TR_VerboseJitState, TR_VerbosePerformance))
-                            TR_VerboseLog::writeLineLocked(TR_Vlog_INFO, "t=%6u GCR disabled; GCR queued=%d",
-                                (uint32_t)crtTime, compInfo->getNumGCRRequestsQueued());
+                            TR_VerboseLog::writeLineLocked(TR_Vlog_INFO, "t=%6llu GCR disabled; GCR queued=%d",
+                                (unsigned long long)crtTime, compInfo->getNumGCRRequestsQueued());
                     }
                 }
             }
@@ -6816,9 +6819,9 @@ static int32_t J9THREAD_PROC samplerThreadProc(void *entryarg)
                                 compInfo->setCompileFromLPQRegardlessOfCPU(false);
                                 if (TR::Options::isAnyVerboseOptionSet(TR_VerbosePerformance, TR_VerboseJITServer)) {
                                     TR_VerboseLog::writeLineLocked(TR_Vlog_PERF,
-                                        "t=%6u Entering low compilation density mode. Will suppress most remote "
+                                        "t=%6llu Entering low compilation density mode. Will suppress most remote "
                                         "compilations. numComps=%u cpuConsumed=%llu ms LPQsize=%d",
-                                        (uint32_t)crtTime, numComps, cpuConsumed,
+                                        (unsigned long long)crtTime, numComps, (unsigned long long)cpuConsumed,
                                         compInfo->getLowPriorityCompQueue().getLowPriorityQueueSize());
                                 }
                             }
@@ -6841,9 +6844,9 @@ static int32_t J9THREAD_PROC samplerThreadProc(void *entryarg)
                                     compInfo->setCompileFromLPQRegardlessOfCPU(true);
                                 if (TR::Options::isAnyVerboseOptionSet(TR_VerbosePerformance, TR_VerboseJITServer)) {
                                     TR_VerboseLog::writeLineLocked(TR_Vlog_PERF,
-                                        "t=%6u Exiting low compilation density mode. Will re-enable remote "
+                                        "t=%6llu Exiting low compilation density mode. Will re-enable remote "
                                         "compilations. numComps=%u cpuConsumed=%llu ms LPQsize=%d",
-                                        (uint32_t)crtTime, numComps, cpuConsumed,
+                                        (unsigned long long)crtTime, numComps, (unsigned long long)cpuConsumed,
                                         compInfo->getLowPriorityCompQueue().getLowPriorityQueueSize());
                                 }
                             }
@@ -6877,13 +6880,13 @@ static int32_t J9THREAD_PROC samplerThreadProc(void *entryarg)
                     highCodeCacheOccupancyThresholdReached = true;
                     if (TR::Options::getCmdLineOptions()->isAnyVerboseOptionSet(TR_VerbosePerformance)) {
                         TR_VerboseLog::writeLineLocked(TR_Vlog_PERF,
-                            "t=%6u JIT entered high code cache occupancy state", (uint32_t)crtTime);
+                            "t=%6llu JIT entered high code cache occupancy state", (unsigned long long)crtTime);
                     }
                 } else if ((usedCacheSize <= threshold) && highCodeCacheOccupancyThresholdReached) {
                     highCodeCacheOccupancyThresholdReached = false;
                     if (TR::Options::getCmdLineOptions()->isAnyVerboseOptionSet(TR_VerbosePerformance)) {
-                        TR_VerboseLog::writeLineLocked(TR_Vlog_PERF, "t=%6u JIT exited high code cache occupancy state",
-                            (uint32_t)crtTime);
+                        TR_VerboseLog::writeLineLocked(TR_Vlog_PERF,
+                            "t=%6llu JIT exited high code cache occupancy state", (unsigned long long)crtTime);
                     }
                 }
 
@@ -7839,8 +7842,8 @@ void turnOffInterpreterProfiling(J9JITConfig *jitConfig)
             PORT_ACCESS_FROM_JITCONFIG(jitConfig);
             if (TR::Options::getCmdLineOptions()->getOption(TR_VerboseInterpreterProfiling)) {
                 TR::CompilationInfo *compInfo = TR::CompilationInfo::get(jitConfig);
-                TR_VerboseLog::writeLineLocked(TR_Vlog_IPROFILER, "t=%6u IProfiler stopped",
-                    (uint32_t)compInfo->getPersistentInfo()->getElapsedTime());
+                TR_VerboseLog::writeLineLocked(TR_Vlog_IPROFILER, "t=%6llu IProfiler stopped",
+                    (unsigned long long)compInfo->getPersistentInfo()->getElapsedTime());
             }
         }
     }
