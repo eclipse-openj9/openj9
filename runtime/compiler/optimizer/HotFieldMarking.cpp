@@ -88,8 +88,10 @@ int32_t TR_HotFieldMarking::perform()
     OMR::Logger *log = comp()->log();
     bool trace = comp()->getOption(TR_TraceMarkingOfHotFields);
 
-    if (!TR::Compiler->om.isHotReferenceFieldRequired()) {
-        logprints(trace, log, "Skipping hot field marking since dynamic breadth first scan ordering is disabled\n");
+    if (!TR::Compiler->om.isHotReferenceFieldRequired() || comp()->getOption(TR_DisableMarkingOfHotFields)) {
+        logprints(trace, log,
+            "Skipping hot field marking since field marking is disabled. Do not disable hot fields if using dynamic "
+            "breadth first scan ordering.\n");
         return 0;
     }
 
