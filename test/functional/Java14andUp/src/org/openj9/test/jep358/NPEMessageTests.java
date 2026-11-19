@@ -56,6 +56,7 @@ import java.lang.invoke.MethodHandles;
 import java.lang.invoke.MethodType;
 import java.lang.invoke.WrongMethodTypeException;
 import java.lang.invoke.MethodHandles.Lookup;
+import java.nio.ByteBuffer;
 
 interface E0 {
 	public int throwNPEOne(F fVal);
@@ -121,6 +122,13 @@ public class NPEMessageTests {
 
 	private static void checkMessage(String actualMsg, String expectedMsgWithDebugInfo, String expectedMsgNoDebugInfo) {
 		Assert.assertEquals(actualMsg, hasDebugInfo ? expectedMsgWithDebugInfo : expectedMsgNoDebugInfo);
+	}
+
+	private static void checkBecauseMessage(String actualNPEMsg, String expectedBecauseMsg) {
+		Assert.assertNotNull(actualNPEMsg, "NPE message should not be null");
+		Assert.assertTrue(
+				actualNPEMsg.endsWith(expectedBecauseMsg),
+				"Expected [" + actualNPEMsg + "] to end with [" + expectedBecauseMsg + "]");
 	}
 
 	public void test_iaload() {
@@ -1604,5 +1612,65 @@ public class NPEMessageTests {
 				new double[31], new double[32], new double[33], new double[34], new double[35], new double[36], new double[37], new double[38], new double[39], new double[40],
 				new double[41], new double[42], new double[43], new double[44], new double[45], new double[46], new double[47], new double[48], new double[49], new double[50],
 				new double[51], new double[52], new double[53], new double[54], new double[55], new double[56], new double[57], new double[58], new double[59], new double[60]);
+	}
+
+	private static final class Holder {
+		private final ByteBuffer buf;
+
+		Holder(ByteBuffer b) {
+			buf = b;
+		}
+
+		boolean hasRemaining() {
+			return buf.hasRemaining();
+		}
+	}
+
+	private static interface Callback {
+		boolean completed();
+	}
+
+	private static Callback pipe(final Holder holder) {
+		return new Callback() {
+			@Override
+			public boolean completed() {
+				return holder.hasRemaining();
+			}
+		};
+	}
+
+	// The testcase is from https://github.com/eclipse-openj9/openj9/issues/25159.
+	public void test_jittedNPEAtJBgetfield() throws Throwable {
+		final int JIT_WARMUP_ITERATIONS = 2_000_000;
+		final int TEST_ITERATIONS = 100_000;
+
+		Callback warm = pipe(new Holder(ByteBuffer.allocate(8)));
+		long sink = 0;
+		for (int i = 0; i < JIT_WARMUP_ITERATIONS; i++) {
+			if (warm.completed()) {
+				sink++;
+			}
+		}
+		System.out.println("warm-up done (" + sink + ")");
+
+		try {
+			Callback a = pipe(new Holder(null));
+			for (int i = 0; i < TEST_ITERATIONS; i++) {
+				a.completed();
+			}
+			Assert.fail("NullPointerException should have been thrown!");
+		} catch (NullPointerException npe) {
+			checkBecauseMessage(npe.getMessage(), "because \"this.buf\" is null");
+		}
+
+		try {
+			Callback b = pipe(null);
+			for (int i = 0; i < 100_000; i++) {
+				b.completed();
+			}
+			Assert.fail("NullPointerException should have been thrown!");
+		} catch (NullPointerException npe) {
+			checkBecauseMessage(npe.getMessage(), "because \"this.val$holder\" is null");
+		}
 	}
 }

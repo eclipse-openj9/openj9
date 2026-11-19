@@ -117,6 +117,8 @@ static const U_32 decodeTable[] = {
 	0xF							/* return index */
 };
 
+#define CURRENT_OBJECT_THIS_REFERENCE "this"
+
 /**
  * Replace '/' with '.' for an internal fully qualified name
  *
@@ -1114,7 +1116,10 @@ computeNPEMsgAtPC(J9VMThread *vmThread, J9ROMMethod *romMethod, J9ROMClass *romC
 					computeNPEMsgAtPC(vmThread, romMethod, romClass, bcCausePos, false, &npeMsgObjref, isMethodFlag, temps, bytecodeOffset);
 				}
 
-				if (npeFinalFlag) {
+				/* When NPE is thrown at JBgetfield by JIT, the field name needs to be included with current object reference "this". */
+				if (npeFinalFlag
+					&& (NULL != npeMsgObjref) && (0 != strcmp(npeMsgObjref, CURRENT_OBJECT_THIS_REFERENCE))
+				) {
 					*npeMsg = npeMsgObjref;
 				} else {
 					UDATA index = PARAM_16(bcCurrentPtr, 1);
@@ -1246,6 +1251,8 @@ getLocalsName(J9VMThread *vmThread, J9ROMMethod *romMethod, U_16 localVar, UDATA
 			) {
 				if ((NULL != values->signature) && (NULL != values->name)) {
 					result = getMsgWithAllocation(vmThread, "%.*s", J9UTF8_LENGTH(values->name), J9UTF8_DATA(values->name));
+					/* The result could be CURRENT_OBJECT_THIS_REFERENCE("this"). */
+					Trc_VM_GetLocalsName_SlotValue(vmThread, localVar, result);
 					foundName = true;
 				}
 				break;
@@ -1259,7 +1266,7 @@ getLocalsName(J9VMThread *vmThread, J9ROMMethod *romMethod, U_16 localVar, UDATA
 		if ((0 == localVar)
 			&& !(romMethod->modifiers & J9AccStatic)
 		) {
-			result = getMsgWithAllocation(vmThread, "this");
+			result = getMsgWithAllocation(vmThread, CURRENT_OBJECT_THIS_REFERENCE);
 		} else {
 			UDATA temp = temps[localVar];
 			if (BYTECODE_TEMP_CHANGED == temp) {
