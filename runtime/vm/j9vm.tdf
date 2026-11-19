@@ -1098,3 +1098,5 @@ TraceEvent=Trc_VM_GetCompleteNPEMessage_JBputstatic_npeCauseMsg Overhead=1 Level
 TraceEvent=Trc_VM_jfrObjectAllocationSample Overhead=1 Level=5 Template="jfrObjectAllocationSample class=%.*s weight=%zu objectSize=%zu"
 TraceEvent=Trc_VM_jfrObjectAllocationSample_indexableObject Overhead=1 Level=5 Template="jfrObjectAllocationSample class=%.*s%.*s; weight=%zu objectSize=%zu"
 TraceEvent=Trc_VM_jfrRecalibrateObjectAllocationSampleInterval NoEnv Overhead=1 Level=5 Template="jfrRecalibrateObjectAllocationSampleInterval totalBytes=%zu elapsedSeconds=%zu oldInterval=%zu newInterval=%zu"
+
+TraceEvent=Trc_VM_GetLocalsName_SlotValue Overhead=1 Level=3 Template="GetLocalsName() slotNumber(%d) result (%s)"
