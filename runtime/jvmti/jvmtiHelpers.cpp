@@ -995,6 +995,22 @@ hashEqualObjectTag(void *lhsEntry, void *rhsEntry, void *userData)
 }
 
 
+#if defined(J9VM_OPT_VALHALLA_VALUE_TYPES)
+/* Returns TRUE if slotPtr is the global reference the table owns for *slotPtr. The slot address
+ * is compared, so a user created global reference to an equal value is not matched. */
+BOOLEAN
+isValueTypeTagGlobalRef(J9JVMTIEnv *j9env, j9object_t *slotPtr)
+{
+	if ((NULL == j9env) || (NULL == j9env->valueTypeObjectTagTable) || (NULL == slotPtr) || (NULL == *slotPtr)) {
+		return FALSE;
+	}
+	J9JVMTIValueTypeTag *entry = findValueTypeTag(j9env, *slotPtr);
+
+	return (NULL != entry) && ((j9object_t *)entry->ref == slotPtr);
+}
+#endif /* defined(J9VM_OPT_VALHALLA_VALUE_TYPES) */
+
+
 static UDATA
 watchedClassHash(void *entry, void *userData)
 {
