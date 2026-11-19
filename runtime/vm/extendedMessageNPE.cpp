@@ -35,8 +35,9 @@ extern "C" {
 */
 
 static IDATA buildBranchMap(J9NPEMessageData *npeMsgData);
-static void computeNPEMsgAtPC(J9VMThread *vmThread, J9ROMMethod *romMethod, J9ROMClass *romClass, UDATA npePC,
-	bool npeFinalFlag, char **npeMsg, bool *isMethodFlag, UDATA *temps, J9BytecodeOffset *bytecodeOffset);
+static void computeNPEMsgAtPC(
+		J9VMThread *vmThread, J9ROMMethod *romMethod, J9ROMClass *romClass, UDATA npePC, bool *addFieldName,
+		bool npeFinalFlag, char **npeMsg, bool *isMethodFlag, UDATA *temps, J9BytecodeOffset *bytecodeOffset);
 static char* convertToJavaFullyQualifiedName(J9VMThread *vmThread, J9UTF8 *fullyQualifiedNameUTF);
 static char* convertMethodSignature(J9VMThread *vmThread, J9UTF8 *methodSig);
 static IDATA copyToTargetStack(J9NPEMessageData *npeMsgData, UDATA target);
@@ -793,6 +794,7 @@ buildBranchMap(J9NPEMessageData *npeMsgData)
  * @param[in] romMethod The romMethod of the bytecode
  * @param[in] romClass The romClass of the bytecode
  * @param[in] npePC The bytecode offset where the NPE message is to be generated
+ * @param[in,out] addFieldName The flag indicates if the field name is to be added
  * @param[in] npeFinalFlag The flag indicates if getCompleteNPEMessage() is invoked
  * @param[in,out] npeMsg An extended NPE message generated so far
  * @param[in,out] isMethodFlag The flag indicates if "the return value of" should be added into the message
@@ -801,7 +803,8 @@ buildBranchMap(J9NPEMessageData *npeMsgData)
  * @param[in] bytecodeOffset The cause of NPE
  */
 static void
-computeNPEMsgAtPC(J9VMThread *vmThread, J9ROMMethod *romMethod, J9ROMClass *romClass, UDATA npePC,
+computeNPEMsgAtPC(
+		J9VMThread *vmThread, J9ROMMethod *romMethod, J9ROMClass *romClass, UDATA npePC, bool *addFieldName,
 		bool npeFinalFlag, char **npeMsg, bool *isMethodFlag, UDATA *temps, J9BytecodeOffset *bytecodeOffset)
 {
 	Trc_VM_ComputeNPEMsgAtPC_Entry(vmThread, romClass, romMethod, temps, bytecodeOffset, npePC, npeFinalFlag, *isMethodFlag, *npeMsg);
@@ -926,7 +929,8 @@ computeNPEMsgAtPC(J9VMThread *vmThread, J9ROMMethod *romMethod, J9ROMClass *romC
 					if (BYTECODE_BRANCH_TARGET == objectrefPos) {
 						/* *npeMsg is NULL */
 					} else {
-						computeNPEMsgAtPC(vmThread, romMethod, romClass, objectrefPos, false, npeMsg, isMethodFlag, temps, bytecodeOffset);
+						bool tempAddFieldName = false;
+						computeNPEMsgAtPC(vmThread, romMethod, romClass, objectrefPos, &tempAddFieldName, false, npeMsg, isMethodFlag, temps, bytecodeOffset);
 					}
 				} else {
 					U_8 *bcPtrTemp = (JBinvokeinterface2 == bcCurrent) ? bcCurrentPtr + 2 : bcCurrentPtr;
@@ -975,6 +979,12 @@ computeNPEMsgAtPC(J9VMThread *vmThread, J9ROMMethod *romMethod, J9ROMClass *romC
 					localVar = 0;
 				}
 				*npeMsg = getLocalsName(vmThread, romMethod, localVar, npePC, temps);
+				if (!npeFinalFlag && (JBaload0getfield == bcCurrent)) {
+					/* When NPE is thrown at JBgetfield by JIT and the bytecode putting
+					 * the object reference is JBaload0getfield, set the flag addFieldName.
+					 */
+					*addFieldName = true;
+				}
 				break;
 			}
 
@@ -1029,7 +1039,10 @@ computeNPEMsgAtPC(J9VMThread *vmThread, J9ROMMethod *romMethod, J9ROMClass *romC
 			case JBdup2:	/* Fall through case !!! */
 			case JBdup2x1:	/* Fall through case !!! */
 			case JBdup2x2:
-				computeNPEMsgAtPC(vmThread, romMethod, romClass, bytecodeOffset[npePC].first, false, npeMsg, isMethodFlag, temps, bytecodeOffset);
+			{
+				bool tempAddFieldName = false;
+				computeNPEMsgAtPC(vmThread, romMethod, romClass, bytecodeOffset[npePC].first, &tempAddFieldName, false, npeMsg, isMethodFlag, temps, bytecodeOffset);
+			}
 				break;
 
 			case JBiastore:	/* Fall through case !!! */
@@ -1048,7 +1061,8 @@ computeNPEMsgAtPC(J9VMThread *vmThread, J9ROMMethod *romMethod, J9ROMClass *romC
 				) {
 					/* *npeMsg is NULL */
 				} else {
-					computeNPEMsgAtPC(vmThread, romMethod, romClass, bcCausePos, false, npeMsg, isMethodFlag, temps, bytecodeOffset);
+					bool tempAddFieldName = false;
+					computeNPEMsgAtPC(vmThread, romMethod, romClass, bcCausePos, &tempAddFieldName, false, npeMsg, isMethodFlag, temps, bytecodeOffset);
 				}
 				break;
 			}
@@ -1070,7 +1084,8 @@ computeNPEMsgAtPC(J9VMThread *vmThread, J9ROMMethod *romMethod, J9ROMClass *romC
 						npeMsgObjref = getMsgWithAllocation(vmThread, "<array>");
 					}
 				} else {
-					computeNPEMsgAtPC(vmThread, romMethod, romClass, bcCausePos, false, &npeMsgObjref, isMethodFlag, temps, bytecodeOffset);
+					bool tempAddFieldName = false;
+					computeNPEMsgAtPC(vmThread, romMethod, romClass, bcCausePos, &tempAddFieldName, false, &npeMsgObjref, isMethodFlag, temps, bytecodeOffset);
 				}
 				aaloadIndexPos = bytecodeOffset[npePC].second;
 				if (npeFinalFlag || (NULL == npeMsgObjref)) {
@@ -1080,7 +1095,8 @@ computeNPEMsgAtPC(J9VMThread *vmThread, J9ROMMethod *romMethod, J9ROMClass *romC
 					if (BYTECODE_BRANCH_TARGET == aaloadIndexPos) {
 						npeMsgIndex = getMsgWithAllocation(vmThread, "...");
 					} else {
-						computeNPEMsgAtPC(vmThread, romMethod, romClass, aaloadIndexPos, false, &npeMsgIndex, isMethodFlag, temps, bytecodeOffset);
+						bool tempAddFieldName = false;
+						computeNPEMsgAtPC(vmThread, romMethod, romClass, aaloadIndexPos, &tempAddFieldName, false, &npeMsgIndex, isMethodFlag, temps, bytecodeOffset);
 					}
 
 					if (NULL != npeMsgIndex) {
@@ -1110,11 +1126,16 @@ computeNPEMsgAtPC(J9VMThread *vmThread, J9ROMMethod *romMethod, J9ROMClass *romC
 			case JBgetfield: {
 				UDATA bcCausePos = bytecodeOffset[npePC].first;
 				char *npeMsgObjref = NULL;
+				bool tempAddFieldName = *addFieldName && npeFinalFlag;
+				/* Reset the flag which intends to only add the name of the field
+				 * where NPE is thrown at JBgetfield by JIT in first invokation of computeNPEMsgAtPC().
+				 */
+				*addFieldName = false;
 				if (BYTECODE_BRANCH_TARGET != bcCausePos) {
-					computeNPEMsgAtPC(vmThread, romMethod, romClass, bcCausePos, false, &npeMsgObjref, isMethodFlag, temps, bytecodeOffset);
+					computeNPEMsgAtPC(vmThread, romMethod, romClass, bcCausePos, &tempAddFieldName, false, &npeMsgObjref, isMethodFlag, temps, bytecodeOffset);
 				}
 
-				if (npeFinalFlag) {
+				if (npeFinalFlag && !(tempAddFieldName)) {
 					*npeMsg = npeMsgObjref;
 				} else {
 					UDATA index = PARAM_16(bcCurrentPtr, 1);
@@ -1135,8 +1156,9 @@ computeNPEMsgAtPC(J9VMThread *vmThread, J9ROMMethod *romMethod, J9ROMClass *romC
 			case JBputfield: {
 				UDATA bcCausePos = bytecodeOffset[npePC].first;
 				char *npeMsgObjref = NULL;
+				bool tempAddFieldName = false;
 
-				computeNPEMsgAtPC(vmThread, romMethod, romClass, bcCausePos, false, &npeMsgObjref, isMethodFlag, temps, bytecodeOffset);
+				computeNPEMsgAtPC(vmThread, romMethod, romClass, bcCausePos, &tempAddFieldName, false, &npeMsgObjref, isMethodFlag, temps, bytecodeOffset);
 				if (npeFinalFlag || (NULL == npeMsgObjref)) {
 					*npeMsg = npeMsgObjref;
 				} else {
@@ -1413,6 +1435,7 @@ simulateStack(J9NPEMessageData *npeMsgData)
 	bool justLoadedStack = false;
 	bool wideIndex = false;
 	UDATA popCount = 0;
+	bool addFieldName = false;
 
 	while (pc < bytecodeLength) {
 		bcIndex = bytecode + pc;
@@ -1420,6 +1443,9 @@ simulateStack(J9NPEMessageData *npeMsgData)
 		if (pc == npePC) {
 			/* mark the NPE PC is found, need proceed to prepare the data structures while the pc value could be updated later */
 			foundFlag = true;
+			/* When NPE is thrown at JBgetfield by JIT, the field name needs to be included with current object reference. */
+			addFieldName = (JBgetfield == currentBytecode) &&
+					((J9VM_STACK_FRAME_JIT_INLINE == npeMsgData->frameType) || (J9VM_STACK_FRAME_JIT == npeMsgData->frameType));
 		} else if (JBinvokeinterface2 == currentBytecode) {
 			if ((pc + 2) == npePC) {
 				foundFlag = true;
@@ -1911,7 +1937,7 @@ _checkFinished:
 	if (foundFlag) {
 		bool isMethodFlag = false;
 
-		computeNPEMsgAtPC(vmThread, romMethod, romClass, npePC, true, &npeMsg, &isMethodFlag, temps, bytecodeOffset);
+		computeNPEMsgAtPC(vmThread, romMethod, romClass, npePC, &addFieldName, true, &npeMsg, &isMethodFlag, temps, bytecodeOffset);
 	}
 
 _internalError: /* required by macro POP etc. */

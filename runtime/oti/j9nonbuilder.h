@@ -2418,6 +2418,7 @@ typedef struct J9BytecodeOffset {
 
 typedef struct J9NPEMessageData {
 	UDATA npePC;
+	UDATA frameType;
 	U_32 *bytecodeMap;
 	UDATA bytecodeMapSize;
 	struct J9BytecodeOffset *bytecodeOffset;
