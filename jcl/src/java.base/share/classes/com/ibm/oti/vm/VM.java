@@ -736,6 +736,12 @@ public static native void triggerExecutionSample();
  */
 public static native String getjfrCMDLineOption();
 /**
+ * Native used to get the -XX:FlightRecorderOptions string
+ *
+ * @return the -XX:FlightRecorderOptions value, or null if not specified
+ */
+public static native String getJFRFlightRecorderOptions();
+/**
  * Native used to get the JFR delay string
  *
  * @return a String which is the JFR delay value (e.g., "30s", "2m")

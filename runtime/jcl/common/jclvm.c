@@ -582,6 +582,15 @@ Java_com_ibm_oti_vm_VM_getjfrCMDLineOption(JNIEnv *env, jclass clazz)
 	return jfrOption;
 }
 jstring JNICALL
+Java_com_ibm_oti_vm_VM_getJFRFlightRecorderOptions(JNIEnv *env, jclass clazz)
+{
+	const char *options = ((J9VMThread *)env)->javaVM->jfrState.flightRecorderOptions;
+	if (NULL == options) {
+		return NULL;
+	}
+	return (*env)->NewStringUTF(env, options);
+}
+jstring JNICALL
 Java_com_ibm_oti_vm_VM_getJfrDelay(JNIEnv *env, jclass clazz)
 {
 	J9JavaVM *javaVM = ((J9VMThread *)env)->javaVM;

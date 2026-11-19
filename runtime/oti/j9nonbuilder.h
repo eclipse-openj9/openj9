@@ -6374,6 +6374,8 @@ typedef struct JFRCheckpointEventTables {
 typedef struct JFRState {
 	char *jfrFileName;
 	const char *jfrCMDLineOption;
+	/* value of -XX:FlightRecorderOptions, NULL if not specified */
+	const char *flightRecorderOptions;
 	U_8 *metaDataBlobFile;
 	UDATA metaDataBlobFileSize;
 	IDATA blobFileDescriptor;

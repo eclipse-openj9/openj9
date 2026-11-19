@@ -4765,6 +4765,21 @@ processVMArgsFromFirstToLast(J9JavaVM * vm)
 			}
 		}
 	}
+	{
+		IDATA flightRecorderOptionsIndex = FIND_AND_CONSUME_VMARG(STARTSWITH_MATCH, VMOPT_XXFLIGHTRECORDEROPTIONS, NULL);
+		if ((0 <= flightRecorderOptionsIndex)
+			&& J9_ARE_ANY_BITS_SET(vm->extendedRuntimeFlags3, J9_EXTENDED_RUNTIME3_JFR_V2_SUPPORT)
+		) {
+			/* Applied by JFRHelpers through DCmdConfigure before any recording is started. */
+			char *jfrOptionBuffer = NULL;
+			if (0 <= FIND_ARG_IN_VMARGS(STARTSWITH_MATCH, VMOPT_XXFLIGHTRECORDEROPTIONS_EQUALS, NULL)) {
+				GET_OPTION_VALUE(flightRecorderOptionsIndex, '=', &jfrOptionBuffer);
+			} else if (0 <= FIND_ARG_IN_VMARGS(STARTSWITH_MATCH, VMOPT_XXFLIGHTRECORDEROPTIONS_COLON, NULL)) {
+				GET_OPTION_OPTION(flightRecorderOptionsIndex, ':', ':', &jfrOptionBuffer);
+			}
+			vm->jfrState.flightRecorderOptions = jfrOptionBuffer;
+		}
+	}
 #endif /* defined(J9VM_OPT_JFR) */
 
 	{

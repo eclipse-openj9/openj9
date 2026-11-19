@@ -697,6 +697,7 @@ if(J9VM_OPT_JFR)
 	omr_add_exports(jclse
 		Java_com_ibm_oti_vm_VM_disableJFRV2Support
 		Java_com_ibm_oti_vm_VM_getjfrCMDLineOption
+		Java_com_ibm_oti_vm_VM_getJFRFlightRecorderOptions
 		Java_com_ibm_oti_vm_VM_getJfrDelay
 		Java_com_ibm_oti_vm_VM_getJfrDuration
 		Java_com_ibm_oti_vm_VM_getJfrRecordingFileName
