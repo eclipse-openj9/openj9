@@ -155,6 +155,7 @@
 	<test name="JCL_TEST_Test-Annotation">
 		<classes>
 			<class name="org.openj9.test.annotation.Test_Annotation"/>
+			<class name="org.openj9.test.annotation.Test_AnnotationInheritance"/>
 		</classes>
 	</test>
 	<test name="JCL_TEST_Java-Lang_ClassLoader">
