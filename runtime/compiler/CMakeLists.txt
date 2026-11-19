@@ -114,6 +114,52 @@ if(J9VM_OPT_JITSERVER)
 	include_directories(${OPENSSL_INCLUDE_DIR})
 endif()
 
+if(OMR_OS_ZTPF)
+	if(NOT DEFINED TPF_ROOT)
+		if(DEFINED ENV{TPF_ROOT})
+			set(TPF_ROOT "$ENV{TPF_ROOT}" CACHE STRING "z/TPF root directory list")
+		elseif(DEFINED ENV{TPF_ROOT1})
+			set(TPF_ROOT "$ENV{TPF_ROOT1}" CACHE STRING "z/TPF root directory list")
+		endif()
+	endif()
+	if(TPF_ROOT)
+		# Convert space/colon separated paths into a CMake list
+		string(REPLACE ":" " " tpf_root_str "${TPF_ROOT}")
+		separate_arguments(tpf_root_dirs UNIX_COMMAND "${tpf_root_str}")
+
+		set(tpf_subdirs
+			noship/include7
+			noship/include
+			base/a2e/headers7
+			base/a2e/headers
+			base/include
+			base/openssl/include
+			base/openssl/tpfssl/headers
+			opensource/include7
+			opensource/include7/backward
+			opensource/include
+			base/filesys/include
+		)
+
+		set(tpf_inc_dirs "")
+		foreach(subdir ${tpf_subdirs})
+			foreach(d ${tpf_root_dirs})
+				list(APPEND tpf_inc_dirs "${d}/${subdir}")
+			endforeach()
+		endforeach()
+
+		foreach(d ${tpf_root_dirs})
+			list(APPEND tpf_inc_dirs "${d}")
+		endforeach()
+
+		if(EXISTS "${j9vm_SOURCE_DIR}/closed/ztpf/include")
+			list(APPEND tpf_inc_dirs "${j9vm_SOURCE_DIR}/closed/ztpf/include")
+		endif()
+
+		include_directories(${tpf_inc_dirs})
+	endif()
+endif()
+
 # TODO We should get rid of this, but it's still required by the compiler_support module in OMR.
 set(J9SRC ${j9vm_SOURCE_DIR})
 
@@ -321,6 +367,71 @@ elseif(OMR_OS_ZOS)
 		MAXMOVE
 	)
 	set(CMAKE_SHARED_LINKER_FLAGS "${CMAKE_SHARED_LINKER_FLAGS} -L/usr/lpp/hzc/lib")
+elseif(OMR_OS_ZTPF)
+	list(APPEND TARGET_DEFINES
+		FULL_ANSI
+		IBM_USE_MALLOC64
+		J9VM_TIERED_CODE_CACHE
+		MAXMOVE
+	)
+	list(APPEND J9_SHAREDFLAGS
+		-U_FILE_OFFSET_BITS
+		-DIBM_ATOE
+		-DJ9ZTPF
+		-DOMRZTPF
+		-DLINUX
+		-D_TPF_SOURCE
+		-D_REENTRANT
+		-DOMRPORT_JSIG_SUPPORT
+		-DIBMLOCKS
+		-D_TPF_THREADS
+		-DZTPF_POSIX_SOCKET
+		-D__tpf__
+		-fno-builtin-abort
+		-fno-builtin-exit
+		-fno-delete-null-pointer-checks
+		-fno-strict-aliasing
+		-ffloat-store
+		-Wno-int-to-pointer-cast
+		-Wno-unused-but-set-variable
+		-Wno-write-strings
+		-fno-optimize-strlen
+		-fno-tree-dse
+		-fabi-version=2
+		-march=z10
+		-mtune=z9-109
+		-gdwarf-2
+		-gno-strict-dwarf
+		-g2
+		-O3
+		-Wno-deprecated
+		-Wno-enum-compare
+		-Wreturn-type
+		-fexec-charset=ISO-8859-1
+		-fmessage-length=0
+		-funsigned-char
+		-fno-optimize-sibling-calls
+		-fomit-frame-pointer
+		-mno-tpf-trace
+	)
+	foreach(inc ${tpf_inc_dirs})
+		list(APPEND J9_SHAREDFLAGS "-I${inc}")
+	endforeach()
+	foreach(d ${tpf_root_dirs})
+		list(APPEND J9_SHAREDFLAGS "-isystem" "${d}")
+	endforeach()
+	list(APPEND J9_CFLAGS
+		-std=gnu89
+	)
+	list(APPEND J9_CXXFLAGS
+		-std=c++11
+		-fno-rtti
+		-fpermissive
+		-Wno-invalid-offsetof
+	)
+	if(tpf_inc_dirs)
+		list(APPEND J9_INCLUDES ${tpf_inc_dirs})
+	endif()
 else()
 	message(SEND_ERROR "unsupported platform")
 endif()
@@ -358,9 +469,22 @@ else()
 	set(OMR_ENHANCED_WARNINGS OFF)
 endif()
 
+if(OMR_OS_ZTPF)
+	if(NOT DEFINED ZTPF_PROGRAM_LETTER)
+		set(ZTPF_PROGRAM_LETTER "J")
+	endif()
+	if(NOT DEFINED ZTPF_REFRESH_VERSION)
+		set(ZTPF_REFRESH_VERSION "X.X.X.X")
+	endif()
+	set(ZTPF_NAME "D${ZTPF_PROGRAM_LETTER}IT")
+	set(J9JIT_OUTPUT_NAME "${ZTPF_NAME}")
+else()
+	set(J9JIT_OUTPUT_NAME "j9jit${J9VM_VERSION_SUFFIX}")
+endif()
+
 create_omr_compiler_library(NAME j9jit
 	SHARED
-	OUTPUT_NAME j9jit${J9VM_VERSION_SUFFIX}
+	OUTPUT_NAME ${J9JIT_OUTPUT_NAME}
 	OBJECTS ${J9_FILES} ${J9JIT_FILES} ${NOT_EXFRRED}
 	DEFINES J9_PROJECT_SPECIFIC ${TARGET_DEFINES}
 	INCLUDES ${J9_INCLUDES}
@@ -395,8 +519,74 @@ target_link_libraries(j9jit
 		j9utilcore
 		j9hookable
 		j9thr
-		${CMAKE_DL_LIBS}
 )
+
+if(NOT OMR_OS_ZTPF)
+	target_link_libraries(j9jit PRIVATE ${CMAKE_DL_LIBS})
+endif()
+
+if(OMR_OS_ZTPF)
+	target_include_directories(j9jit PRIVATE ${tpf_inc_dirs})
+
+	if(NOT DEFINED ZTPF_STDCPP_LIB)
+		set(ZTPF_STDCPP_LIB "stdcpp7")
+	endif()
+
+	target_link_options(j9jit
+		PRIVATE
+			"LINKER:--whole-archive"
+			-l${ZTPF_STDCPP_LIB}
+			"LINKER:--no-whole-archive"
+			-Wl,-Map=j9jit.map
+			-Wl,-entry=0
+			-Wl,-soname=${ZTPF_NAME}
+			bld-${ZTPF_NAME}.o
+	)
+
+	find_file(ZTPF_CRT3_OBJ
+		NAMES crt3.o
+		PATHS ${tpf_root_dirs}
+		PATH_SUFFIXES base/obj
+		NO_DEFAULT_PATH
+	)
+
+	if(NOT DEFINED COMPILER_BASE_DIR AND CMAKE_CXX_COMPILER)
+		get_filename_component(_compiler_bin_dir "${CMAKE_CXX_COMPILER}" DIRECTORY)
+		get_filename_component(COMPILER_BASE_DIR "${_compiler_bin_dir}/.." ABSOLUTE)
+	endif()
+
+	if(COMPILER_BASE_DIR)
+		find_file(ZTPF_CRTBEGINS_OBJ
+			NAMES crtbeginS.o
+			PATHS ${COMPILER_BASE_DIR}
+			PATH_SUFFIXES lib/gcc/s390x-ibm-tpf/${CMAKE_CXX_COMPILER_VERSION} lib/gcc/s390x-ibm-tpf/7.3.0
+			NO_DEFAULT_PATH
+		)
+		find_file(ZTPF_CRTENDS_OBJ
+			NAMES crtendS.o
+			PATHS ${COMPILER_BASE_DIR}
+			PATH_SUFFIXES lib/gcc/s390x-ibm-tpf/${CMAKE_CXX_COMPILER_VERSION} lib/gcc/s390x-ibm-tpf/7.3.0
+			NO_DEFAULT_PATH
+		)
+	endif()
+
+	if(ZTPF_CRTBEGINS_OBJ AND ZTPF_CRT3_OBJ AND ZTPF_CRTENDS_OBJ)
+		set(CMAKE_CXX_CREATE_SHARED_LIBRARY "<CMAKE_CXX_COMPILER> <CMAKE_SHARED_LIBRARY_CXX_FLAGS> <LANGUAGE_COMPILE_FLAGS> <LINK_FLAGS> <CMAKE_SHARED_LIBRARY_CREATE_CXX_FLAGS> -o <TARGET> ${ZTPF_CRTBEGINS_OBJ} ${ZTPF_CRT3_OBJ} <OBJECTS> <LINK_LIBRARIES> ${ZTPF_CRTENDS_OBJ}")
+	endif()
+
+	add_custom_command(
+		TARGET j9jit
+		PRE_LINK
+		COMMAND echo "tpfobjpp -O O3 -g g2 -c ${ZTPF_REFRESH_VERSION} $<TARGET_OBJECTS:j9jit>"
+		COMMAND tpfobjpp -O O3 -g g2 -c ${ZTPF_REFRESH_VERSION} $<TARGET_OBJECTS:j9jit>
+		COMMAND_EXPAND_LISTS
+		DEPENDS $<TARGET_OBJECTS:j9jit>
+		COMMAND sh -c "echo .set __TPF_TOD, \$(date +%Y%m%d%H%M%S)" | tpf-as -o bld-${ZTPF_NAME}.o
+		COMMAND echo "tpfobjpp -O ONotApplicable -g gNotApplicable bld-${ZTPF_NAME}.o"
+		COMMAND tpfobjpp -O ONotApplicable -g gNotApplicable bld-${ZTPF_NAME}.o
+		VERBATIM
+	)
+endif()
 
 # This is a bit hokey, but cmake can't track the fact that files are generated across directories.
 # Note: while these are only needed on Z, setting the properties unconditionally has no ill-effect.
@@ -409,10 +599,12 @@ set_source_files_properties(
 	GENERATED TRUE
 )
 
-if(OMR_OS_LINUX)
+if(OMR_OS_LINUX OR OMR_OS_ZTPF)
 	set_property(TARGET j9jit APPEND_STRING PROPERTY
 		LINK_FLAGS " -Wl,--version-script=${CMAKE_CURRENT_SOURCE_DIR}/build/scripts/j9jit.linux.exp")
-	target_link_libraries(j9jit PRIVATE m)
+	if(NOT OMR_OS_ZTPF)
+		target_link_libraries(j9jit PRIVATE m)
+	endif()
 elseif(OMR_OS_WINDOWS)
 	target_sources(j9jit PRIVATE build/scripts/j9jit.def)
 elseif(OMR_OS_AIX)
