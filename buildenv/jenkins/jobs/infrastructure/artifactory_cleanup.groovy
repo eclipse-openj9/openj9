@@ -34,46 +34,48 @@
 
 timestamps {
     def LABEL = params.LABEL ?: 'worker'
-    node(LABEL) {
-        checkout scm
-        def variableFile = load 'buildenv/jenkins/common/variables-functions.groovy'
-        variableFile.parse_variables_file()
-        variableFile.set_basic_artifactory_config()
-        println ARTIFACTORY_CONFIG
+    timeout(time: 1, unit: 'HOURS') {
+        node(LABEL) {
+            checkout scm
+            def variableFile = load 'buildenv/jenkins/common/variables-functions.groovy'
+            variableFile.parse_variables_file()
+            variableFile.set_basic_artifactory_config()
+            println ARTIFACTORY_CONFIG
 
-        def artifactory_server = params.ARTIFACTORY_SERVER ? params.ARTIFACTORY_SERVER : env.ARTIFACTORY_SERVER
-        def server = Artifactory.server artifactory_server
-        def ARTIFACTORY_SERVER_URL = server.getUrl()
-        def ARTIFACTORY_REPO = params.ARTIFACTORY_REPO ? params.ARTIFACTORY_REPO : env.ARTIFACTORY_REPO
-        def artifactoryCreds = server.getCredentialsId()
-        def ARTIFACTORY_NUM_ARTIFACTS = params.ARTIFACTORY_NUM_ARTIFACTS ? params.ARTIFACTORY_NUM_ARTIFACTS : env.ARTIFACTORY_NUM_ARTIFACTS
-        def ARTIFACTORY_DAYS_TO_KEEP_ARTIFACTS = params.ARTIFACTORY_DAYS_TO_KEEP_ARTIFACTS ? params.ARTIFACTORY_DAYS_TO_KEEP_ARTIFACTS : env.ARTIFACTORY_DAYS_TO_KEEP_ARTIFACTS
-        ret = false
-        try {
-            retry(2) {
-                if (ret) {
-                    sleep time: 120, unit: 'SECONDS'
-                } else {
-                    ret = true
+            def artifactory_server = params.ARTIFACTORY_SERVER ? params.ARTIFACTORY_SERVER : env.ARTIFACTORY_SERVER
+            def server = Artifactory.server artifactory_server
+            def ARTIFACTORY_SERVER_URL = server.getUrl()
+            def ARTIFACTORY_REPO = params.ARTIFACTORY_REPO ? params.ARTIFACTORY_REPO : env.ARTIFACTORY_REPO
+            def artifactoryCreds = server.getCredentialsId()
+            def ARTIFACTORY_NUM_ARTIFACTS = params.ARTIFACTORY_NUM_ARTIFACTS ? params.ARTIFACTORY_NUM_ARTIFACTS : env.ARTIFACTORY_NUM_ARTIFACTS
+            def ARTIFACTORY_DAYS_TO_KEEP_ARTIFACTS = params.ARTIFACTORY_DAYS_TO_KEEP_ARTIFACTS ? params.ARTIFACTORY_DAYS_TO_KEEP_ARTIFACTS : env.ARTIFACTORY_DAYS_TO_KEEP_ARTIFACTS
+            ret = false
+            try {
+                retry(2) {
+                    if (ret) {
+                        sleep time: 120, unit: 'SECONDS'
+                    } else {
+                        ret = true
+                    }
+                    switch (params.JOB_TYPE) {
+                        case 'TIME':
+                            cleanupTime(ARTIFACTORY_SERVER_URL, ARTIFACTORY_REPO, ARTIFACTORY_DAYS_TO_KEEP_ARTIFACTS, artifactoryCreds)
+                        break
+                        case 'COUNT':
+                            if (params.JOB_TO_CHECK) {
+                                cleanupBuilds(ARTIFACTORY_SERVER_URL, ARTIFACTORY_REPO, params.JOB_TO_CHECK, ARTIFACTORY_NUM_ARTIFACTS, artifactoryCreds)
+                            } else {
+                                error 'Please input a job to cleanup'
+                            }
+                        break
+                        default:
+                            error 'the JOB_TO_CHECK parameter is not properly defined. Please Enter TIME or COUNT'
+                        break
+                    }
                 }
-                switch (params.JOB_TYPE) {
-                    case 'TIME':
-                        cleanupTime(ARTIFACTORY_SERVER_URL, ARTIFACTORY_REPO, ARTIFACTORY_DAYS_TO_KEEP_ARTIFACTS, artifactoryCreds)
-                    break
-                    case 'COUNT':
-                        if (params.JOB_TO_CHECK) {
-                            cleanupBuilds(ARTIFACTORY_SERVER_URL, ARTIFACTORY_REPO, params.JOB_TO_CHECK, ARTIFACTORY_NUM_ARTIFACTS, artifactoryCreds)
-                        } else {
-                            error 'Please input a job to cleanup'
-                        }
-                    break
-                    default:
-                        error 'the JOB_TO_CHECK parameter is not properly defined. Please Enter TIME or COUNT'
-                    break
-                }
+            } catch (e) {
+                slackSend channel: '#jenkins-sandbox', color: 'danger', message: "Failed: ${JOB_NAME} #${BUILD_NUMBER} (<${BUILD_URL}|Open>)"
             }
-        } catch (e) {
-            slackSend channel: '#jenkins-sandbox', color: 'danger', message: "Failed: ${JOB_NAME} #${BUILD_NUMBER} (<${BUILD_URL}|Open>)"
         }
     }
 }
