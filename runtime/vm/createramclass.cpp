@@ -3652,7 +3652,7 @@ fail:
 			}
 
 			/* run pre-init (requires vTable to be in place) */
-			internalRunPreInitInstructions(ramClass, vmThread);
+			internalRunPreInitInstructions(ramClass, vmThread, TRUE);
 
 			ramClass->initializeStatus = J9ClassInitUnverified;
 
