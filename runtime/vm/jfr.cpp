@@ -3616,7 +3616,10 @@ notifyForChunkRotation(J9VMThread *currentThread)
 	omrthread_monitor_t monitorPtr = NULL;
 	Assert_VM_mustHaveVMAccess(currentThread);
 
-	if (JNI_FALSE == vm->jfrState.shouldRotateDisk) {
+	/* Only request a rotation when a file is set. For an in-memory recording the JCL
+	 * would otherwise create a new chunk file in the repository.
+	 */
+	if ((NULL != vm->jfrState.jfrFileName) && (JNI_FALSE == vm->jfrState.shouldRotateDisk)) {
 		Trc_VM_notifyForChunkRotation(currentThread);
 
 		j9object_t chunkMonitor = J9_JNI_UNWRAP_REFERENCE(vm->jfrState.chunkRotationMonitor);
