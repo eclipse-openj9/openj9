@@ -498,6 +498,23 @@ public:
     bool _useDefBasedAliasing;
 
     /** \brief
+     *     Use/def based aliasing with boxing treats <tt>astore D <- aload S</tt> as a directed copy
+     *     from the web of S to the web of D instead of merging the two webs. See \c resolveCopyEdges()
+     */
+    bool _directedCopies;
+
+    /** \brief
+     *     A copy of a value from the web of use node \c _src into the web of def node \c _dst
+     *     (alias ids, i.e. use/def indexes)
+     */
+    struct copyEdge {
+        int32_t _src;
+        int32_t _dst;
+    };
+
+    TR_Array<copyEdge> _copyEdges;
+
+    /** \brief
      *     Checks if vector is supported on current platform
      *
      *  \param comp
@@ -928,6 +945,34 @@ public:
      *     RHS has known type
      */
     void aliasDefNode(TR::Node *defNode, bool rhsHasKnownType);
+
+    /** \brief
+     *     Returns the temp class that an alias id belongs to, or -1 if it does not belong to a valid class
+     *     (such a value is not a vector)
+     *
+     *  \param id
+     *     Alias id
+     */
+    int32_t getTempClassId(int32_t id);
+
+    /** \brief
+     *     One round of propagation of vector info along the copies recorded by \c aliasDefNode().
+     *     The web receiving a copy is a vector only if every input into it is a known vector of the same type:
+     *     -# an unknown input makes the destination unknown
+     *     -# a destination without vector info gets it from the source
+     *     -# different vector info makes the destination unknown
+     *     A known source copied into an unknown destination is left alone: the astore is not a vector node, so
+     *     its RHS is boxed.
+     *
+     *  \return true if anything changed
+     */
+    bool propagateCopyEdges();
+
+    /** \brief
+     *     Propagates vector info along the recorded copies until nothing changes, then invalidates the classes
+     *     that never got any, then propagates again since those are now unknown inputs
+     */
+    void resolveCopyEdges();
 
     /** \brief
      *     Finds vector length from SPECIES node if it's a known object
