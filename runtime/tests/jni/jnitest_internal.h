@@ -18,6 +18,7 @@
  * [2] https://openjdk.org/legal/assembly-exception.html
  *
  * SPDX-License-Identifier: EPL-2.0 OR Apache-2.0 OR GPL-2.0-only WITH Classpath-exception-2.0 OR GPL-2.0-only WITH OpenJDK-assembly-exception-1.0
+ * Assisted-by: OpenAI Codex
  *******************************************************************************/
 
 #ifndef jnitest_internal_h
@@ -88,6 +89,8 @@ void JNICALL Java_j9vm_test_memchk_Generic_test(JNIEnv * env, jclass clazz);
 
 
 /* ---------------- jnierrors.c ---------------- */
+jclass JNICALL Java_j9vm_test_jnichk_DefineClassLoader_defineClass(JNIEnv *env, jclass clazz, jobject loader, jbyteArray bytes);
+
 void JNICALL Java_j9vm_test_jnichk_BufferOverrun_test(JNIEnv * env, jclass clazz);
 
 void JNICALL Java_j9vm_test_jnichk_ModifiedBuffer_test(JNIEnv* env, jclass clazz, jint phase);

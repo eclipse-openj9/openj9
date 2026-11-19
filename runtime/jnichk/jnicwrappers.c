@@ -275,7 +275,7 @@ checkDefineClass(JNIEnv *env, const char *name, jobject loader, const jbyte *buf
 {
 	jclass actualResult;
 	J9JniCheckLocalRefState refTracking;
-	static const U_32 argDescriptor[] = { JNIC_CLASSNAME, JNIC_CLASSLOADER, JNIC_POINTER, JNIC_JSIZE, 0 };
+	static const U_32 argDescriptor[] = { JNIC_CLASSNAME, JNIC_CLASSLOADER_OR_NULL, JNIC_POINTER, JNIC_JSIZE, 0 };
 	static const char function[] = "DefineClass";
 	U_32 nameCRC, bufCRC;
 
