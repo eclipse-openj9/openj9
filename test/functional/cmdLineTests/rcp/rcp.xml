@@ -24,18 +24,19 @@
 
 <!DOCTYPE suite SYSTEM "cmdlinetester.dtd">
 
-<suite id="J9 RCP Command-Line Option Tests" timeout="300">
+<suite id="J9 RCP restore Tests" timeout="300">
   <variable name="MAINCLASS_SIMPLE" value="org.openj9.test.HelloWorld" />
-  <variable name="JVM_OPTIONS" value="-Xshare:off -Xjit:disableDirectToJNI -Xsnapshot=rcpCache" />
 
   <test id="Create RCP cache">
-    <command>bash $SCRIPPATH$ $TEST_RESROOT$ $JAVA_COMMAND$ '$JVM_OPTIONS$' $MAINCLASS_SIMPLE$ none </command>
+    <command>bash $SCRIPPATH$ $TEST_RESROOT$ $JAVA_COMMAND$ "$JVM_OPTIONS$" $MAINCLASS_SIMPLE$ none </command>
     <output type="success" caseSensitive="yes" regex="no">Hello World[SATURDAY, SUNDAY]</output>
-    <output type="failure" caseSensitive="no" regex="yes">exception</output>
+    <output type="failure" caseSensitive="yes" regex="yes">Test failed:.+</output>
+    <output type="failure" caseSensitive="no" regex="yes">.+exception.+</output>
   </test>
   <test id="Restore RCP cache once">
     <command>bash $SCRIPPATH$ $TEST_RESROOT$ $JAVA_COMMAND$ '$JVM_OPTIONS$' $MAINCLASS_SIMPLE$ none </command>
     <output type="success" caseSensitive="yes" regex="no">Hello World[SATURDAY, SUNDAY]</output>
-    <output type="failure" caseSensitive="no" regex="yes">exception</output>
+    <output type="failure" caseSensitive="yes" regex="yes">Test failed:.+</output>
+    <output type="failure" caseSensitive="no" regex="yes">.+exception.+</output>
   </test>
 </suite>
