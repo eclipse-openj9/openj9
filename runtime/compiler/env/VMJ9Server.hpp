@@ -317,6 +317,7 @@ public:
 #endif
     virtual TR::KnownObjectTable::Index getFieldAccessorIndex(TR::Compilation *comp,
         TR::KnownObjectTable::Index fieldIndex) override;
+    virtual int32_t getVectorOperatorInfo(TR::Compilation *comp, TR::KnownObjectTable::Index opIndex) override;
     virtual LayoutByteOrder getLayoutByteOrder(TR::Compilation *comp, TR::KnownObjectTable::Index layoutIndex) override;
     virtual int64_t getLayoutByteAlignment(TR::Compilation *comp, TR::KnownObjectTable::Index layoutIndex) override;
     virtual TR::KnownObjectTable::Index getMemberNameFieldKnotIndexFromMethodHandleKnotIndex(TR::Compilation *comp,

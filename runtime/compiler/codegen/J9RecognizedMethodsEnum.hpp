@@ -344,6 +344,8 @@ FirstJ9Method = LastOMRMethod + 1,
     LastVectorIntrinsicMethod = jdk_internal_vm_vector_VectorSupport_wrapShuffleIndexes,
     LastVectorMethod = LastVectorIntrinsicMethod,
 
+    jdk_incubator_vector_IntVector_opKind,
+
     java_lang_reflect_Array_getLength, java_lang_reflect_Field_getFieldAccessor, java_lang_reflect_Method_invoke,
     java_lang_reflect_Method_acquireMethodAccessor, java_util_Arrays_fill, java_util_Arrays_equals,
     java_lang_String_equals, sun_io_ByteToCharSingleByte_convert, sun_io_CharToByteSingleByte_convert,
