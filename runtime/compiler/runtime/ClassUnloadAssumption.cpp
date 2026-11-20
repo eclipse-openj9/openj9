@@ -186,20 +186,32 @@ bool TR_RuntimeAssumptionTable::init()
     // Set default values for size tables.
     // Sizes need to be determined at bootstrap because in this implementation we cannot grow the tables.
     // A palliative would be to store a hint in the shared class cache.
-    size_t sizes[LastAssumptionKind];
-    for (int32_t i = 0; i < LastAssumptionKind; i++)
-        sizes[i] = 251;
+    size_t sizes[] = {40009, 4999, 10007, 40009, 1999, 100003, 100003, 100003, 509, 509, 509};
+    static_assert(sizeof(sizes) / sizeof(sizes[0]) == LastAssumptionKind, "Incorrect number of elements in sizes vector");
+    //RuntimeAssumptionOnClassUnload = 0,
+    //RuntimeAssumptionOnClassPreInitialize,
+    //RuntimeAssumptionOnClassExtend,
+    //RuntimeAssumptionOnMethodOverride,
+    //RuntimeAssumptionOnRegisterNative,
+    //RuntimeAssumptionOnClassRedefinitionPIC,
+    //RuntimeAssumptionOnClassRedefinitionUPIC,
+    //RuntimeAssumptionOnClassRedefinitionNOP,
+    //RuntimeAssumptionOnStaticFinalFieldModification,
+    //RuntimeAssumptionOnMutableCallSiteChange,
+    //RuntimeAssumptionOnMethodBreakPoint,
+    //for (int32_t i = 0; i < LastAssumptionKind; i++)
+    //    sizes[i] = 251;
     // overrides in case user provided options or we know we are in specific environments
-    if (TR::Options::_classExtendRatSize > 0)
-        sizes[RuntimeAssumptionOnClassExtend] = TR::Options::_classExtendRatSize;
-    else if (TR::Options::sharedClassCache())
-        sizes[RuntimeAssumptionOnClassExtend] = 3079; // choices 1543 3079 6151
-    if (TR::Options::_methodOverrideRatSize > 0)
-        sizes[RuntimeAssumptionOnMethodOverride] = TR::Options::_methodOverrideRatSize;
-    if (TR::Options::_classRedefinitionUPICRatSize > 0)
-        sizes[RuntimeAssumptionOnClassRedefinitionUPIC] = TR::Options::_classRedefinitionUPICRatSize;
-    else if (TR::Options::getCmdLineOptions()->getOption(TR_EnableHCR))
-        sizes[RuntimeAssumptionOnClassRedefinitionUPIC] = 1543;
+    //if (TR::Options::_classExtendRatSize > 0)
+    //    sizes[RuntimeAssumptionOnClassExtend] = TR::Options::_classExtendRatSize;
+    //else if (TR::Options::sharedClassCache())
+    //    sizes[RuntimeAssumptionOnClassExtend] = 3079; // choices 1543 3079 6151
+    //if (TR::Options::_methodOverrideRatSize > 0)
+    //    sizes[RuntimeAssumptionOnMethodOverride] = TR::Options::_methodOverrideRatSize;
+    //if (TR::Options::_classRedefinitionUPICRatSize > 0)
+    //    sizes[RuntimeAssumptionOnClassRedefinitionUPIC] = TR::Options::_classRedefinitionUPICRatSize;
+    //else if (TR::Options::getCmdLineOptions()->getOption(TR_EnableHCR))
+    //    sizes[RuntimeAssumptionOnClassRedefinitionUPIC] = 1543;
 
     for (int i = 0; i < LastAssumptionKind; i++) {
         assumptionCount[i] = 0;
@@ -219,6 +231,14 @@ bool TR_RuntimeAssumptionTable::init()
     }
     _marked = 0;
     memset(_detachPending, 0, sizeof(bool) * LastAssumptionKind);
+
+    _RAMetadataListProcessing_numOps = 0;
+    _RAMetadataListProcessing_visitedAssumptions = 0;
+    _RAMetadataListProcessing_markedAssumptions = 0;
+    _RAMetadataListProcessing_sentinelPurges = 0;
+    _GCReclaim_numOps = 0;
+    _GCReclaim_purgedAssumptions = 0;
+
     return true;
 }
 
@@ -295,51 +315,37 @@ bool OMR::RuntimeAssumption::isAssumingMethod(void *md, bool reclaimPrePrologueA
     return false;
 }
 
-// Currrent assumption must be taken out from the circular list of assumptions
-// starting in the jittedBodyInfo. We start from the current assumption and go around
-// until we find it again. This way we can find previous entry so we can detach it
-// from the list
-// must be executed under assumptionTableMutex
+// Takes out the currrent assumption from the circular list of assumptions
+// starting in the jittedBodyInfo. Assumption is not yet freed.
+// Must be executed under assumptionTableMutex.
 void OMR::RuntimeAssumption::dequeueFromListOfAssumptionsForJittedBody()
 {
-    OMR::RuntimeAssumption *crt = this->getNextAssumptionForSameJittedBodyEvenIfDead();
-    OMR::RuntimeAssumption *prev = this;
-    TR_ASSERT(crt, "Assumption must be queued when trying to detach");
-    while (crt != this) {
-        if (crt->isMarkedForDetach()) {
-            OMR::RuntimeAssumption *next = crt->getNextAssumptionForSameJittedBodyEvenIfDead();
-            prev->setNextAssumptionForSameJittedBody(next);
-            crt->setNextAssumptionForSameJittedBody(NULL);
+    OMR::RuntimeAssumption *next = this->getNextAssumptionForSameJittedBodyEvenIfDead();
+    OMR::RuntimeAssumption *prev = this->getPrevAssumptionForSameJittedBodyEvenIfDead();
+    TR_ASSERT_FATAL(next && prev && next != this && prev != this, "Assumption must be queued when trying to detach");
 
-            // Sentinel is not a part of RAT so it will not be deleted normally.
-            // Need to explicitly free it here
-            if (crt->getAssumptionKind() == RuntimeAssumptionSentinel) {
-                if (TR::Options::getCmdLineOptions()->getVerboseOption(TR_VerboseRuntimeAssumptions)) {
-                    TR_VerboseLog::CriticalSection vlogLock;
-                    TR_VerboseLog::write(TR_Vlog_RA,
-                        "Deleting %s assumption sentinel: ", runtimeAssumptionKindNames[crt->getAssumptionKind()]);
-                    crt->dumpInfo();
-                    TR_VerboseLog::writeLine("");
-                }
+    prev->setNextAssumptionForSameJittedBody(next);
+    next->setPrevAssumptionForSameJittedBody(prev);
+    setNextAssumptionForSameJittedBody(NULL); // assumption no longer in the circular list
+    setPrevAssumptionForSameJittedBody(NULL);
 
-                crt->paint();
-                TR_RuntimeAssumptionTable::freeRAPersistentMemory(crt);
-            }
-
-            crt = next;
-        } else {
-            // any such assumption (except the sentinel) must have an assumption location belonging to this body
-            prev = crt;
-            crt = crt->getNextAssumptionForSameJittedBodyEvenIfDead();
+    // If the only remaining entry in the circular list is the Sentinel, free it here.
+    // The Sentinel is marked for detach when the body it belongs to has already been reclaimed.
+    if (next == prev && next->getAssumptionKind() == RuntimeAssumptionSentinel && next->isMarkedForDetach()) {
+        if (TR::Options::getCmdLineOptions()->getVerboseOption(TR_VerboseRuntimeAssumptions)) {
+            TR_VerboseLog::CriticalSection vlogLock;
+            TR_VerboseLog::write(TR_Vlog_RA,
+                "Deleting %s assumption sentinel: ", runtimeAssumptionKindNames[next->getAssumptionKind()]);
+            next->dumpInfo();
+            TR_VerboseLog::writeLine("");
         }
+        next->paint();
+        TR_RuntimeAssumptionTable::freeRAPersistentMemory(next);
     }
-    // Now I completed a full circle
-    prev->setNextAssumptionForSameJittedBody(crt->getNextAssumptionForSameJittedBodyEvenIfDead());
-    crt->setNextAssumptionForSameJittedBody(NULL); // assumption no longer in the circular list
 }
 
-// must be executed under assumptionTableMutex
-// This forms a circular linked list starting at sentinel
+// Must be executed under assumptionTableMutex.
+// This forms a circular linked list starting at sentinel.
 bool OMR::RuntimeAssumption::enqueueInListOfAssumptionsForJittedBody(OMR::RuntimeAssumption **sentinel)
 {
     if (*sentinel == NULL) // sentinel does not exist yet
@@ -350,7 +356,10 @@ bool OMR::RuntimeAssumption::enqueueInListOfAssumptionsForJittedBody(OMR::Runtim
             return false;
         *sentinel = ::new (mem) TR::SentinelRuntimeAssumption();
     }
-    this->setNextAssumptionForSameJittedBody((*sentinel)->getNextAssumptionForSameJittedBodyEvenIfDead());
+    OMR::RuntimeAssumption *next = (*sentinel)->getNextAssumptionForSameJittedBodyEvenIfDead();
+    this->setNextAssumptionForSameJittedBody(next);
+    this->setPrevAssumptionForSameJittedBody(*sentinel);
+    next->setPrevAssumptionForSameJittedBody(this);
     (*sentinel)->setNextAssumptionForSameJittedBody(this);
     return true;
 }
@@ -361,6 +370,13 @@ OMR::RuntimeAssumption **TR_RuntimeAssumptionTable::getBucketPtr(TR_RuntimeAssum
     OMR::RuntimeAssumption **head = hashTable->_htSpineArray + (hashIndex % hashTable->_spineArraySize);
     while (head && *head && (*head)->isMarkedForDetach())
         head = &((*head)->_next);
+    return head;
+}
+
+OMR::RuntimeAssumption **TR_RuntimeAssumptionTable::getBucketPtrEvenIfDead(TR_RuntimeAssumptionKind kind, uintptr_t hashIndex)
+{
+    TR_RatHT *hashTable = findAssumptionHashTable(kind);
+    OMR::RuntimeAssumption **head = hashTable->_htSpineArray + (hashIndex % hashTable->_spineArraySize);
     return head;
 }
 
@@ -394,6 +410,8 @@ void TR_RuntimeAssumptionTable::purgeRATArray(TR_FrontEnd *fe, OMR::RuntimeAssum
     }
 }
 
+// Compensate and eliminate all assumptions.
+// This method is only used for RAS purposes.
 void TR_RuntimeAssumptionTable::purgeRATTable(TR_FrontEnd *fe)
 {
     OMR::CriticalSection purgeRATTable(assumptionTableMutex);
@@ -402,6 +420,42 @@ void TR_RuntimeAssumptionTable::purgeRATTable(TR_FrontEnd *fe)
             continue; // For some reason we don't want to purge this type of assumption
         purgeRATArray(fe, _tables[i]._htSpineArray, _tables[i]._spineArraySize);
     }
+}
+
+// Detaches the given assumption from RAT and from list of assumptions for the
+// same jitted body (if applicable) and deletes the assumption.
+// Side effect: The RAT bucket list is updated accordingly by modifying `assumptionList`
+// to point to the assumption that comes after the one to be purged (possibly NULL).
+// If the given assumption is already marked for deletion, it updates the relevant RAT
+// counters that keep track of marked assumptions.
+// Note: the caller is responsible for compensating the assumption.
+void TR_RuntimeAssumptionTable::purgeAssumption(OMR::RuntimeAssumption **assumptionList, OMR::RuntimeAssumption *assumption)
+{
+    TR_ASSERT_FATAL(*assumptionList == assumption, "assumptionList must point to the assumption to be purged");
+    *assumptionList = assumption->getNextEvenIfDead();
+    assumption->setNext(NULL);
+    if (assumption->isMarkedForDetach()) {
+        // Adjust accounting for marked assumptions.
+        TR_RatHT *hashTable = findAssumptionHashTable(assumption->getAssumptionKind());
+        auto markedCounterForBucket = &(hashTable->_markedforDetachCount[(assumption->hashCode() % hashTable->_spineArraySize)]);
+        TR_ASSERT_FATAL(*markedCounterForBucket != 0, "_markedforDetachCount will become negative");
+        (*markedCounterForBucket)--;
+        _marked--;
+    }
+    if (assumption->getNextAssumptionForSameJittedBodyEvenIfDead()) {
+        assumption->dequeueFromListOfAssumptionsForJittedBody();
+    }
+    incReclaimedAssumptionCount(assumption->getAssumptionKind());
+    if (TR::Options::getCmdLineOptions()->getVerboseOption(TR_VerboseRuntimeAssumptions)) {
+        TR_VerboseLog::CriticalSection vlogLock;
+        TR_VerboseLog::write(TR_Vlog_RA, "Deleting %s assumption: ",
+            runtimeAssumptionKindNames[assumption->getAssumptionKind()]);
+        assumption->dumpInfo();
+        TR_VerboseLog::writeLine("");
+    }
+    assumption->reclaim();
+    assumption->paint();
+    TR_RuntimeAssumptionTable::freeRAPersistentMemory(assumption);
 }
 
 void TR_RuntimeAssumptionTable::addAssumption(OMR::RuntimeAssumption *a, TR_RuntimeAssumptionKind kind, TR_FrontEnd *fe,
@@ -414,7 +468,7 @@ void TR_RuntimeAssumptionTable::addAssumption(OMR::RuntimeAssumption *a, TR_Runt
     // TODO: why is the kind needed? Should use a->getAssumptionKind()
     a->setNext(0); // for sanity's sake.  We don't have assumes() in codert.dev
     assumptionCount[kind]++;
-    OMR::RuntimeAssumption **headPtr = getBucketPtr(kind, a->hashCode());
+    OMR::RuntimeAssumption **headPtr = getBucketPtrEvenIfDead(kind, a->hashCode());
     if (*headPtr)
         a->setNext(*headPtr);
     *headPtr = a;
@@ -450,60 +504,51 @@ void TR_RuntimeAssumptionTable::markForDetachFromRAT(OMR::RuntimeAssumption *ass
  * metadata's linked list. Only RAT 'kinds' that have any marked assumptions
  * will be traversed, and only the hashtable linked-lists that have a non-zero
  * marked for detach count will be traversed.
+ * This routine is called by the GC during local/global collections.
  */
 void TR_RuntimeAssumptionTable::reclaimMarkedAssumptionsFromRAT(int32_t cleanupCount)
 {
-    if (_marked == 0)
+    if (_marked < 1000) // Wait for a larger number of assumptions before scanning
         return;
 
+    _GCReclaim_numOps++;
+    // If cleanupCount is negative, clean them all.
+    if (cleanupCount < 0)
+        cleanupCount =  _marked;
     assumptionTableMutex->enter();
-    for (int kind = 0; _marked > 0 && cleanupCount != 0 && kind < LastAssumptionKind; kind++) // for each table
+    for (int kind = 0; _marked > 0 && cleanupCount > 0 && kind < LastAssumptionKind; kind++) // for each table
     {
         if (_detachPending[kind] == true) // Is there anything to remove from this table?
         {
             TR_RatHT *hashTable = _tables + kind;
             bool fullyCleaned = true;
-            for (size_t i = 0; cleanupCount != 0 && i < hashTable->_spineArraySize; ++i) // for each bucket in the table
+            for (size_t i = 0; cleanupCount > 0 && i < hashTable->_spineArraySize; ++i) // for each bucket in the table
             {
-                OMR::RuntimeAssumption *cursor, *next, *prev;
-                // Look for linked list nodes to remove until all marked nodes have been deleted
-                for (cursor = hashTable->_htSpineArray[i], prev = NULL;
-                     cursor && cleanupCount != 0 && hashTable->_markedforDetachCount[i] > 0; cursor = next) {
-                    next = cursor->getNextEvenIfDead();
-                    if (cursor->isMarkedForDetach()) {
-                        if (prev) {
-                            prev->setNext(next);
+                // First, do a test on _markedforDetachCount[i]. If this bucket has nothing
+                // to clean, we can avoid touching the spine of the hashtable.
+                if (hashTable->_markedforDetachCount[i] > 0) {
+                    OMR::RuntimeAssumption *cursor, *next;
+                    OMR::RuntimeAssumption **assumptionList = hashTable->_htSpineArray + i;
+                    // Look for linked list nodes to remove until all marked nodes have been deleted or
+                    // we have reached our limit imposed by cleanupCount. However, if we started to process
+                    // a bucket we will finish it, possibly cleaning more than cleanupCount nodes.
+                    for (cursor = hashTable->_htSpineArray[i];
+                        cursor && hashTable->_markedforDetachCount[i] > 0; cursor = next)
+                    {
+                        next = cursor->getNextEvenIfDead(); // This generates page faults
+                        if (cursor->isMarkedForDetach()) {
+                            purgeAssumption(assumptionList, cursor);
+                            cleanupCount--;
+                            _GCReclaim_purgedAssumptions++;
                         } else {
-                            TR_ASSERT_FATAL(hashTable->_htSpineArray[i] == cursor, "RAT spine head is not cursor!");
-                            hashTable->_htSpineArray[i] = next;
+                            assumptionList = cursor->getNextFieldLocation();
                         }
-
-                        if (cursor->getNextAssumptionForSameJittedBodyEvenIfDead())
-                            cursor->dequeueFromListOfAssumptionsForJittedBody();
-
-                        // Now release the assumption
-                        hashTable->_markedforDetachCount[i]--;
-                        _marked--;
-                        incReclaimedAssumptionCount(kind);
-
-                        if (TR::Options::getCmdLineOptions()->getVerboseOption(TR_VerboseRuntimeAssumptions)) {
-                            TR_VerboseLog::CriticalSection vlogLock;
-                            TR_VerboseLog::write(TR_Vlog_RA, "Deleting %s assumption in loop: ",
-                                runtimeAssumptionKindNames[cursor->getAssumptionKind()]);
-                            cursor->dumpInfo();
-                            TR_VerboseLog::writeLine("");
-                        }
-
-                        cursor->reclaim();
-                        cursor->paint(); // RAS
-                        TR_RuntimeAssumptionTable::freeRAPersistentMemory(cursor);
-                        cleanupCount--;
-                    } else {
-                        prev = cursor;
+                    }
+                    if (hashTable->_markedforDetachCount[i] != 0) {
+                        fullyCleaned = false;
+                        TR_ASSERT_FATAL(cleanupCount == 0, "Should have cleaned the entire bucket");
                     }
                 }
-                if (hashTable->_markedforDetachCount[i] != 0)
-                    fullyCleaned = false;
             }
             if (fullyCleaned)
                 _detachPending[kind] = false;
@@ -521,18 +566,26 @@ void TR_RuntimeAssumptionTable::reclaimMarkedAssumptionsFromRAT(int32_t cleanupC
  */
 void TR_RuntimeAssumptionTable::markAssumptionsAndDetach(void *md, bool reclaimPrePrologueAssumptions)
 {
-    assumptionTableMutex->enter();
+    OMR::CriticalSection reclaimAssumptions(assumptionTableMutex);
     J9JITExceptionTable *metaData = (J9JITExceptionTable *)md;
     OMR::RuntimeAssumption *sentry = (OMR::RuntimeAssumption *)(metaData->runtimeAssumptionList);
     OMR::RuntimeAssumption *cursor, *next;
 
     if (sentry) {
-        TR_ASSERT(sentry->getAssumptionKind() == RuntimeAssumptionSentinel, "First assumption must be the sentinel\n");
+        _RAMetadataListProcessing_numOps++;
+        TR_ASSERT_FATAL(sentry->getAssumptionKind() == RuntimeAssumptionSentinel, "First assumption must be the sentinel\n");
+        TR_ASSERT_FATAL(!sentry->isMarkedForDetach(), "We should not be reclaiming the same metadata twice");
+        TR_ASSERT_FATAL(static_cast<TR::SentinelRuntimeAssumption*>(sentry)->getOwningMetadata() == metaData,
+            "The sentinel must point back to owning metadata");
         bool entriesRemain = false;
-        for (cursor = sentry->getNextAssumptionForSameJittedBody(); cursor != sentry; cursor = next) {
-            next = cursor->getNextAssumptionForSameJittedBody();
+        for (cursor = sentry->getNextAssumptionForSameJittedBodyEvenIfDead(); cursor != sentry; cursor = next) {
+            _RAMetadataListProcessing_visitedAssumptions++;
+            next = cursor->getNextAssumptionForSameJittedBodyEvenIfDead();
+            TR_ASSERT_FATAL(!cursor->isMarkedForDetach(), "Metadata's circular list must not contain marked assumptions");
             if (cursor->isAssumingMethod(metaData, reclaimPrePrologueAssumptions)) {
+                cursor->dequeueFromListOfAssumptionsForJittedBody();
                 markForDetachFromRAT(cursor);
+                _RAMetadataListProcessing_markedAssumptions;
             } else // This could be an assumption to the persistentBodyInfo which is not reclaimed
             {
                 entriesRemain = true;
@@ -548,11 +601,20 @@ void TR_RuntimeAssumptionTable::markAssumptionsAndDetach(void *md, bool reclaimP
         }
 
         if (!entriesRemain) {
-            sentry->markForDetach();
             metaData->runtimeAssumptionList = NULL;
+            TR_ASSERT_FATAL(sentry->getNextAssumptionForSameJittedBodyEvenIfDead() == sentry, "Only the sentry must be left");
+            sentry->paint();
+            TR_RuntimeAssumptionTable::freeRAPersistentMemory(sentry);
+            _RAMetadataListProcessing_sentinelPurges++;
+        } else {
+            // The body will be reclaimed, but assumptions still exist.
+            // Mark the sentry so that it is reclaimed when the last assumption in the
+            // circular list is invalidated and purged.
+            sentry->markForDetach();
+            static_cast<TR::SentinelRuntimeAssumption*>(sentry)->setOwningMetadata(NULL);
+            // Optional: metaData->runtimeAssumptionList = NULL;
         }
     }
-    assumptionTableMutex->exit();
 }
 
 // Reclaim all assumptions that are placed in a circular linked list
@@ -566,24 +628,40 @@ void TR_RuntimeAssumptionTable::reclaimAssumptions(OMR::RuntimeAssumption **sent
     if (*sentinel != NULL) // list is not empty
     {
         int32_t numAssumptionsNotReclaimed = 0;
-        TR_ASSERT(sentry->getAssumptionKind() == RuntimeAssumptionSentinel, "First assumption must be the sentinel\n");
+        _RAMetadataListProcessing_numOps++;
+        TR_ASSERT_FATAL(sentry->getAssumptionKind() == RuntimeAssumptionSentinel, "First assumption must be the sentinel\n");
+        // If the sentry has ben marked for detach it means that we attempted to
+        // reclaim the owning metadata and some entries could not be freed.
+        // We should not be trying to reclaim assumptions on the same metadata twice,
+        // hence the following assert.
+        TR_ASSERT_FATAL(!sentry->isMarkedForDetach(), "We should not be reclaiming the same metadata twice");
+        TR_ASSERT_FATAL(!metaData || static_cast<TR::SentinelRuntimeAssumption*>(sentry)->getOwningMetadata() == metaData,
+            "The sentinel must point back to owning metadata");
         OMR::RuntimeAssumption *notReclaimedList = sentry;
-        OMR::RuntimeAssumption *cursor = sentry->getNextAssumptionForSameJittedBody();
+        OMR::RuntimeAssumption *cursor = sentry->getNextAssumptionForSameJittedBodyEvenIfDead();
+        TR_ASSERT_FATAL(!cursor->isMarkedForDetach(), "Metadata's circular list must not contain marked assumptions");
+
         while (cursor != sentry) {
-            OMR::RuntimeAssumption *next = cursor->getNextAssumptionForSameJittedBody();
+            _RAMetadataListProcessing_visitedAssumptions++;
+            OMR::RuntimeAssumption *next = cursor->getNextAssumptionForSameJittedBodyEvenIfDead();
+            TR_ASSERT_FATAL(!next->isMarkedForDetach(), "Metadata's circular list must not contain marked assumptions");
             if (!metaData || cursor->isAssumingMethod(metaData, reclaimPrePrologueAssumptions)) {
-                // Must detach the entry from the RAT
+
+                cursor->dequeueFromListOfAssumptionsForJittedBody();
+                // Must detach the entry from the RAT, but don't do it right now
+                // to avoid overhead. Right now, just mark it for later detach.
                 markForDetachFromRAT(cursor);
-            } else // This could be an assumption to the persistentBodyInfo which is not reclaimed
-            {
+                _RAMetadataListProcessing_markedAssumptions++;
+            } else { // This could be an assumption to the persistentBodyInfo which is not reclaimed
                 numAssumptionsNotReclaimed++;
             }
             cursor = next;
         }
         if (numAssumptionsNotReclaimed > 0) {
 #ifdef PROD_WITH_ASSUMES
-            cursor = sentry->getNextAssumptionForSameJittedBody();
+            cursor = sentry->getNextAssumptionForSameJittedBodyEvenIfDead();
             while (cursor != sentry) {
+                TR_ASSERT(!cursor->isMarkedForDetach(), "Metadata assumption list should not contain marked assumptions");
                 TR_RuntimeAssumptionKind kind = cursor->getAssumptionKind();
                 if (kind != RuntimeAssumptionOnClassRedefinitionPIC && kind != RuntimeAssumptionOnClassRedefinitionUPIC
                     && kind != RuntimeAssumptionOnClassRedefinitionNOP) {
@@ -593,18 +671,28 @@ void TR_RuntimeAssumptionTable::reclaimAssumptions(OMR::RuntimeAssumption **sent
                         (void *)cursor->getKey(), cursor->getFirstAssumingPC());
                     TR_ASSERT(false, "non redefinition assumptions left after metadata reclamation\n");
                 }
-                cursor = cursor->getNextAssumptionForSameJittedBody();
+                cursor = cursor->getNextAssumptionForSameJittedBodyEvenIfDead();
             }
+            // TODO: who reclaimes these assumptions? The metadata is freed, so what happens?
 #endif
-        } else {
+            // The body will be reclaimed, but assumptions still exist.
+            // Mark the sentry so that it is reclaimed when the last assumption in the
+            // circular list is invalidated and purged.
             sentry->markForDetach();
+            static_cast<TR::SentinelRuntimeAssumption*>(sentry)->setOwningMetadata(NULL);
+            // Optional: reinterpret_cast<J9JITExceptionTable *>(metaData)->runtimeAssumptionList = NULL;
+        } else {
             if (metaData) {
                 reinterpret_cast<J9JITExceptionTable *>(metaData)->runtimeAssumptionList = NULL;
             } else if ((metaData = reinterpret_cast<TR::SentinelRuntimeAssumption *>(sentry)->getOwningMetadata())) {
                 // metadata passed might be NULL, but it can still exist
                 reinterpret_cast<J9JITExceptionTable *>(metaData)->runtimeAssumptionList = NULL;
             }
+            TR_ASSERT_FATAL(sentry->getNextAssumptionForSameJittedBodyEvenIfDead() == sentry, "Only the sentry must be left");
+            sentry->paint();
+            TR_RuntimeAssumptionTable::freeRAPersistentMemory(sentry);
             *sentinel = NULL;
+            _RAMetadataListProcessing_sentinelPurges++;
         }
     }
 }
@@ -625,6 +713,59 @@ int32_t TR_RuntimeAssumptionTable::countRatAssumptions()
         }
     }
     return count;
+}
+
+void TR_RuntimeAssumptionTable::checkTables()
+{
+    size_t totalMarked = 0;
+    OMR::CriticalSection checks(assumptionTableMutex);
+    for (int k = 0; k < LastAssumptionKind; k++) // for each table
+    {
+        size_t largestBuckectSize = 0;
+        size_t largestBucketIndex = 0;
+        bool detachPending = false;
+        TR_RatHT *hashTable = _tables + k;
+        size_t hashTableSize = hashTable->_spineArraySize;
+        for (size_t i = 0; i < hashTableSize; ++i) // for each bucket
+        {
+            // Traverse the entire bucket and do some accounting.
+            unsigned numMarked = 0;
+            size_t numEntriesInBucket = 0;
+            for (OMR::RuntimeAssumption *cursor = hashTable->_htSpineArray[i]; cursor;
+                 cursor = cursor->getNextEvenIfDead()) // for each entry
+            {
+                if (cursor->isMarkedForDetach()) {
+                    numMarked++;
+                    totalMarked++;
+                    detachPending = true;
+                }
+                numEntriesInBucket++;
+            }
+            if (hashTable->_markedforDetachCount[i] != numMarked) {
+                fprintf(stderr, "Discrepancy in RAT table %d: numMarked=%u _markedforDetachCount=%u\n",
+                     k, numMarked, hashTable->_markedforDetachCount[i]);
+            }
+            if (numEntriesInBucket > largestBuckectSize) {
+                largestBuckectSize = numEntriesInBucket;
+                largestBucketIndex = i;
+            }
+        }
+        // Print keys of the largest bucket of table 0
+        //if (k == 7) {
+        //    for (OMR::RuntimeAssumption *cursor = hashTable->_htSpineArray[largestBucketIndex]; cursor;
+        //        cursor = cursor->getNextEvenIfDead()) // for each entry
+        //        fprintf(stderr, "Key=%p ", (void*)cursor->getKey());
+        //    fprintf(stderr, "\n");
+        //}
+        if (detachPending != _detachPending[k]) {
+            fprintf(stderr, "Discrepancy in RAT table %d: detachPending=%d _detachPending[k]=%d\n",
+                 k, detachPending, _detachPending[k]);
+        }
+        fprintf(stderr, "Table %d largest bucket (%zu) has %zu entries\n", k, largestBucketIndex, largestBuckectSize);
+    }
+    if (totalMarked != _marked) {
+        fprintf(stderr, "Discrepancy in RAT: totalMarked=%zu _marked=%zu\n", totalMarked, (size_t)_marked);
+    }
 }
 
 void TR_RuntimeAssumptionTable::reclaimAssumptions(void *md, bool reclaimPrePrologueAssumptions)
@@ -656,31 +797,40 @@ void TR_RuntimeAssumptionTable::notifyIllegalStaticFinalFieldModificationEvent(T
     bool reportDetails = TR::Options::getCmdLineOptions()->getVerboseOption(TR_VerboseRuntimeAssumptions);
 
     OMR::RuntimeAssumption **headPtr
-        = getBucketPtr(RuntimeAssumptionOnStaticFinalFieldModification, hashCode((uintptr_t)key));
+        = getBucketPtrEvenIfDead(RuntimeAssumptionOnStaticFinalFieldModification, hashCode((uintptr_t)key));
+
+    OMR::RuntimeAssumption *next = NULL;
+    OMR::RuntimeAssumption **assumptionList = headPtr;
     OMR::RuntimeAssumption *cursor = *headPtr;
     bool found = false;
 
     while (cursor) {
         TR_VerboseLog::CriticalSection vlogLock(reportDetails);
 
-        OMR::RuntimeAssumption *next = cursor->getNext();
-        if (reportDetails)
-            TR_VerboseLog::write(TR_Vlog_RA, "key=%p @ %p", cursor->getKey(), cursor->getFirstAssumingPC());
-
-        if (cursor->matches((uintptr_t)key)) {
-            found = true;
+        OMR::RuntimeAssumption *next = cursor->getNextEvenIfDead();
+        if (cursor->isMarkedForDetach()) {
+            // Prune dead entries as we go.
+            purgeAssumption(assumptionList, cursor);
+        } else {
             if (reportDetails)
-                TR_VerboseLog::write(" compensating key=%p", key);
+                TR_VerboseLog::write(TR_Vlog_RA, "key=%p @ %p", cursor->getKey(), cursor->getFirstAssumingPC());
 
-            cursor->compensate(vm, 0, 0);
-            markForDetachFromRAT(cursor);
+            if (cursor->matches((uintptr_t)key)) {
+                found = true;
+                if (reportDetails)
+                    TR_VerboseLog::write(" compensating key=%p", key);
+
+                cursor->compensate(vm, 0, 0);
+                purgeAssumption(assumptionList, cursor);
+            } else {
+                assumptionList = cursor->getNextFieldLocation();
+            }
+
+            if (reportDetails)
+                TR_VerboseLog::writeLine("");
         }
-
-        if (reportDetails)
-            TR_VerboseLog::writeLine("");
-
         cursor = next;
-    }
+    } // end while
 
     if (!found && reportDetails) {
         TR_VerboseLog::writeLineLocked(TR_Vlog_RA, "key %p not registered!", key);
@@ -691,15 +841,27 @@ void TR_RuntimeAssumptionTable::notifyClassUnloadEvent(TR_FrontEnd *vm, bool isS
     TR_OpaqueClassBlock *unloadedClass)
 {
     OMR::CriticalSection notifyClassUnloadEvent(assumptionTableMutex);
-    OMR::RuntimeAssumption **headPtr = getBucketPtr(RuntimeAssumptionOnClassUnload, hashCode((uintptr_t)assumingClass));
+    OMR::RuntimeAssumption **headPtr = getBucketPtrEvenIfDead(RuntimeAssumptionOnClassUnload, hashCode((uintptr_t)assumingClass));
+    OMR::RuntimeAssumption *next = NULL;
+    OMR::RuntimeAssumption **assumptionList = headPtr;
     for (TR_UnloadedClassPicSite *cursor = (TR_UnloadedClassPicSite *)(*headPtr); cursor;
-         cursor = (TR_UnloadedClassPicSite *)cursor->getNext()) {
-        if (cursor->matches((uintptr_t)assumingClass)
+         cursor = (TR_UnloadedClassPicSite *)next) {
+        next = cursor->getNextEvenIfDead();
+        if (cursor->isMarkedForDetach()) {
+            // Prune dead entries as we go.
+            purgeAssumption(assumptionList, cursor);
+        } else if (cursor->matches((uintptr_t)assumingClass)
             && ((unloadedClass == assumingClass) || (cursor->getPicEntry() == (uintptr_t)unloadedClass))) {
             cursor->compensate(vm, 0, 0);
+            // Here we detach only some of them, while some remain even if they are not compensated
             if (assumingClass == unloadedClass) {
-                markForDetachFromRAT(cursor);
+                purgeAssumption(assumptionList, cursor); // markForDetachFromRAT(cursor);
+            } else {
+                assumptionList = cursor->getNextFieldLocation();
             }
+            // FIXME: why are there assumptions that are compensated, but not marked for detach from RAT?
+        } else {
+            assumptionList = cursor->getNextFieldLocation();
         }
     }
 }
@@ -889,8 +1051,9 @@ void TR_RuntimeAssumptionTable::notifyClassRedefinitionEvent(TR_FrontEnd *vm, bo
             TR_VerboseLog::writeLine("");
 
         pic_cursor = pic_next;
-    }
-    oldHeadPtr = getBucketPtr(RuntimeAssumptionOnClassRedefinitionNOP, hashCode((uintptr_t)oldKey));
+    } // end while
+
+    oldHeadPtr = getBucketPtrEvenIfDead(RuntimeAssumptionOnClassRedefinitionNOP, hashCode((uintptr_t)oldKey));
     OMR::RuntimeAssumption *nop_cursor = *oldHeadPtr;
 
     raArray = findAssumptionHashTable(RuntimeAssumptionOnClassRedefinitionNOP)->_htSpineArray;
@@ -902,28 +1065,28 @@ void TR_RuntimeAssumptionTable::notifyClassRedefinitionEvent(TR_FrontEnd *vm, bo
             TR_VerboseLog::writeLine(TR_Vlog_RA, "oldKey %p not registered with NOP!", oldKey);
     }
 
+    OMR::RuntimeAssumption **assumptionList = oldHeadPtr;
     while (nop_cursor) {
-        OMR::RuntimeAssumption *nop_next = nop_cursor->getNext();
+        OMR::RuntimeAssumption *nop_next = nop_cursor->getNextEvenIfDead();
 
-        TR_VerboseLog::CriticalSection vlogLock(reportDetails);
-        if (reportDetails)
-            TR_VerboseLog::write(TR_Vlog_RA, "old=%p @ %p", nop_cursor->getKey(), nop_cursor->getFirstAssumingPC());
-
-        if (nop_cursor->matches((uintptr_t)oldKey)) {
+        if (nop_cursor->isMarkedForDetach()) {
+            // Prune dead entries as we go.
+            purgeAssumption(assumptionList, nop_cursor);
+        } else if (nop_cursor->matches((uintptr_t)oldKey)) {
             if (reportDetails)
-                TR_VerboseLog::writeLine(" compensating new=%p", newKey);
+                TR_VerboseLog::writeLineLocked(TR_Vlog_RA, "old=%p @ %p compensating new=%p",
+                    nop_cursor->getKey(), nop_cursor->getFirstAssumingPC(), newKey);
 
             nop_cursor->compensate(vm, 0, 0);
-            markForDetachFromRAT(nop_cursor);
-            nop_cursor = nop_next;
-            continue;
+            purgeAssumption(assumptionList, nop_cursor);
+        } else {
+            assumptionList = nop_cursor->getNextFieldLocation();
+            if (reportDetails)
+                TR_VerboseLog::writeLineLocked(TR_Vlog_RA, "old=%p @ %p", nop_cursor->getKey(), nop_cursor->getFirstAssumingPC());
         }
 
-        if (reportDetails)
-            TR_VerboseLog::writeLine("");
-
         nop_cursor = nop_next;
-    }
+    } // end while
 
     if (reportDetails)
         TR_VerboseLog::writeLineLocked(TR_Vlog_RA, "Scanning for unresolved PIC assumptions");
@@ -1098,12 +1261,16 @@ void TR_RuntimeAssumptionTable::notifyMethodBreakpointed(TR_FrontEnd *fe, TR_Opa
 
     bool reportDetails = TR::Options::getCmdLineOptions()->getVerboseOption(TR_VerboseRuntimeAssumptions);
 
-    OMR::RuntimeAssumption **headPtr = getBucketPtr(RuntimeAssumptionOnMethodBreakPoint, hashCode((uintptr_t)method));
+    OMR::RuntimeAssumption **headPtr = getBucketPtrEvenIfDead(RuntimeAssumptionOnMethodBreakPoint, hashCode((uintptr_t)method));
     TR_PatchNOPedGuardSiteOnMethodBreakPoint *cursor = (TR_PatchNOPedGuardSiteOnMethodBreakPoint *)(*headPtr);
+    OMR::RuntimeAssumption **assumptionList = headPtr;
     while (cursor) {
-        TR_PatchNOPedGuardSiteOnMethodBreakPoint *next = (TR_PatchNOPedGuardSiteOnMethodBreakPoint *)cursor->getNext();
+        TR_PatchNOPedGuardSiteOnMethodBreakPoint *next = (TR_PatchNOPedGuardSiteOnMethodBreakPoint *)cursor->getNextEvenIfDead();
 
-        if (cursor->matches((uintptr_t)method)) {
+        if (cursor->isMarkedForDetach()) {
+            // Prune dead entries as we go.
+            purgeAssumption(assumptionList, cursor);
+        } else if (cursor->matches((uintptr_t)method)) {
             if (reportDetails) {
                 TR_VerboseLog::CriticalSection vlogLock;
                 TR_VerboseLog::write(TR_Vlog_RA, "compensating key (breakpointed method) " UINT64_PRINTF_FORMAT_HEX " ",
@@ -1112,9 +1279,10 @@ void TR_RuntimeAssumptionTable::notifyMethodBreakpointed(TR_FrontEnd *fe, TR_Opa
                 TR_VerboseLog::writeLine("");
             }
             cursor->compensate(fe, 0, 0);
-            markForDetachFromRAT(cursor);
+            purgeAssumption(assumptionList, cursor);
+        } else {
+                assumptionList = cursor->getNextFieldLocation();
         }
-
         cursor = next;
     }
 }
@@ -1125,13 +1293,17 @@ void TR_RuntimeAssumptionTable::notifyMutableCallSiteChangeEvent(TR_FrontEnd *fe
 
     bool reportDetails = TR::Options::getCmdLineOptions()->getVerboseOption(TR_VerboseRuntimeAssumptions);
 
-    OMR::RuntimeAssumption **headPtr = getBucketPtr(RuntimeAssumptionOnMutableCallSiteChange, hashCode(cookie));
+    OMR::RuntimeAssumption **headPtr = getBucketPtrEvenIfDead(RuntimeAssumptionOnMutableCallSiteChange, hashCode(cookie));
     TR_PatchNOPedGuardSiteOnMutableCallSiteChange *cursor = (TR_PatchNOPedGuardSiteOnMutableCallSiteChange *)(*headPtr);
+    OMR::RuntimeAssumption **assumptionList = headPtr;
     while (cursor) {
         TR_PatchNOPedGuardSiteOnMutableCallSiteChange *next
-            = (TR_PatchNOPedGuardSiteOnMutableCallSiteChange *)cursor->getNext();
+            = (TR_PatchNOPedGuardSiteOnMutableCallSiteChange *)cursor->getNextEvenIfDead();
 
-        if (cursor->matches(cookie)) {
+        if (cursor->isMarkedForDetach()) {
+            // Prune dead entries as we go.
+            purgeAssumption(assumptionList, cursor);
+        } else if (cursor->matches(cookie)) {
             if (reportDetails) {
                 TR_VerboseLog::CriticalSection vlogLock;
                 TR_VerboseLog::write(TR_Vlog_RA, "compensating cookie " UINT64_PRINTF_FORMAT_HEX " ", cookie);
@@ -1139,9 +1311,10 @@ void TR_RuntimeAssumptionTable::notifyMutableCallSiteChangeEvent(TR_FrontEnd *fe
                 TR_VerboseLog::writeLine("");
             }
             cursor->compensate(fe, 0, 0);
-            markForDetachFromRAT(cursor);
+            purgeAssumption(assumptionList, cursor);
+        } else {
+            assumptionList = cursor->getNextFieldLocation();
         }
-
         cursor = next;
     }
 }

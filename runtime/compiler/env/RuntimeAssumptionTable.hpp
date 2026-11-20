@@ -140,15 +140,21 @@ public:
     }
 
     OMR::RuntimeAssumption **getBucketPtr(TR_RuntimeAssumptionKind kind, uintptr_t hashIndex);
+    OMR::RuntimeAssumption **getBucketPtrEvenIfDead(TR_RuntimeAssumptionKind kind, uintptr_t hashIndex);
 
     OMR::RuntimeAssumption *getBucket(TR_RuntimeAssumptionKind kind, uintptr_t key)
     {
         return *getBucketPtr(kind, hashCode(key));
     }
+    OMR::RuntimeAssumption *getBucketEvenIfDead(TR_RuntimeAssumptionKind kind, uintptr_t key)
+    {
+        return *getBucketPtrEvenIfDead(kind, hashCode(key));
+    }
 
     void purgeRATTable(TR_FrontEnd *fe);
     void purgeRATArray(TR_FrontEnd *fe, OMR::RuntimeAssumption **array, uint32_t size);
     void purgeAssumptionListHead(OMR::RuntimeAssumption *&assumptionList, TR_FrontEnd *fe);
+    void purgeAssumption(OMR::RuntimeAssumption **assumptionList, OMR::RuntimeAssumption *assumption);
 
     void reclaimAssumptions(OMR::RuntimeAssumption **sentinel, void *metaData,
         bool reclaimPrePrologueAssumptions = false);
@@ -180,6 +186,7 @@ public:
     void reclaimMarkedAssumptionsFromRAT(int32_t cleanupCount = -1);
 
     int32_t countRatAssumptions();
+    void checkTables();
 
 private:
     friend class OMR::RuntimeAssumption;
@@ -192,9 +199,18 @@ private:
     TR_RatHT _tables[LastAssumptionKind];
     bool _detachPending[LastAssumptionKind]; // Marks tables that have assumptions waiting to be removed
     uint32_t _marked; // Counts the number of assumptions waiting to be removed
+    // Stats
     int32_t assumptionCount[LastAssumptionKind]; // this never gets decremented
     int32_t reclaimedAssumptionCount[LastAssumptionKind];
+public:
+    unsigned long long _RAMetadataListProcessing_numOps;
+    unsigned long long _RAMetadataListProcessing_visitedAssumptions;
+    unsigned long long _RAMetadataListProcessing_markedAssumptions;
+    unsigned long long _RAMetadataListProcessing_sentinelPurges;
 
+    unsigned long long _GCReclaim_numOps;
+    unsigned long long _GCReclaim_purgedAssumptions;
+private:
     /**
      * @brief Static persistent allocator for RuntimeAssumptions
      *
