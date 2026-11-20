@@ -302,8 +302,7 @@ done:
 jlong JNICALL
 Java_jdk_jfr_internal_JVM_getUnloadedEventClassCount(JNIEnv *env, jobject obj)
 {
-	// TODO: implementation
-	return 0;
+	return ((J9VMThread *)env)->javaVM->jfrState.unloadedEventClassCount;
 }
 
 jlong JNICALL
