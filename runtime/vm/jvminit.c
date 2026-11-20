@@ -4319,16 +4319,13 @@ processVMArgsFromFirstToLast(J9JavaVM * vm)
 						return JNI_ERR;
 					}
 					if (0 == strncmp(disclaimOption, VMOPT_XXCLASSMEMORYDISCLAIM_ALL, strlen(VMOPT_XXCLASSMEMORYDISCLAIM_ALL))) {
-						/* TODO: Support others; only RAM Class is supported for the time being. */
-						vm->extendedRuntimeFlags3 |= J9_EXTENDED_RUNTIME3_DISCLAIM_RAM_CLASS_MEMORY;
+						vm->extendedRuntimeFlags3 |= (J9_EXTENDED_RUNTIME3_DISCLAIM_RAM_CLASS_MEMORY | J9_EXTENDED_RUNTIME3_DISCLAIM_ROM_CLASS_MEMORY);
 						j9port_control(J9PORT_CTLDATA_MEM_32BIT, J9PORT_MEM_32BIT_FLAGS_TMP_FILE_BACKED_VMEM);
 					} else if (0 == strncmp(disclaimOption, VMOPT_XXCLASSMEMORYDISCLAIM_RAM, strlen(VMOPT_XXCLASSMEMORYDISCLAIM_RAM))) {
 						vm->extendedRuntimeFlags3 |= J9_EXTENDED_RUNTIME3_DISCLAIM_RAM_CLASS_MEMORY;
 						j9port_control(J9PORT_CTLDATA_MEM_32BIT, J9PORT_MEM_32BIT_FLAGS_TMP_FILE_BACKED_VMEM);
-					}  else if (0 == strncmp(disclaimOption, VMOPT_XXCLASSMEMORYDISCLAIM_ROM, strlen(VMOPT_XXCLASSMEMORYDISCLAIM_ROM))) {
-						/* vm->extendedRuntimeFlags3 |= J9_EXTENDED_RUNTIME3_DISCLAIM_ROM_CLASS_MEMORY; */
-						j9nls_printf(PORTLIB, J9NLS_ERROR, J9NLS_VM_UNSUPPORTED_OPTION, VMOPT_XXCLASSMEMORYDISCLAIM VMOPT_XXCLASSMEMORYDISCLAIM_ROM);
-						return JNI_ERR;
+					} else if (0 == strncmp(disclaimOption, VMOPT_XXCLASSMEMORYDISCLAIM_ROM, strlen(VMOPT_XXCLASSMEMORYDISCLAIM_ROM))) {
+						vm->extendedRuntimeFlags3 |= J9_EXTENDED_RUNTIME3_DISCLAIM_ROM_CLASS_MEMORY;
 					} else {
 						j9nls_printf(PORTLIB, J9NLS_ERROR, J9NLS_VM_UNRECOGNISED_CMD_LINE_OPT, disclaimOption);
 						return JNI_ERR;
