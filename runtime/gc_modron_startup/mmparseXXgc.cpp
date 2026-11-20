@@ -621,6 +621,15 @@ gcParseXXgcArguments(J9JavaVM *vm, char *optArg)
 			extensions->cacheListSplitForced = true;
 			continue;
 		}
+
+		if (try_scan(&scan_start, "enableUnifiedAbort")) {
+			extensions->enableUnifiedAbort = true;
+			continue;
+		}
+		if (try_scan(&scan_start, "disableUnifiedAbort")) {
+			extensions->enableUnifiedAbort = false;
+			continue;
+		}
 #endif /* J9VM_GC_MODRON_SCAVENGER */
 
 		if (try_scan(&scan_start, "markingArraySplitMinimumAmount=")) {
