@@ -6437,6 +6437,7 @@ typedef struct JFRState {
 	JFRLogLevel jfrLogTagSet[JFRCOMBINATION_JFRTAG_COUNT];
 	/* JFR logging is enabled by default; can be disabled via -Xlog:disable. */
 	jboolean jfrLogEnabled;
+	jlong unloadedEventClassCount;
 } JFRState;
 #endif /* defined(J9VM_OPT_JFR) */
 

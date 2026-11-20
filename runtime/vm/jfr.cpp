@@ -2174,6 +2174,7 @@ initializeJFRIDs(J9JavaVM *vm)
 	}
 
 	vm->jfrState.typeIDcount = 0;
+	vm->jfrState.unloadedEventClassCount = 0;
 	vm->jfrState.jfrEventEnabledFlags = NULL;
 	vm->jfrState.jfrEventEnabledFlagsSize = 0;
 

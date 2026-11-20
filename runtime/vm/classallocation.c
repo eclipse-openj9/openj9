@@ -240,9 +240,14 @@ static UDATA
 freeClassLoaderTypeIDs(void *entry, void *userData)
 {
 	J9JFRTypeID *tableEntry = (J9JFRTypeID *) entry;
+	J9JavaVM *javaVM = (J9JavaVM *)userData;
+
+	if (tableEntry->isEvent && (NULL != tableEntry->eventClass)) {
+		javaVM->jfrState.unloadedEventClassCount += 1;
+	}
 
 	if (tableEntry->free) {
-		PORT_ACCESS_FROM_JAVAVM((J9JavaVM *)userData);
+		PORT_ACCESS_FROM_JAVAVM(javaVM);
 		j9mem_free_memory(tableEntry->className);
 	}
 	return FALSE;
