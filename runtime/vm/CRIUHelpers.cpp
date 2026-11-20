@@ -499,7 +499,7 @@ initializeCriuHooks(J9VMThread *currentThread)
 	Trc_VM_criu_initHooks_Entry(currentThread);
 	cleanupCriuHooks(currentThread);
 	if (NULL == vm->checkpointState.hookRecords) {
-		vm->checkpointState.hookRecords = pool_new(sizeof(J9InternalHookRecord), 0, 0, 0, J9_GET_CALLSITE(), OMRMEM_CATEGORY_VM, POOL_FOR_PORT(vm->portLibrary));
+		vm->checkpointState.hookRecords = pool_new(sizeof(J9InternalHookRecord), 0, 0, 0, J9_GET_CALLSITE(), OMRMEM_CATEGORY_VM, POOL_FOR_PORT(OMRPORT_FROM_J9PORT(vm->portLibrary)));
 		if (NULL == vm->checkpointState.hookRecords) {
 			setNativeOutOfMemoryError(currentThread, 0, 0);
 			goto done;
@@ -507,7 +507,7 @@ initializeCriuHooks(J9VMThread *currentThread)
 	}
 
 	if (NULL == vm->checkpointState.classIterationRestoreHookRecords) {
-		vm->checkpointState.classIterationRestoreHookRecords = pool_new(sizeof(J9InternalClassIterationRestoreHookRecord), 0, 0, 0, J9_GET_CALLSITE(), OMRMEM_CATEGORY_VM, POOL_FOR_PORT(vm->portLibrary));
+		vm->checkpointState.classIterationRestoreHookRecords = pool_new(sizeof(J9InternalClassIterationRestoreHookRecord), 0, 0, 0, J9_GET_CALLSITE(), OMRMEM_CATEGORY_VM, POOL_FOR_PORT(OMRPORT_FROM_J9PORT(vm->portLibrary)));
 		if (NULL == vm->checkpointState.classIterationRestoreHookRecords) {
 			setNativeOutOfMemoryError(currentThread, 0, 0);
 			goto done;
@@ -515,7 +515,7 @@ initializeCriuHooks(J9VMThread *currentThread)
 	}
 
 	if (NULL == vm->checkpointState.delayedLockingOperationsRecords) {
-		vm->checkpointState.delayedLockingOperationsRecords = pool_new(sizeof(J9DelayedLockingOpertionsRecord), 0, 0, 0, J9_GET_CALLSITE(), OMRMEM_CATEGORY_VM, POOL_FOR_PORT(vm->portLibrary));
+		vm->checkpointState.delayedLockingOperationsRecords = pool_new(sizeof(J9DelayedLockingOpertionsRecord), 0, 0, 0, J9_GET_CALLSITE(), OMRMEM_CATEGORY_VM, POOL_FOR_PORT(OMRPORT_FROM_J9PORT(vm->portLibrary)));
 		if (NULL == vm->checkpointState.delayedLockingOperationsRecords) {
 			setNativeOutOfMemoryError(currentThread, 0, 0);
 			goto done;
@@ -585,7 +585,7 @@ fillinHookRecords(J9VMThread *currentThread, j9object_t object)
 			|| (hookRecord->includeSubClass && isSameOrSuperClassOf(hookRecord->instanceType, clazz))
 		) {
 			if (NULL == hookRecord->instanceObjects) {
-				hookRecord->instanceObjects = pool_new(sizeof(j9object_t), 0, 0, 0, J9_GET_CALLSITE(), OMRMEM_CATEGORY_VM, POOL_FOR_PORT(vm->portLibrary));
+				hookRecord->instanceObjects = pool_new(sizeof(j9object_t), 0, 0, 0, J9_GET_CALLSITE(), OMRMEM_CATEGORY_VM, POOL_FOR_PORT(OMRPORT_FROM_J9PORT(vm->portLibrary)));
 				if (NULL == hookRecord->instanceObjects) {
 					setNativeOutOfMemoryError(currentThread, 0, 0);
 					result = FALSE;
@@ -1554,7 +1554,7 @@ loadRestoreArguments(J9VMThread *currentThread, const char *optionsFile, char *e
 	UDATA ignored = 0;
 	J9VMInitArgs *previousArgs = vm->checkpointState.restoreArgsList;
 
-	vmArgumentsList.pool = pool_new(sizeof(J9JavaVMArgInfo), 0, 0, 0, J9_GET_CALLSITE(), J9MEM_CATEGORY_CLASSES, POOL_FOR_PORT(vm->portLibrary));
+	vmArgumentsList.pool = pool_new(sizeof(J9JavaVMArgInfo), 0, 0, 0, J9_GET_CALLSITE(), J9MEM_CATEGORY_CLASSES, POOL_FOR_PORT(OMRPORT_FROM_J9PORT(vm->portLibrary)));
 	if (NULL == vmArgumentsList.pool) {
 		vm->internalVMFunctions->setNativeOutOfMemoryError(currentThread, 0, 0);
 		result = RESTORE_ARGS_RETURN_OOM;

@@ -115,7 +115,7 @@ SH_ByteDataManagerImpl::localInitializePools(J9VMThread* currentThread)
 {
 	Trc_SHR_BDMI_localInitializePools_Entry(currentThread);
 
-	_linkedListImplPool = pool_new(sizeof(SH_ByteDataManagerImpl::BdLinkedListImpl),  0, 0, 0, J9_GET_CALLSITE(), J9MEM_CATEGORY_CLASSES, POOL_FOR_PORT(_portlib));
+	_linkedListImplPool = pool_new(sizeof(SH_ByteDataManagerImpl::BdLinkedListImpl),  0, 0, 0, J9_GET_CALLSITE(), J9MEM_CATEGORY_CLASSES, POOL_FOR_PORT(OMRPORT_FROM_J9PORT(_portlib)));
 	if (!_linkedListImplPool) {
 		PORT_ACCESS_FROM_PORT(_portlib);
 		M_ERR_TRACE(J9NLS_SHRC_BDMI_FAILED_CREATE_POOL);

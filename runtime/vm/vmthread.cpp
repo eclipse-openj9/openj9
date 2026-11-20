@@ -266,7 +266,7 @@ allocateVMThread(J9JavaVM *vm, omrthread_t osThread, UDATA privateFlags, void *m
 		goto fail;
 	}
 
-	newThread->monitorEnterRecordPool = pool_new(sizeof(J9MonitorEnterRecord), 0, 0, 0, J9_GET_CALLSITE(), OMRMEM_CATEGORY_VM, POOL_FOR_PORT(PORTLIB));
+	newThread->monitorEnterRecordPool = pool_new(sizeof(J9MonitorEnterRecord), 0, 0, 0, J9_GET_CALLSITE(), OMRMEM_CATEGORY_VM, POOL_FOR_PORT(OMRPORT_FROM_J9PORT(PORTLIB)));
 	if (NULL == newThread->monitorEnterRecordPool) {
 		goto fail;
 	}
@@ -1030,7 +1030,7 @@ threadParseArguments(J9JavaVM *vm, char *optArg)
 
 #if defined(J9VM_INTERP_CUSTOM_SPIN_OPTIONS)
 		if (try_scan(&scan_start, "customSpinOptions=")) {
-			vm->customSpinOptions = pool_new(sizeof(J9VMCustomSpinOptions), 0, 0, 0, J9_GET_CALLSITE(), OMRMEM_CATEGORY_VM, POOL_FOR_PORT(vm->portLibrary));
+			vm->customSpinOptions = pool_new(sizeof(J9VMCustomSpinOptions), 0, 0, 0, J9_GET_CALLSITE(), OMRMEM_CATEGORY_VM, POOL_FOR_PORT(OMRPORT_FROM_J9PORT(vm->portLibrary)));
 			if (NULL == vm->customSpinOptions) {
 				goto _error;
 			}

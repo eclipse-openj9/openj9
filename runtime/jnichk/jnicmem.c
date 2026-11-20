@@ -145,7 +145,9 @@ jniCheckMemoryInit(J9JavaVM* javaVM)
 
 	omrthread_monitor_enter(MemMonitor);
 	if (MemPoolGlobal == NULL) {
-		MemPoolGlobal = pool_new(sizeof(MemRecord),  0, 0, 0, J9_GET_CALLSITE(), OMRMEM_CATEGORY_VM, (j9memAlloc_fptr_t)pool_portLibAlloc, (j9memFree_fptr_t)pool_portLibFree, PORTLIB);
+		MemPoolGlobal = pool_new(
+				sizeof(MemRecord), 0, 0, 0, J9_GET_CALLSITE(), OMRMEM_CATEGORY_VM,
+				POOL_FOR_PORT(OMRPORT_FROM_J9PORT(PORTLIB)));
 	}
 	omrthread_monitor_exit(MemMonitor);
 

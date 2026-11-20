@@ -1973,7 +1973,9 @@ jniPushFrame(J9VMThread * vmThread, UDATA type, UDATA capacity)
 
 	/* Allocate per-thread JNI reference frame pools */
 	if (vmThread->jniReferenceFrames == NULL) {
-		if ((vmThread->jniReferenceFrames = pool_new(sizeof(struct J9JNIReferenceFrame), 16, 0, POOL_NO_ZERO, J9_GET_CALLSITE(), J9MEM_CATEGORY_JNI, POOL_FOR_PORT(javaVM->portLibrary))) == NULL) {
+		if ((vmThread->jniReferenceFrames = pool_new(
+				sizeof(struct J9JNIReferenceFrame), 16, 0, POOL_NO_ZERO, J9_GET_CALLSITE(), J9MEM_CATEGORY_JNI,
+				POOL_FOR_PORT(OMRPORT_FROM_J9PORT(javaVM->portLibrary)))) == NULL) {
 			goto exit;
 		}
 	}
@@ -1983,7 +1985,9 @@ jniPushFrame(J9VMThread * vmThread, UDATA type, UDATA capacity)
 	if (frame) {
 		frame->type = type;
 		frame->previous = (J9JNIReferenceFrame*)vmThread->jniLocalReferences;
-		frame->references = pool_new( sizeof(UDATA), capacity, sizeof(UDATA), POOL_NO_ZERO, J9_GET_CALLSITE(), J9MEM_CATEGORY_JNI, POOL_FOR_PORT(javaVM->portLibrary));
+		frame->references = pool_new(
+				sizeof(UDATA), capacity, sizeof(UDATA), POOL_NO_ZERO, J9_GET_CALLSITE(), J9MEM_CATEGORY_JNI,
+				POOL_FOR_PORT(OMRPORT_FROM_J9PORT(javaVM->portLibrary)));
 		if (frame->references) {
 			vmThread->jniLocalReferences = (UDATA*)frame;
 			result = 0;
@@ -2171,7 +2175,9 @@ ensureJNIIDTable(J9VMThread *currentThread, J9Class* clazz)
 	/* First ensure that the ID pool in the class loader exists */
 
 	if (classLoader->jniIDs == NULL) {
-		J9Pool * idPool = pool_new(sizeof(J9GenericJNIID),  16, 0, 0, J9_GET_CALLSITE(), J9MEM_CATEGORY_JNI, (j9memAlloc_fptr_t)pool_portLibAlloc, (j9memFree_fptr_t)pool_portLibFree, PORTLIB);
+		J9Pool *idPool = pool_new(
+				sizeof(J9GenericJNIID), 16, 0, 0, J9_GET_CALLSITE(), J9MEM_CATEGORY_JNI,
+				POOL_FOR_PORT(OMRPORT_FROM_J9PORT(PORTLIB)));
 
 		if (idPool == NULL) {
 			return NULL;

@@ -636,7 +636,7 @@ initializeSystemProperties(J9JavaVM *vm)
 	initArgs = vm->vmArgsArray->actualVMArgs;
 
 	/* Allocate the properties pool */
-	vm->systemProperties = pool_new(sizeof(J9VMSystemProperty), 0, 0, 0, J9_GET_CALLSITE(), OMRMEM_CATEGORY_VM, POOL_FOR_PORT(vm->portLibrary));
+	vm->systemProperties = pool_new(sizeof(J9VMSystemProperty), 0, 0, 0, J9_GET_CALLSITE(), OMRMEM_CATEGORY_VM, POOL_FOR_PORT(OMRPORT_FROM_J9PORT(vm->portLibrary)));
 	if (NULL == vm->systemProperties) {
 		return J9SYSPROP_ERROR_OUT_OF_MEMORY;
 	}

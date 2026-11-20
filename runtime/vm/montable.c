@@ -143,7 +143,7 @@ initializeMonitorTable(J9JavaVM* vm)
 		return -1;
 	}
 
-	vm->monitorTableListPool = pool_new(sizeof(J9MonitorTableListEntry), 0, 0, 0, J9_GET_CALLSITE(), OMRMEM_CATEGORY_VM, POOL_FOR_PORT(vm->portLibrary));
+	vm->monitorTableListPool = pool_new(sizeof(J9MonitorTableListEntry), 0, 0, 0, J9_GET_CALLSITE(), OMRMEM_CATEGORY_VM, POOL_FOR_PORT(OMRPORT_FROM_J9PORT(vm->portLibrary)));
 	if (NULL == vm->monitorTableListPool) {
 		return -1;
 	}

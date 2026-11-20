@@ -360,7 +360,7 @@ gatherROMClassLayoutInfo(J9PortLibrary *portLib, J9ROMClass *romClass,
 	memset(state, 0, sizeof(J9ROMClassGatherLayoutInfoState));
 
 	state->validateRangeCallback = validateRangeCallback;
-	state->regionsPool = pool_new(sizeof(J9ROMClassRegion), 64, 0, 0, J9_GET_CALLSITE(), J9MEM_CATEGORY_CLASSES, POOL_FOR_PORT(PORTLIB));
+	state->regionsPool = pool_new(sizeof(J9ROMClassRegion), 64, 0, 0, J9_GET_CALLSITE(), J9MEM_CATEGORY_CLASSES, POOL_FOR_PORT(OMRPORT_FROM_J9PORT(PORTLIB)));
 
 	if (NULL == state->regionsPool) {
 		j9tty_printf(PORTLIB, "Error: Could not create J9Pool.\n");
@@ -733,7 +733,7 @@ j9bcutil_queryROMClass(J9PortLibrary *portLib, J9ROMClass *romClass, void *baseA
 
 	PORT_ACCESS_FROM_PORT(portLib);
 
-	queryComponentPool = pool_new(sizeof(J9ROMClassQueryComponent), 64, 0, 0, J9_GET_CALLSITE(), J9MEM_CATEGORY_CLASSES, POOL_FOR_PORT(PORTLIB));
+	queryComponentPool = pool_new(sizeof(J9ROMClassQueryComponent), 64, 0, 0, J9_GET_CALLSITE(), J9MEM_CATEGORY_CLASSES, POOL_FOR_PORT(OMRPORT_FROM_J9PORT(PORTLIB)));
 	if (NULL == queryComponentPool) {
 		j9tty_printf(PORTLIB, "Error: Could not create queryComponentPool J9Pool.\n");
 		return;

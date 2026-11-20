@@ -184,7 +184,7 @@ MM_ConfigurationIncrementalGenerational::createEnvironmentPool(MM_EnvironmentBas
 
 	uintptr_t numberOfElements = getConfigurationDelegate()->getInitialNumberOfPooledEnvironments(env);
 	/* number of elements, pool flags = 0, 0 selects default pool configuration (at least 1 element, puddle size rounded to OS page size) */
-	return pool_new(sizeof(MM_EnvironmentVLHGC), numberOfElements, sizeof(U_64), 0, J9_GET_CALLSITE(), OMRMEM_CATEGORY_MM, POOL_FOR_PORT(PORTLIB));
+	return pool_new(sizeof(MM_EnvironmentVLHGC), numberOfElements, sizeof(U_64), 0, J9_GET_CALLSITE(), OMRMEM_CATEGORY_MM, POOL_FOR_PORT(OMRPORT_FROM_J9PORT(PORTLIB)));
 }
 
 bool

@@ -596,7 +596,7 @@ J9MemorySegmentList *allocateMemorySegmentListWithSize(J9JavaVM * javaVM, U_32 n
 				0,
 				J9_GET_CALLSITE(),
 				memoryCategory,
-				POOL_FOR_PORT(PORTLIB));
+				POOL_FOR_PORT(OMRPORT_FROM_J9PORT(PORTLIB)));
 		if (NULL == segmentList->segmentPool) {
 			j9mem_free_memory(segmentList);
 			return NULL;

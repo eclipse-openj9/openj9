@@ -5908,7 +5908,7 @@ SH_CacheMap::startupForStats(J9VMThread* currentThread, const char* ctrlDirName,
 
 		if (ccToUse != _ccHead) {
 			if (NULL == *lowerLayerList) {
-				*lowerLayerList = pool_new(sizeof(SH_OSCache_Info),  0, 0, 0, J9_GET_CALLSITE(), J9MEM_CATEGORY_CLASSES, POOL_FOR_PORT(_portlib));
+				*lowerLayerList = pool_new(sizeof(SH_OSCache_Info),  0, 0, 0, J9_GET_CALLSITE(), J9MEM_CATEGORY_CLASSES, POOL_FOR_PORT(OMRPORT_FROM_J9PORT(_portlib)));
 			}
 			if (NULL == *lowerLayerList) {
 				retval = CC_STARTUP_FAILED;

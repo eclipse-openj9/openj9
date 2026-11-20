@@ -515,7 +515,7 @@ detect_hypervisor_from_env(struct J9PortLibrary *portLibrary)
 	vmArgumentsList.pool = pool_new(sizeof(J9JavaVMArgInfo),
 				4, /* max = 1, over allocate for now */
 				0, 0,
-				J9_GET_CALLSITE(), OMRMEM_CATEGORY_VM, POOL_FOR_PORT(portLibrary));
+				J9_GET_CALLSITE(), OMRMEM_CATEGORY_VM, POOL_FOR_PORT(OMRPORT_FROM_J9PORT(portLibrary)));
 	if (NULL == vmArgumentsList.pool) {
 		/* Explicitly call free memory here instead of at clean_up
 		 * This ensures that there is no double free in some cases

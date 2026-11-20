@@ -379,9 +379,6 @@ typedef struct J9CacheInfoQuery {
 /* include the generated Port header here (at the end of the file since it relies on some defines from within this file) */
 #include "j9port_generated.h"
 
-#define j9memAlloc_fptr_t omrmemAlloc_fptr_t
-#define j9memFree_fptr_t omrmemFree_fptr_t
-
 #define J9PORT_TIME_DELTA_IN_MICROSECONDS OMRPORT_TIME_DELTA_IN_MICROSECONDS
 #define J9PORT_TIME_DELTA_IN_MILLISECONDS OMRPORT_TIME_DELTA_IN_MILLISECONDS
 #define J9PORT_TIME_NS_PER_MS OMRPORT_TIME_NS_PER_MS

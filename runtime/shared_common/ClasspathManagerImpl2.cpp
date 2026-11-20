@@ -272,7 +272,7 @@ SH_ClasspathManagerImpl2::localInitializePools(J9VMThread* currentThread)
 
 	Trc_SHR_CMI_localInitializePools_Entry(currentThread);
 
-	_linkedListImplPool = pool_new(sizeof(SH_ClasspathManagerImpl2::CpLinkedListImpl),  0, 0, 0, J9_GET_CALLSITE(), J9MEM_CATEGORY_CLASSES, POOL_FOR_PORT(_portlib));
+	_linkedListImplPool = pool_new(sizeof(SH_ClasspathManagerImpl2::CpLinkedListImpl),  0, 0, 0, J9_GET_CALLSITE(), J9MEM_CATEGORY_CLASSES, POOL_FOR_PORT(OMRPORT_FROM_J9PORT(_portlib)));
 	if (!_linkedListImplPool) {
 		M_ERR_TRACE(J9NLS_SHRC_CMI_FAILED_CREATE_LINKEDLISTIMPL);
 		returnVal = -1;

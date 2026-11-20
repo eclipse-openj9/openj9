@@ -1663,7 +1663,7 @@ public:
 
 		addAllThreads();
 
-		shallowEntries = pool_new(sizeof(ClassEntry **), 0, sizeof(U_64), 0, J9_GET_CALLSITE(), OMRMEM_CATEGORY_VM, POOL_FOR_PORT(privatePortLibrary));
+		shallowEntries = pool_new(sizeof(ClassEntry **), 0, sizeof(U_64), 0, J9_GET_CALLSITE(), OMRMEM_CATEGORY_VM, POOL_FOR_PORT(OMRPORT_FROM_J9PORT(privatePortLibrary)));
 		if (NULL == shallowEntries) {
 			_buildResult = OutOfMemory;
 			goto done;
@@ -2563,176 +2563,176 @@ done:
 			goto done;
 		}
 
-		_threadTable = pool_new(sizeof(ThreadEntry), 0, sizeof(U_64), 0, J9_GET_CALLSITE(), OMRMEM_CATEGORY_VM, POOL_FOR_PORT(privatePortLibrary));
+		_threadTable = pool_new(sizeof(ThreadEntry), 0, sizeof(U_64), 0, J9_GET_CALLSITE(), OMRMEM_CATEGORY_VM, POOL_FOR_PORT(OMRPORT_FROM_J9PORT(privatePortLibrary)));
 		if (NULL == _threadTable) {
 			_buildResult = OutOfMemory;
 			goto done;
 		}
 
-		_executionSampleTable = pool_new(sizeof(ExecutionSampleEntry), 0, sizeof(U_64), 0, J9_GET_CALLSITE(), OMRMEM_CATEGORY_VM, POOL_FOR_PORT(privatePortLibrary));
+		_executionSampleTable = pool_new(sizeof(ExecutionSampleEntry), 0, sizeof(U_64), 0, J9_GET_CALLSITE(), OMRMEM_CATEGORY_VM, POOL_FOR_PORT(OMRPORT_FROM_J9PORT(privatePortLibrary)));
 		if (NULL == _executionSampleTable) {
 			_buildResult = OutOfMemory;
 			goto done;
 		}
 
-		_threadStartTable = pool_new(sizeof(ThreadStartEntry), 0, sizeof(U_64), 0, J9_GET_CALLSITE(), OMRMEM_CATEGORY_VM, POOL_FOR_PORT(privatePortLibrary));
+		_threadStartTable = pool_new(sizeof(ThreadStartEntry), 0, sizeof(U_64), 0, J9_GET_CALLSITE(), OMRMEM_CATEGORY_VM, POOL_FOR_PORT(OMRPORT_FROM_J9PORT(privatePortLibrary)));
 		if (NULL == _threadStartTable) {
 			_buildResult = OutOfMemory;
 			goto done;
 		}
 
-		_threadEndTable = pool_new(sizeof(ThreadEndEntry), 0, sizeof(U_64), 0, J9_GET_CALLSITE(), OMRMEM_CATEGORY_VM, POOL_FOR_PORT(privatePortLibrary));
+		_threadEndTable = pool_new(sizeof(ThreadEndEntry), 0, sizeof(U_64), 0, J9_GET_CALLSITE(), OMRMEM_CATEGORY_VM, POOL_FOR_PORT(OMRPORT_FROM_J9PORT(privatePortLibrary)));
 		if (NULL == _threadEndTable) {
 			_buildResult = OutOfMemory;
 			goto done;
 		}
 
-		_threadSleepTable = pool_new(sizeof(ThreadSleepEntry), 0, sizeof(U_64), 0, J9_GET_CALLSITE(), OMRMEM_CATEGORY_VM, POOL_FOR_PORT(privatePortLibrary));
+		_threadSleepTable = pool_new(sizeof(ThreadSleepEntry), 0, sizeof(U_64), 0, J9_GET_CALLSITE(), OMRMEM_CATEGORY_VM, POOL_FOR_PORT(OMRPORT_FROM_J9PORT(privatePortLibrary)));
 		if (NULL == _threadEndTable) {
 			_buildResult = OutOfMemory;
 			goto done;
 		}
 
-		_monitorWaitTable = pool_new(sizeof(MonitorWaitEntry), 0, sizeof(U_64), 0, J9_GET_CALLSITE(), OMRMEM_CATEGORY_VM, POOL_FOR_PORT(privatePortLibrary));
+		_monitorWaitTable = pool_new(sizeof(MonitorWaitEntry), 0, sizeof(U_64), 0, J9_GET_CALLSITE(), OMRMEM_CATEGORY_VM, POOL_FOR_PORT(OMRPORT_FROM_J9PORT(privatePortLibrary)));
 		if (NULL == _monitorWaitTable) {
 			_buildResult = OutOfMemory;
 			goto done;
 		}
 
-		_monitorEnterTable = pool_new(sizeof(MonitorEnterEntry), 0, sizeof(U_64), 0, J9_GET_CALLSITE(), OMRMEM_CATEGORY_VM, POOL_FOR_PORT(privatePortLibrary));
+		_monitorEnterTable = pool_new(sizeof(MonitorEnterEntry), 0, sizeof(U_64), 0, J9_GET_CALLSITE(), OMRMEM_CATEGORY_VM, POOL_FOR_PORT(OMRPORT_FROM_J9PORT(privatePortLibrary)));
 		if (NULL == _monitorEnterTable) {
 			_buildResult = OutOfMemory;
 			goto done;
 		}
 
-		_threadParkTable = pool_new(sizeof(ThreadParkEntry), 0, sizeof(U_64), 0, J9_GET_CALLSITE(), OMRMEM_CATEGORY_VM, POOL_FOR_PORT(privatePortLibrary));
+		_threadParkTable = pool_new(sizeof(ThreadParkEntry), 0, sizeof(U_64), 0, J9_GET_CALLSITE(), OMRMEM_CATEGORY_VM, POOL_FOR_PORT(OMRPORT_FROM_J9PORT(privatePortLibrary)));
 		if (NULL == _threadParkTable) {
 			_buildResult = OutOfMemory;
 			goto done;
 		}
 
-		_cpuLoadTable = pool_new(sizeof(CPULoadEntry), 0, sizeof(U_64), 0, J9_GET_CALLSITE(), OMRMEM_CATEGORY_VM, POOL_FOR_PORT(privatePortLibrary));
+		_cpuLoadTable = pool_new(sizeof(CPULoadEntry), 0, sizeof(U_64), 0, J9_GET_CALLSITE(), OMRMEM_CATEGORY_VM, POOL_FOR_PORT(OMRPORT_FROM_J9PORT(privatePortLibrary)));
 		if (NULL == _cpuLoadTable) {
 			_buildResult = OutOfMemory;
 			goto done;
 		}
 
-		_threadCPULoadTable = pool_new(sizeof(ThreadCPULoadEntry), 0, sizeof(U_64), 0, J9_GET_CALLSITE(), OMRMEM_CATEGORY_VM, POOL_FOR_PORT(privatePortLibrary));
+		_threadCPULoadTable = pool_new(sizeof(ThreadCPULoadEntry), 0, sizeof(U_64), 0, J9_GET_CALLSITE(), OMRMEM_CATEGORY_VM, POOL_FOR_PORT(OMRPORT_FROM_J9PORT(privatePortLibrary)));
 		if (NULL == _threadCPULoadTable) {
 			_buildResult = OutOfMemory;
 			goto done;
 		}
 
-		_classLoadingStatisticsTable = pool_new(sizeof(ClassLoadingStatisticsEntry), 0, sizeof(U_64), 0, J9_GET_CALLSITE(), OMRMEM_CATEGORY_VM, POOL_FOR_PORT(privatePortLibrary));
+		_classLoadingStatisticsTable = pool_new(sizeof(ClassLoadingStatisticsEntry), 0, sizeof(U_64), 0, J9_GET_CALLSITE(), OMRMEM_CATEGORY_VM, POOL_FOR_PORT(OMRPORT_FROM_J9PORT(privatePortLibrary)));
 		if (NULL == _classLoadingStatisticsTable) {
 			_buildResult = OutOfMemory;
 			goto done;
 		}
 
-		_classLoaderStatisticsTable = pool_new(sizeof(ClassLoaderStatisticsEntry), 0, sizeof(U_64), 0, J9_GET_CALLSITE(), OMRMEM_CATEGORY_VM, POOL_FOR_PORT(privatePortLibrary));
+		_classLoaderStatisticsTable = pool_new(sizeof(ClassLoaderStatisticsEntry), 0, sizeof(U_64), 0, J9_GET_CALLSITE(), OMRMEM_CATEGORY_VM, POOL_FOR_PORT(OMRPORT_FROM_J9PORT(privatePortLibrary)));
 		if (NULL == _classLoaderStatisticsTable) {
 			_buildResult = OutOfMemory;
 			goto done;
 		}
 
-		_threadAllocationStatisticsTable = pool_new(sizeof(ThreadAllocationStatisticsEntry), 0, sizeof(U_64), 0, J9_GET_CALLSITE(), OMRMEM_CATEGORY_VM, POOL_FOR_PORT(privatePortLibrary));
+		_threadAllocationStatisticsTable = pool_new(sizeof(ThreadAllocationStatisticsEntry), 0, sizeof(U_64), 0, J9_GET_CALLSITE(), OMRMEM_CATEGORY_VM, POOL_FOR_PORT(OMRPORT_FROM_J9PORT(privatePortLibrary)));
 		if (NULL == _threadAllocationStatisticsTable) {
 			_buildResult = OutOfMemory;
 			goto done;
 		}
 
-		_threadContextSwitchRateTable = pool_new(sizeof(ThreadContextSwitchRateEntry), 0, sizeof(U_64), 0, J9_GET_CALLSITE(), OMRMEM_CATEGORY_VM, POOL_FOR_PORT(privatePortLibrary));
+		_threadContextSwitchRateTable = pool_new(sizeof(ThreadContextSwitchRateEntry), 0, sizeof(U_64), 0, J9_GET_CALLSITE(), OMRMEM_CATEGORY_VM, POOL_FOR_PORT(OMRPORT_FROM_J9PORT(privatePortLibrary)));
 		if (NULL == _threadContextSwitchRateTable) {
 			_buildResult = OutOfMemory;
 			goto done;
 		}
 
-		_threadStatisticsTable = pool_new(sizeof(ThreadStatisticsEntry), 0, sizeof(U_64), 0, J9_GET_CALLSITE(), OMRMEM_CATEGORY_VM, POOL_FOR_PORT(privatePortLibrary));
+		_threadStatisticsTable = pool_new(sizeof(ThreadStatisticsEntry), 0, sizeof(U_64), 0, J9_GET_CALLSITE(), OMRMEM_CATEGORY_VM, POOL_FOR_PORT(OMRPORT_FROM_J9PORT(privatePortLibrary)));
 		if (NULL == _threadStatisticsTable) {
 			_buildResult = OutOfMemory;
 			goto done;
 		}
 
-		_physicalMemoryTable = pool_new(sizeof(PhysicalMemoryEntry), 0, sizeof(U_64), 0, J9_GET_CALLSITE(), OMRMEM_CATEGORY_VM, POOL_FOR_PORT(privatePortLibrary));
+		_physicalMemoryTable = pool_new(sizeof(PhysicalMemoryEntry), 0, sizeof(U_64), 0, J9_GET_CALLSITE(), OMRMEM_CATEGORY_VM, POOL_FOR_PORT(OMRPORT_FROM_J9PORT(privatePortLibrary)));
 		if (NULL == _physicalMemoryTable) {
 			_buildResult = OutOfMemory;
 			goto done;
 		}
 
 
-		_systemProcessTable = pool_new(sizeof(SystemProcessEntry), 0, sizeof(U_64), 0, J9_GET_CALLSITE(), OMRMEM_CATEGORY_VM, POOL_FOR_PORT(privatePortLibrary));
+		_systemProcessTable = pool_new(sizeof(SystemProcessEntry), 0, sizeof(U_64), 0, J9_GET_CALLSITE(), OMRMEM_CATEGORY_VM, POOL_FOR_PORT(OMRPORT_FROM_J9PORT(privatePortLibrary)));
 		if (NULL == _systemProcessTable) {
 			_buildResult = OutOfMemory;
 			goto done;
 		}
 
-		_nativeLibrariesTable = pool_new(sizeof(NativeLibraryEntry), 0, sizeof(U_64), 0, J9_GET_CALLSITE(), OMRMEM_CATEGORY_VM, POOL_FOR_PORT(privatePortLibrary));
+		_nativeLibrariesTable = pool_new(sizeof(NativeLibraryEntry), 0, sizeof(U_64), 0, J9_GET_CALLSITE(), OMRMEM_CATEGORY_VM, POOL_FOR_PORT(OMRPORT_FROM_J9PORT(privatePortLibrary)));
 		if (NULL == _nativeLibrariesTable) {
 			_buildResult = OutOfMemory;
 			goto done;
 		}
 
-		_systemGCTable = pool_new(sizeof(SystemGCEntry), 0, sizeof(U_64), 0, J9_GET_CALLSITE(), OMRMEM_CATEGORY_VM, POOL_FOR_PORT(privatePortLibrary));
+		_systemGCTable = pool_new(sizeof(SystemGCEntry), 0, sizeof(U_64), 0, J9_GET_CALLSITE(), OMRMEM_CATEGORY_VM, POOL_FOR_PORT(OMRPORT_FROM_J9PORT(privatePortLibrary)));
 		if (NULL == _systemGCTable) {
 			_buildResult = OutOfMemory;
 			goto done;
 		}
 
-		_moduleRequireTable = pool_new(sizeof(ModuleRequireEntry), 0, sizeof(U_64), 0, J9_GET_CALLSITE(), OMRMEM_CATEGORY_VM, POOL_FOR_PORT(privatePortLibrary));
+		_moduleRequireTable = pool_new(sizeof(ModuleRequireEntry), 0, sizeof(U_64), 0, J9_GET_CALLSITE(), OMRMEM_CATEGORY_VM, POOL_FOR_PORT(OMRPORT_FROM_J9PORT(privatePortLibrary)));
 		if (NULL == _moduleRequireTable) {
 			_buildResult = OutOfMemory;
 			goto done;
 		}
 
-		_moduleExportTable = pool_new(sizeof(ModuleExportEntry), 0, sizeof(U_64), 0, J9_GET_CALLSITE(), OMRMEM_CATEGORY_VM, POOL_FOR_PORT(privatePortLibrary));
+		_moduleExportTable = pool_new(sizeof(ModuleExportEntry), 0, sizeof(U_64), 0, J9_GET_CALLSITE(), OMRMEM_CATEGORY_VM, POOL_FOR_PORT(OMRPORT_FROM_J9PORT(privatePortLibrary)));
 		if (NULL == _moduleExportTable) {
 			_buildResult = OutOfMemory;
 			goto done;
 		}
 
-		_oldGarbageCollectionTable = pool_new(sizeof(OldGarbageCollectionEntry), 0, sizeof(U_64), 0, J9_GET_CALLSITE(), OMRMEM_CATEGORY_VM, POOL_FOR_PORT(privatePortLibrary));
+		_oldGarbageCollectionTable = pool_new(sizeof(OldGarbageCollectionEntry), 0, sizeof(U_64), 0, J9_GET_CALLSITE(), OMRMEM_CATEGORY_VM, POOL_FOR_PORT(OMRPORT_FROM_J9PORT(privatePortLibrary)));
 		if (NULL == _oldGarbageCollectionTable) {
 			_buildResult = OutOfMemory;
 			goto done;
 		}
 
-		_youngGarbageCollectionTable = pool_new(sizeof(YoungGarbageCollectionEntry), 0, sizeof(U_64), 0, J9_GET_CALLSITE(), OMRMEM_CATEGORY_VM, POOL_FOR_PORT(privatePortLibrary));
+		_youngGarbageCollectionTable = pool_new(sizeof(YoungGarbageCollectionEntry), 0, sizeof(U_64), 0, J9_GET_CALLSITE(), OMRMEM_CATEGORY_VM, POOL_FOR_PORT(OMRPORT_FROM_J9PORT(privatePortLibrary)));
 		if (NULL == _youngGarbageCollectionTable) {
 			_buildResult = OutOfMemory;
 			goto done;
 		}
 
-		_garbageCollectionTable = pool_new(sizeof(GarbageCollectionEntry), 0, sizeof(U_64), 0, J9_GET_CALLSITE(), OMRMEM_CATEGORY_VM, POOL_FOR_PORT(privatePortLibrary));
+		_garbageCollectionTable = pool_new(sizeof(GarbageCollectionEntry), 0, sizeof(U_64), 0, J9_GET_CALLSITE(), OMRMEM_CATEGORY_VM, POOL_FOR_PORT(OMRPORT_FROM_J9PORT(privatePortLibrary)));
 		if (NULL == _garbageCollectionTable) {
 			_buildResult = OutOfMemory;
 			goto done;
 		}
 
-		_gcHeapSummaryTable = pool_new(sizeof(GCHeapSummaryEntry), 0, sizeof(U_64), 0, J9_GET_CALLSITE(), OMRMEM_CATEGORY_VM, POOL_FOR_PORT(privatePortLibrary));
+		_gcHeapSummaryTable = pool_new(sizeof(GCHeapSummaryEntry), 0, sizeof(U_64), 0, J9_GET_CALLSITE(), OMRMEM_CATEGORY_VM, POOL_FOR_PORT(OMRPORT_FROM_J9PORT(privatePortLibrary)));
 		if (NULL == _gcHeapSummaryTable) {
 			_buildResult = OutOfMemory;
 			goto done;
 		}
 
-		_networkUtilizationTable = pool_new(sizeof(NetworkUtilizationEntry), 0, sizeof(U_64), 0, J9_GET_CALLSITE(), OMRMEM_CATEGORY_VM, POOL_FOR_PORT(privatePortLibrary));
+		_networkUtilizationTable = pool_new(sizeof(NetworkUtilizationEntry), 0, sizeof(U_64), 0, J9_GET_CALLSITE(), OMRMEM_CATEGORY_VM, POOL_FOR_PORT(OMRPORT_FROM_J9PORT(privatePortLibrary)));
 		if (NULL == _networkUtilizationTable) {
 			_buildResult = OutOfMemory;
 			goto done;
 		}
 
-		_dataLossTable = pool_new(sizeof(DataLossEntry), 0, sizeof(U_64), 0, J9_GET_CALLSITE(), OMRMEM_CATEGORY_VM, POOL_FOR_PORT(privatePortLibrary));
+		_dataLossTable = pool_new(sizeof(DataLossEntry), 0, sizeof(U_64), 0, J9_GET_CALLSITE(), OMRMEM_CATEGORY_VM, POOL_FOR_PORT(OMRPORT_FROM_J9PORT(privatePortLibrary)));
 		if (NULL == _dataLossTable) {
 			_buildResult = OutOfMemory;
 			goto done;
 		}
 
-		_threadDumpTable = pool_new(sizeof(ThreadDumpEntry), 0, sizeof(U_64), 0, J9_GET_CALLSITE(), OMRMEM_CATEGORY_VM, POOL_FOR_PORT(privatePortLibrary));
+		_threadDumpTable = pool_new(sizeof(ThreadDumpEntry), 0, sizeof(U_64), 0, J9_GET_CALLSITE(), OMRMEM_CATEGORY_VM, POOL_FOR_PORT(OMRPORT_FROM_J9PORT(privatePortLibrary)));
 		if (NULL == _threadDumpTable) {
 			_buildResult = OutOfMemory;
 			goto done;
 		}
 
-		_javaEventDataTable = pool_new(sizeof(JavaEventDataEntry), 0, sizeof(UDATA), 0, J9_GET_CALLSITE(), OMRMEM_CATEGORY_VM, POOL_FOR_PORT(privatePortLibrary));
+		_javaEventDataTable = pool_new(sizeof(JavaEventDataEntry), 0, sizeof(UDATA), 0, J9_GET_CALLSITE(), OMRMEM_CATEGORY_VM, POOL_FOR_PORT(OMRPORT_FROM_J9PORT(privatePortLibrary)));
 		if (NULL == _javaEventDataTable) {
 			_buildResult = OutOfMemory;
 			goto done;
@@ -2740,7 +2740,7 @@ done:
 
 		_objectAllocationSampleTable = pool_new(
 				sizeof(ObjectAllocationSampleEntry), 0, sizeof(U_64),
-				0, J9_GET_CALLSITE(), OMRMEM_CATEGORY_VM, POOL_FOR_PORT(privatePortLibrary));
+				0, J9_GET_CALLSITE(), OMRMEM_CATEGORY_VM, POOL_FOR_PORT(OMRPORT_FROM_J9PORT(privatePortLibrary)));
 		if (NULL == _objectAllocationSampleTable) {
 			_buildResult = OutOfMemory;
 			goto done;

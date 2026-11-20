@@ -3453,7 +3453,7 @@ startCompileEventThread(J9JVMTIData * jvmtiData)
 
 	omrthread_monitor_enter(jvmtiData->compileEventMutex);
 	if (NULL == jvmtiData->compileEventThread) {
-		jvmtiData->compileEvents = pool_new(sizeof(J9JVMTICompileEvent), 0, 0, 0, J9_GET_CALLSITE(), J9MEM_CATEGORY_JVMTI, POOL_FOR_PORT(vm->portLibrary));
+		jvmtiData->compileEvents = pool_new(sizeof(J9JVMTICompileEvent), 0, 0, 0, J9_GET_CALLSITE(), J9MEM_CATEGORY_JVMTI, POOL_FOR_PORT(OMRPORT_FROM_J9PORT(vm->portLibrary)));
 		if (NULL == jvmtiData->compileEvents) {
 			omrthread_monitor_exit(jvmtiData->compileEventMutex);
 			return JVMTI_ERROR_OUT_OF_MEMORY;

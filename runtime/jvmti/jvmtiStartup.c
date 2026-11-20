@@ -1102,22 +1102,22 @@ initializeJVMTI(J9JavaVM * vm)
 	vm->jvmtiData = jvmtiData;
 	jvmtiData->vm = vm;
 
-	jvmtiData->agentLibraries = pool_new(sizeof(J9JVMTIAgentLibrary), 0, 0, POOL_ALWAYS_KEEP_SORTED, J9_GET_CALLSITE(), J9MEM_CATEGORY_JVMTI, POOL_FOR_PORT(vm->portLibrary));
+	jvmtiData->agentLibraries = pool_new(sizeof(J9JVMTIAgentLibrary), 0, 0, POOL_ALWAYS_KEEP_SORTED, J9_GET_CALLSITE(), J9MEM_CATEGORY_JVMTI, POOL_FOR_PORT(OMRPORT_FROM_J9PORT(vm->portLibrary)));
 	if (jvmtiData->agentLibraries == NULL) {
 		return JNI_ENOMEM;
 	}
 
-	jvmtiData->environments = pool_new(sizeof(J9JVMTIEnv), 0, 0, POOL_ALWAYS_KEEP_SORTED, J9_GET_CALLSITE(), J9MEM_CATEGORY_JVMTI, POOL_FOR_PORT(vm->portLibrary));
+	jvmtiData->environments = pool_new(sizeof(J9JVMTIEnv), 0, 0, POOL_ALWAYS_KEEP_SORTED, J9_GET_CALLSITE(), J9MEM_CATEGORY_JVMTI, POOL_FOR_PORT(OMRPORT_FROM_J9PORT(vm->portLibrary)));
 	if (jvmtiData->environments == NULL) {
 		return JNI_ENOMEM;
 	}
 
-	jvmtiData->breakpoints = pool_new(sizeof(J9JVMTIGlobalBreakpoint), 0, 0, POOL_ALWAYS_KEEP_SORTED, J9_GET_CALLSITE(), J9MEM_CATEGORY_JVMTI, POOL_FOR_PORT(vm->portLibrary));
+	jvmtiData->breakpoints = pool_new(sizeof(J9JVMTIGlobalBreakpoint), 0, 0, POOL_ALWAYS_KEEP_SORTED, J9_GET_CALLSITE(), J9MEM_CATEGORY_JVMTI, POOL_FOR_PORT(OMRPORT_FROM_J9PORT(vm->portLibrary)));
 	if (jvmtiData->breakpoints == NULL) {
 		return JNI_ENOMEM;
 	}
 
-	jvmtiData->breakpointedMethods = pool_new(sizeof(J9JVMTIBreakpointedMethod), 0, 0, POOL_ALWAYS_KEEP_SORTED, J9_GET_CALLSITE(), J9MEM_CATEGORY_JVMTI, POOL_FOR_PORT(vm->portLibrary));
+	jvmtiData->breakpointedMethods = pool_new(sizeof(J9JVMTIBreakpointedMethod), 0, 0, POOL_ALWAYS_KEEP_SORTED, J9_GET_CALLSITE(), J9MEM_CATEGORY_JVMTI, POOL_FOR_PORT(OMRPORT_FROM_J9PORT(vm->portLibrary)));
 	if (jvmtiData->breakpointedMethods == NULL) {
 		return JNI_ENOMEM;
 	}

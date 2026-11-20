@@ -171,7 +171,7 @@ zipCachePool_findCache(J9ZipCachePool *zcp, char const *zipFileName, IDATA zipFi
  */
 void zipCachePool_kill(J9ZipCachePool *zcp)
 {
-	j9memFree_fptr_t memFree;
+	omrmemFree_fptr_t memFree;
 	void* userData;
 	
 	if (!zcp)  return;
@@ -216,7 +216,7 @@ J9ZipCachePool *zipCachePool_new(J9PortLibrary * portLib, void * userData)
 		p->allocateWorkBuffer = TRUE;
 		p->workBuffer = NULL;
 		if (MUTEX_INIT(p->mutex)) {
-			p->pool = pool_new(sizeof(J9ZipCachePoolEntry),  0, 0, 0, J9_GET_CALLSITE(), J9MEM_CATEGORY_VM_JCL, POOL_FOR_PORT(portLib));
+			p->pool = pool_new(sizeof(J9ZipCachePoolEntry),  0, 0, 0, J9_GET_CALLSITE(), J9MEM_CATEGORY_VM_JCL, POOL_FOR_PORT(OMRPORT_FROM_J9PORT(portLib)));
 			if (p->pool) {
 				if (zip_initZipCachePoolHookInterface(portLib, p) == 0) {
 					/* All initialization worked so set up to return the pointer */
