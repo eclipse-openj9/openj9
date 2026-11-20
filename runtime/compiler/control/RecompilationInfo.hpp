@@ -559,6 +559,10 @@ public:
 
     TR_PersistentProfileInfo *getProfileInfo() { return _profileInfo; }
 
+    uint32_t getTotalBytecodeSize() const { return _totalBytecodeSize; }
+
+    void setTotalBytecodeSize(uint32_t size) { _totalBytecodeSize = size; }
+
     enum {
         HasLoops = 0x0001,
         HasEdoSnippet = 0x0002,
@@ -633,6 +637,7 @@ private:
     TR_JitBodyInvalidations _invalidationReasons;
     bool _longRunningInterpreted; // This cannot be moved into _flags due to synchronization issues
     TR_PersistentProfileInfo *_profileInfo;
+    uint32_t _totalBytecodeSize;
 
 public:
     // Used for HWP-based recompilation

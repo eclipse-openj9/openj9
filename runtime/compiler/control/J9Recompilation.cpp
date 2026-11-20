@@ -561,6 +561,7 @@ TR_PersistentJittedBodyInfo::TR_PersistentJittedBodyInfo(TR_PersistentMethodInfo
     , _longRunningInterpreted(false)
     , _numScorchingIntervals(0)
     , _profileInfo(0)
+    , _totalBytecodeSize(0)
     , _hwpInstructionStartCount(0)
     , _hwpInstructionCount(0)
     , _hwpInducedRecompilation(false)
