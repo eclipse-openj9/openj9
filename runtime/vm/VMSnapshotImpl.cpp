@@ -640,6 +640,7 @@ VMSnapshotImpl::fixupClasses()
 			} else {
 				fixupClass(currentClass);
 			}
+			currentClass->rcpThread = NULL;
 
 			/* Fixup the last ITable */
 			currentClass->lastITable = (J9ITable *)currentClass->iTable;
