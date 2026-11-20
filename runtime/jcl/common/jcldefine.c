@@ -185,7 +185,7 @@ retry:
 #if defined(J9VM_OPT_SNAPSHOTS)
 				if (IS_RESTORE_RUN(vm)) {
 					clazz = persistedClazz;
-					if (!vmFuncs->loadWarmClassFromSnapshot(currentThread, clazz)) {
+					if (!vmFuncs->loadWarmClassFromSnapshot(currentThread, clazz, TRUE)) {
 						clazz = NULL;
 						goto done;
 					}
