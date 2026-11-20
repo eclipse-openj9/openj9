@@ -106,6 +106,7 @@ UDATA parseAllocationRange(char *range, UDATA *min, UDATA *max);
 omr_error_t rasDumpEnableHooks(J9JavaVM *vm, UDATA eventFlags);
 void rasDumpFlushHooks(J9JavaVM *vm, IDATA stage);
 void setAllocationThreshold(J9VMThread *vmThread, UDATA min, UDATA max);
+void runDumpRequest(J9JavaVM *vm, J9RASDumpRequest *request);
 
 /* Constants used with the RASDumpSystemInfo structures (linked list off J9RAS.systemInfo) */
 #define J9RAS_SYSTEMINFO_SCHED_COMPAT_YIELD    1

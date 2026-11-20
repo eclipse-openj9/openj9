@@ -114,7 +114,7 @@ static void abortHandler(int sig);
 #else /* defined(WIN32) */
 static void abortHandler(int sig, siginfo_t *siginfo, void *context);
 #endif /* defined(WIN32) */
-static void initRasDumpGlobalStorage(J9JavaVM *vm);
+static BOOLEAN initRasDumpGlobalStorage(J9JavaVM *vm);
 static void freeRasDumpGlobalStorage(J9JavaVM *vm);
 static void hookVmInitialized(J9HookInterface **hook, UDATA eventNum, void *eventData, void *userData);
 #if defined(LINUX)
@@ -211,13 +211,13 @@ abortHandler(int sig, siginfo_t *siginfo, void *context)
 	/* To get the dumps we must ensure that this thread is attached to the vm. */
 	/* Also, we must have a valid cachedVM in order to get the attach to work. */
 	if (cachedVM && !vmThread) {
-		J9JavaVM* vm = cachedVM; /* local variable required by FIND_DLL_TABLE_ENTRY macro below */
+		J9JavaVM *vm = cachedVM; /* local variable required by FIND_DLL_TABLE_ENTRY macro below */
 		J9VMDllLoadInfo *loadInfo = FIND_DLL_TABLE_ENTRY(J9_RAS_DUMP_DLL_NAME);
 
 		/* Only attempt to attach thread while JVM is up and running. JTC-JAT PR 86446 + PR 98920 */
-		if (loadInfo
-			&& (IS_STAGE_COMPLETED(loadInfo->completedBits, VM_INITIALIZATION_COMPLETE))
-			&& (!IS_STAGE_COMPLETED(loadInfo->completedBits, INTERPRETER_SHUTDOWN))
+		if ((NULL != loadInfo)
+			&& IS_STAGE_COMPLETED(loadInfo->completedBits, VM_INITIALIZATION_COMPLETE)
+			&& !IS_STAGE_COMPLETED(loadInfo->completedBits, INTERPRETER_SHUTDOWN)
 		) {
 			JavaVMAttachArgs attachArgs;
 
@@ -225,7 +225,7 @@ abortHandler(int sig, siginfo_t *siginfo, void *context)
 			attachArgs.name = "SIGABRT Thread";
 			attachArgs.group = NULL;
 
-			cachedVM->internalVMFunctions->AttachCurrentThreadAsDaemon((JavaVM *)cachedVM, (void **)&vmThread, &attachArgs);
+			vm->internalVMFunctions->AttachCurrentThreadAsDaemon((JavaVM *)vm, (void **)&vmThread, &attachArgs);
 		}
 	}
 
@@ -419,11 +419,11 @@ storeDefaultData(J9JavaVM *vm)
 	J9RASdumpQueue *queue = (J9RASdumpQueue *)vm->j9rasDumpFunctions;
 
 	queue->defaultAgents = copyDumpAgentsQueue(vm, queue->agents);
-	if (queue->defaultAgents == NULL){
+	if (queue->defaultAgents == NULL) {
 		return OMR_ERROR_INTERNAL;
 	}
 	queue->defaultSettings = copyDumpSettingsQueue(vm, queue->settings);
-	if (queue->defaultSettings  == NULL){
+	if (queue->defaultSettings  == NULL) {
 		return OMR_ERROR_INTERNAL;
 	}
 	return OMR_ERROR_NONE;
@@ -710,7 +710,7 @@ configureDumpAgents(J9JavaVM *vm, J9VMInitArgs *j9vm_args, BOOLEAN isBootup)
 			}
 			if (!optionString) {
 				/* ... silent option ... */
-			} else if( strncmp(optionString, "none", strlen("none") ) == 0 ){
+			} else if( strncmp(optionString, "none", strlen("none") ) == 0 ) {
 				/* "none" found without any agent type, pretend we found all agents. */
 				for (kind = 0; kind < ( (IDATA)j9RasDumpKnownSpecs ); kind++) {
 					agentOpts[agentNum].kind = kind;
@@ -1090,10 +1090,10 @@ omr_error_t
 resetDumpOptions(struct J9JavaVM *vm)
 {
 	J9RASdumpQueue *queue = (J9RASdumpQueue *)vm->j9rasDumpFunctions;
-    struct J9RASdumpSettings *origSettings = queue->settings;
-    struct J9RASdumpAgent *origAgents = queue->agents;
-    struct J9RASdumpSettings *origDefaultSettings = queue->defaultSettings;
-    struct J9RASdumpAgent *origDefaultAgents = queue->defaultAgents;
+	struct J9RASdumpSettings *origSettings = queue->settings;
+	struct J9RASdumpAgent *origAgents = queue->agents;
+	struct J9RASdumpSettings *origDefaultSettings = queue->defaultSettings;
+	struct J9RASdumpAgent *origDefaultAgents = queue->defaultAgents;
 
 	PORT_ACCESS_FROM_JAVAVM(vm);
 
@@ -1106,7 +1106,7 @@ resetDumpOptions(struct J9JavaVM *vm)
 
 	/* store the original queue on the shutdown queue */
 	queue->settings = copyDumpSettingsQueue(vm, origDefaultSettings);
-	if (queue->settings == NULL){
+	if (queue->settings == NULL) {
 		unlockConfig();
 		return OMR_ERROR_OUT_OF_NATIVE_MEMORY;
 	}
@@ -1114,7 +1114,7 @@ resetDumpOptions(struct J9JavaVM *vm)
 	/* queue->defaultSettings and queue->defaultAgents do not change! */
 
 	queue->agents = copyDumpAgentsQueue(vm, origDefaultAgents);
-	if (queue->agents == NULL){
+	if (queue->agents == NULL) {
 		struct J9RASdumpSettings *newSettings = queue->settings;
 		/* restore the changes */
 		queue->settings = origSettings;
@@ -1126,11 +1126,11 @@ resetDumpOptions(struct J9JavaVM *vm)
 	}
 
 	/* add the old agents to the shutdown queue */
-	if (queue->agentShutdownQueue == NULL){
+	if (queue->agentShutdownQueue == NULL) {
 		queue->agentShutdownQueue = origAgents;
 	} else {
 		struct J9RASdumpAgent *agent = queue->agentShutdownQueue;
-		while (agent->nextPtr != NULL){
+		while (agent->nextPtr != NULL) {
 			agent = agent->nextPtr;
 		}
 		agent->nextPtr = origAgents;
@@ -1223,14 +1223,14 @@ popDumpFacade(J9JavaVM *vm)
 		freeDumpSettings(vm, queue->settings);
 
 		/* free our stored queue */
-		if (queue->defaultSettings != NULL){
+		if (queue->defaultSettings != NULL) {
 			j9mem_free_memory(queue->defaultSettings);
 			queue->defaultSettings = NULL;
 		}
 
-		if (queue->defaultAgents != NULL){
+		if (queue->defaultAgents != NULL) {
 			struct J9RASdumpAgent *currentAgent = queue->defaultAgents;
-			while (currentAgent != NULL){
+			while (currentAgent != NULL) {
 				struct J9RASdumpAgent *nextAgent = currentAgent->nextPtr;
 				currentAgent->shutdownFn = NULL;
 				j9mem_free_memory(currentAgent);
@@ -1239,9 +1239,9 @@ popDumpFacade(J9JavaVM *vm)
 			queue->defaultAgents = NULL;
 		}
 
-		if (queue->agentShutdownQueue != NULL){
+		if (queue->agentShutdownQueue != NULL) {
 			struct J9RASdumpAgent *currentAgent = queue->agentShutdownQueue;
-			while (currentAgent != NULL){
+			while (currentAgent != NULL) {
 				struct J9RASdumpAgent *nextAgent = currentAgent->nextPtr;
 				currentAgent->shutdownFn = NULL;
 				j9mem_free_memory(currentAgent);
@@ -1256,61 +1256,152 @@ popDumpFacade(J9JavaVM *vm)
 	return OMR_ERROR_NONE;
 }
 
-static void
-initRasDumpGlobalStorage(J9JavaVM *vm)
+static int J9THREAD_PROC
+asyncDumpMain(void *arg)
 {
-	/* Create global storage for rasdump and populate it */
+	J9JavaVM *vm = (J9JavaVM *)arg;
+	RasDumpGlobalStorage *dumpGlobal = (RasDumpGlobalStorage *)vm->j9rasdumpGlobalStorage;
+	J9VMThread *currentThread = NULL;
+	JavaVMAttachArgs attachArgs;
+	jint attachRc = JNI_OK;
 
-	PORT_ACCESS_FROM_JAVAVM(vm);
-	IDATA rc = 0;
+	attachArgs.version = JNI_VERSION_1_2;
+	attachArgs.name = "Async Dump Thread";
+	attachArgs.group = NULL;
 
-	/* allocate the global storage */
-	vm->j9rasdumpGlobalStorage = j9mem_allocate_memory(sizeof(RasDumpGlobalStorage), OMRMEM_CATEGORY_VM);
+	attachRc = vm->internalVMFunctions->AttachCurrentThreadAsDaemon(
+			(JavaVM *)vm, (void **)&currentThread, &attachArgs);
 
-	if (NULL != vm->j9rasdumpGlobalStorage) {
-		RasDumpGlobalStorage* dump_storage = (RasDumpGlobalStorage*)vm->j9rasdumpGlobalStorage;
+	omrthread_monitor_enter(dumpGlobal->delegateMonitor);
 
-		/* ensure that the storage is all NULLs to start with */
-		memset (dump_storage, '\0', sizeof(RasDumpGlobalStorage));
+	if (JNI_OK != attachRc) {
+		Trc_dump_asyncAttachFail(attachRc);
+		dumpGlobal->delegateState = J9RAS_DUMP_DELEGATE_STATE_FAILED;
+	} else {
+		dumpGlobal->delegateState = J9RAS_DUMP_DELEGATE_STATE_RUNNING;
 
-		/* now allocate the mutex and the tokens */
-		rc = omrthread_monitor_init_with_name(&dump_storage->dumpLabelTokensMutex, 0, "dump tokens mutex");
-		if (0 == rc) {
-			/* created the mutex */
-			I_64 now = j9time_current_time_millis();
+		for (;;) {
+			J9RASDumpRequest *request = dumpGlobal->delegateRequest;
 
-			omrthread_monitor_enter(dump_storage->dumpLabelTokensMutex);
+			if (NULL == request) {
+				if (J9RAS_DUMP_DELEGATE_STATE_RUNNING != dumpGlobal->delegateState) {
+					break;
+				}
+				/* Wait for the next request. */
+				omrthread_monitor_wait(dumpGlobal->delegateMonitor);
+			} else {
+				request->context->onThread = currentThread;
 
-			/* create the tokens */
-			dump_storage->dumpLabelTokens = j9str_create_tokens(now);
+				runDumpRequest(vm, request);
 
-			omrthread_monitor_exit(dump_storage->dumpLabelTokensMutex);
+				/* signal completion */
+				request->context->onThread = NULL;
+				request->context = NULL;
+				dumpGlobal->delegateRequest = NULL;
+				omrthread_monitor_notify_all(dumpGlobal->delegateMonitor);
+			}
 		}
 	}
+
+	omrthread_monitor_exit(dumpGlobal->delegateMonitor);
+
+	return 0;
+}
+
+static BOOLEAN
+createAsyncDumpThread(J9JavaVM *vm)
+{
+	RasDumpGlobalStorage *dumpGlobal = (RasDumpGlobalStorage *)vm->j9rasdumpGlobalStorage;
+	omrthread_t delegateThread = NULL;
+
+	if (J9RAS_DUMP_DELEGATE_STATE_DISABLED == dumpGlobal->delegateState) {
+		/* The user asked that delegation be disabled, so no
+		 * helper thread is needed. Respond with success.
+		 */
+		return TRUE;
+	}
+
+	if (J9THREAD_SUCCESS != omrthread_create(
+			&delegateThread, vm->defaultOSStackSize, J9THREAD_PRIORITY_MAX, FALSE,
+			asyncDumpMain, vm)
+	) {
+		dumpGlobal->delegateState = J9RAS_DUMP_DELEGATE_STATE_FAILED;
+		return FALSE;
+	}
+
+	return TRUE;
+}
+
+static BOOLEAN
+initRasDumpGlobalStorage(J9JavaVM *vm)
+{
+	/* Create global storage for rasdump and populate it. */
+	PORT_ACCESS_FROM_JAVAVM(vm);
+	/* Check for -XX:+AsyncDumpDelegation and -XX:-AsyncDumpDelegation; whichever comes later wins. */
+	IDATA enableIndex = FIND_AND_CONSUME_VMARG(EXACT_MATCH, VMOPT_XXENABLEASYNCDUMPDELEGATION, NULL);
+	IDATA disableIndex = FIND_AND_CONSUME_VMARG(EXACT_MATCH, VMOPT_XXDISABLEASYNCDUMPDELEGATION, NULL);
+
+	/* allocate the global storage */
+	RasDumpGlobalStorage *dumpGlobal = (RasDumpGlobalStorage *)j9mem_allocate_memory(sizeof(*dumpGlobal), OMRMEM_CATEGORY_VM);
+
+	vm->j9rasdumpGlobalStorage = dumpGlobal;
+
+	if (NULL == dumpGlobal) {
+		return FALSE;
+	}
+
+	/* Ensure the storage begins all NULL. */
+	memset(dumpGlobal, '\0', sizeof(*dumpGlobal));
+
+	if (disableIndex > enableIndex) {
+		/* The user asked that delegation be disabled. */
+		dumpGlobal->delegateState = J9RAS_DUMP_DELEGATE_STATE_DISABLED;
+	} else {
+		if (0 != omrthread_monitor_init_with_name(&dumpGlobal->delegateMonitor, 0, "dump request monitor")) {
+			return FALSE;
+		}
+	}
+
+	/* now allocate the token mutex and the tokens */
+	if (0 != omrthread_monitor_init_with_name(&dumpGlobal->dumpLabelTokensMutex, 0, "dump tokens mutex")) {
+		return FALSE;
+	} else {
+		I_64 now = j9time_current_time_millis();
+
+		/* create the tokens */
+		omrthread_monitor_enter(dumpGlobal->dumpLabelTokensMutex);
+		dumpGlobal->dumpLabelTokens = j9str_create_tokens(now);
+		omrthread_monitor_exit(dumpGlobal->dumpLabelTokensMutex);
+	}
+
+	return TRUE;
 }
 
 static void
 freeRasDumpGlobalStorage(J9JavaVM *vm)
 {
-	/* Free global storage for rasdump and also free its contents */
+	/* Free global storage for rasdump and also free its contents. */
 	PORT_ACCESS_FROM_JAVAVM(vm);
-	RasDumpGlobalStorage *dump_storage = (RasDumpGlobalStorage *)vm->j9rasdumpGlobalStorage;
+	RasDumpGlobalStorage *dumpGlobal = (RasDumpGlobalStorage *)vm->j9rasdumpGlobalStorage;
 	vm->j9rasdumpGlobalStorage = NULL;
 
-	if (NULL != dump_storage) {
-		/* global storage exists. */
+	if (NULL != dumpGlobal) {
+		/* Global storage exists: Free its contents. */
 
-		/* free the contents */
-		if (NULL != dump_storage->dumpLabelTokensMutex) {
-			omrthread_monitor_destroy(dump_storage->dumpLabelTokensMutex);
+		if (NULL != dumpGlobal->delegateMonitor) {
+			omrthread_monitor_destroy(dumpGlobal->delegateMonitor);
 		}
 
-		if (NULL != dump_storage->dumpLabelTokens) {
-			j9str_free_tokens(dump_storage->dumpLabelTokens);
+		if (NULL != dumpGlobal->dumpLabelTokensMutex) {
+			omrthread_monitor_destroy(dumpGlobal->dumpLabelTokensMutex);
 		}
 
-		/* now free the rasdump global storage */
-		j9mem_free_memory(dump_storage);
+		if (NULL != dumpGlobal->dumpLabelTokens) {
+			j9str_free_tokens(dumpGlobal->dumpLabelTokens);
+		}
+
+		/* Now free the rasdump global storage. */
+		j9mem_free_memory(dumpGlobal);
 	}
 }
 
@@ -1578,129 +1669,128 @@ J9VMDllMain(J9JavaVM *vm, IDATA stage, void *reserved)
 
 	PORT_ACCESS_FROM_JAVAVM(vm);
 
-	switch (stage)
-	{
-		case PORT_LIBRARY_GUARANTEED :
-
+	switch (stage) {
+	case PORT_LIBRARY_GUARANTEED:
 #if defined(J9VM_PORT_OMRSIG_SUPPORT) && defined(WIN32)
-			loadOMRSIG(vm);
+		loadOMRSIG(vm);
 #endif /* defined(J9VM_PORT_OMRSIG_SUPPORT) && defined(WIN32) */
-			initBackTrace(vm);
-			initSystemInfo(vm);
-			/* The default dump paths are set by fixDumpLabel in initDumpSettings called
-			 * from pushDumpFacade so we need to process -Xdump:directory first and the
-			 * error handling is best done here.
+		initBackTrace(vm);
+		initSystemInfo(vm);
+		/* The default dump paths are set by fixDumpLabel in initDumpSettings called
+		 * from pushDumpFacade so we need to process -Xdump:directory first and the
+		 * error handling is best done here.
+		 */
+		if (OMR_ERROR_NONE != initDumpDirectory(vm)) {
+			retVal = J9VMDLLMAIN_FAILED;
+		} else {
+			/* Defer enabling dump agents until initRasDumpGlobalStorage() is finished
+			 * so as to avoid triggering dump agent before RAS is ready for use.
 			 */
-			if (OMR_ERROR_NONE != initDumpDirectory(vm)) {
+			if (!initRasDumpGlobalStorage(vm)) {
 				retVal = J9VMDLLMAIN_FAILED;
-			} else {
-				/* Defer enabling dump agents until initRasDumpGlobalStorage() is finished
-				 * so as to avoid triggering dump agent before RAS is ready for use.
-				 */
-				initRasDumpGlobalStorage(vm);
-
+			} else if (OMR_ERROR_NONE == pushDumpFacade(vm)) {
 				/* Swap in new dump facade */
-				if (OMR_ERROR_NONE == pushDumpFacade(vm)) {
-					retVal = configureDumpAgents(vm, vm->vmArgsArray, TRUE);
-					/* Allow configuration updates now that we've done initial setup */
-					unlockConfig();
-				} else {
-					freeRasDumpGlobalStorage(vm);
-					retVal = J9VMDLLMAIN_FAILED;
-				}
-			}
-			break;
-
-		case ALL_LIBRARIES_LOADED:
-
-			if (vm->j9rasGlobalStorage == NULL) {
-				/* RAS init may happen in either dump or trace */
-				vm->j9rasGlobalStorage = j9mem_allocate_memory(sizeof(RasGlobalStorage), OMRMEM_CATEGORY_VM);
-				if (vm->j9rasGlobalStorage != NULL) {
-					memset(vm->j9rasGlobalStorage, '\0', sizeof(RasGlobalStorage));
-					RAS_GLOBAL_FROM_JAVAVM(maxStringLength, vm) = RAS_MAX_STRING_LENGTH_DEFAULT;
-				}
-			}
-			break;
-
-		case TRACE_ENGINE_INITIALIZED:
-
-			if (((RasGlobalStorage *)vm->j9rasGlobalStorage)->jvmriInterface == NULL) {
-				/* JVMRI init may happen in either dump or trace */
-				((RasGlobalStorage *)vm->j9rasGlobalStorage)->jvmriInterface = j9mem_allocate_memory(sizeof(DgRasInterface), OMRMEM_CATEGORY_VM);
-				if (((RasGlobalStorage *)vm->j9rasGlobalStorage)->jvmriInterface == NULL) {
-					j9tty_err_printf("Storage for jvmri interface not available, trace not enabled\n");
-					return J9VMDLLMAIN_FAILED;
-				}
-
-				if ((vm->internalVMFunctions->fillInDgRasInterface( ((RasGlobalStorage *)vm->j9rasGlobalStorage)->jvmriInterface )) != JNI_OK){
-					j9tty_err_printf("Error initializing jvmri interface not available, trace not enabled\n");
-					return J9VMDLLMAIN_FAILED;
-				}
-
-				if ((vm->internalVMFunctions->initJVMRI(vm)) != JNI_OK){
-					j9tty_err_printf("Error initializing jvmri interface, trace not enabled\n");
-					return J9VMDLLMAIN_FAILED;
-				}
-
-				if ((*hook)->J9HookRegisterWithCallSite(hook, J9HOOK_VM_INITIALIZED, hookVmInitialized, OMR_GET_CALLSITE(), NULL)) {
-					j9tty_err_printf("Trace engine failed to hook VM events, trace not enabled\n");
-					return J9VMDLLMAIN_FAILED;
-				}
-			}
-			/* Register GC event hooks that were deferred from earlier dump agent processing */
-			rasDumpFlushHooks(vm, stage);
-			break;
-
-		case JIT_INITIALIZED :
-				/* Register this module with trace */
-				UT_MODULE_LOADED(J9_UTINTERFACE_FROM_VM(vm));
-				Trc_dump_J9VMDllMain_Event1(vm);
-				break;
-
-		case VM_INITIALIZATION_COMPLETE:
-			/* Register thread event hooks that were deferred from earlier dump agent processing */
-			rasDumpFlushHooks(vm, stage);
-			break;
-
-		case GC_SHUTDOWN_COMPLETE :
-
-			/* Replace old dump facade */
-			rc = shutdownDumpAgents(vm);
-			if (OMR_ERROR_NONE == rc) {
-				retVal = J9VMDLLMAIN_OK;
+				retVal = configureDumpAgents(vm, vm->vmArgsArray, TRUE);
+				/* Allow configuration updates now that we've done initial setup */
+				unlockConfig();
 			} else {
+				freeRasDumpGlobalStorage(vm);
 				retVal = J9VMDLLMAIN_FAILED;
 			}
-			popDumpFacade(vm);
-#if defined(J9VM_PORT_OMRSIG_SUPPORT) && defined(WIN32)
-			unloadOMRSIG(vm->portLibrary);
-#endif /* defined(J9VM_PORT_OMRSIG_SUPPORT) && defined(WIN32) */
-			break;
+		}
+		break;
 
-		case ABOUT_TO_BOOTSTRAP :
-			break;
-
-		case INTERPRETER_SHUTDOWN:
-			Trc_dump_J9VMDllMain_Event2(vm);
-			freeRasDumpGlobalStorage(vm);
-			loadInfo = FIND_DLL_TABLE_ENTRY( J9_RAS_TRACE_DLL_NAME );
-			if((loadInfo->loadFlags & LOADED) == 0) {
-				/* If RasTrace created the JVMRI struct, let it destroy it. Otherwise it's our job. */
-				if (vm->j9rasGlobalStorage != NULL) {
-					tempRasGbl = (RasGlobalStorage *)vm->j9rasGlobalStorage;
-					vm->j9rasGlobalStorage = NULL;
-
-					if ( tempRasGbl->jvmriInterface != NULL ){
-						j9mem_free_memory( tempRasGbl->jvmriInterface );
-					}
-					j9mem_free_memory( tempRasGbl );
-				}
+	case ALL_LIBRARIES_LOADED:
+		if (NULL == vm->j9rasGlobalStorage) {
+			/* RAS init may happen in either dump or trace */
+			vm->j9rasGlobalStorage = j9mem_allocate_memory(sizeof(RasGlobalStorage), OMRMEM_CATEGORY_VM);
+			if (NULL != vm->j9rasGlobalStorage) {
+				memset(vm->j9rasGlobalStorage, '\0', sizeof(RasGlobalStorage));
+				RAS_GLOBAL_FROM_JAVAVM(maxStringLength, vm) = RAS_MAX_STRING_LENGTH_DEFAULT;
 			}
-			break;
+		}
+		break;
 
-		default :
-			break;
+	case TRACE_ENGINE_INITIALIZED:
+		if (NULL == ((RasGlobalStorage *)vm->j9rasGlobalStorage)->jvmriInterface) {
+			/* JVMRI init may happen in either dump or trace */
+			((RasGlobalStorage *)vm->j9rasGlobalStorage)->jvmriInterface = j9mem_allocate_memory(sizeof(DgRasInterface), OMRMEM_CATEGORY_VM);
+			if (NULL == ((RasGlobalStorage *)vm->j9rasGlobalStorage)->jvmriInterface) {
+				j9tty_err_printf("Storage for jvmri interface not available, trace not enabled\n");
+				return J9VMDLLMAIN_FAILED;
+			}
+
+			if (JNI_OK != (vm->internalVMFunctions->fillInDgRasInterface(((RasGlobalStorage *)vm->j9rasGlobalStorage)->jvmriInterface ))) {
+				j9tty_err_printf("Error initializing jvmri interface not available, trace not enabled\n");
+				return J9VMDLLMAIN_FAILED;
+			}
+
+			if (JNI_OK != (vm->internalVMFunctions->initJVMRI(vm))) {
+				j9tty_err_printf("Error initializing jvmri interface, trace not enabled\n");
+				return J9VMDLLMAIN_FAILED;
+			}
+
+			if ((*hook)->J9HookRegisterWithCallSite(hook, J9HOOK_VM_INITIALIZED, hookVmInitialized, OMR_GET_CALLSITE(), NULL)) {
+				j9tty_err_printf("Trace engine failed to hook VM events, trace not enabled\n");
+				return J9VMDLLMAIN_FAILED;
+			}
+		}
+		/* Register GC event hooks that were deferred from earlier dump agent processing. */
+		rasDumpFlushHooks(vm, stage);
+		break;
+
+	case JIT_INITIALIZED:
+		/* Register this module with trace. */
+		UT_MODULE_LOADED(J9_UTINTERFACE_FROM_VM(vm));
+		Trc_dump_J9VMDllMain_Event1(vm);
+		break;
+
+	case VM_INITIALIZATION_COMPLETE:
+		if (createAsyncDumpThread(vm)) {
+			/* Register thread event hooks that were deferred from earlier dump agent processing. */
+			rasDumpFlushHooks(vm, stage);
+		} else {
+			retVal = J9VMDLLMAIN_FAILED;
+		}
+		break;
+
+	case GC_SHUTDOWN_COMPLETE:
+		/* Replace old dump facade. */
+		rc = shutdownDumpAgents(vm);
+		if (OMR_ERROR_NONE == rc) {
+			retVal = J9VMDLLMAIN_OK;
+		} else {
+			retVal = J9VMDLLMAIN_FAILED;
+		}
+		popDumpFacade(vm);
+#if defined(J9VM_PORT_OMRSIG_SUPPORT) && defined(WIN32)
+		unloadOMRSIG(vm->portLibrary);
+#endif /* defined(J9VM_PORT_OMRSIG_SUPPORT) && defined(WIN32) */
+		break;
+
+	case ABOUT_TO_BOOTSTRAP:
+		break;
+
+	case INTERPRETER_SHUTDOWN:
+		Trc_dump_J9VMDllMain_Event2(vm);
+		freeRasDumpGlobalStorage(vm);
+		loadInfo = FIND_DLL_TABLE_ENTRY(J9_RAS_TRACE_DLL_NAME);
+		if (0 == (loadInfo->loadFlags & LOADED)) {
+			/* If RasTrace created the JVMRI struct, let it destroy it. Otherwise it's our job. */
+			if (NULL != vm->j9rasGlobalStorage) {
+				tempRasGbl = (RasGlobalStorage *)vm->j9rasGlobalStorage;
+				vm->j9rasGlobalStorage = NULL;
+
+				if (NULL != tempRasGbl->jvmriInterface) {
+					j9mem_free_memory(tempRasGbl->jvmriInterface);
+				}
+				j9mem_free_memory(tempRasGbl);
+			}
+		}
+		break;
+
+	default:
+		break;
 	}
 
 	return retVal;

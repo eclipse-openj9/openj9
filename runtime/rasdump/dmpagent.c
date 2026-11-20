@@ -126,14 +126,6 @@ typedef struct J9RASdumpSpec
 }\
 J9RASdumpSpec;
 
-typedef struct J9RASprotectedDumpData
-{
-	J9RASdumpAgent *agent;
-	char *label;
-	J9RASdumpContext *context;
-}\
-J9RASprotectedDumpData;
-
 /*
  * Known dump events.
  * The order matters because comparisons elsewhere may search for known
@@ -2761,8 +2753,8 @@ runDumpAgent(struct J9JavaVM *vm, J9RASdumpAgent * agent, J9RASdumpContext * con
 			}
 		}
 
-		/* If the dump is a heap dump and exclusive access hasn't been obtained, refuse to do the dump */
-		/* This might be encapsulated more neatly if the triggering code were moved down into the dump functions themselves */
+		/* For a heap dump where exclusive access hasn't been obtained, refuse to do the dump. */
+		/* This might be encapsulated more neatly if the triggering code were moved down into the dump functions themselves. */
 		if (gotExclusive || (agent->dumpFn != doHeapDump)) {
 #if defined(J9ZTPF)
 			struct cujvm_dmpagent_prehook_input preHookInputParms;
@@ -2793,7 +2785,7 @@ runDumpAgent(struct J9JavaVM *vm, J9RASdumpAgent * agent, J9RASdumpContext * con
 			agent->prepState = *state;
 			TRIGGER_J9HOOK_VM_DUMP_START(vm->hookInterface, vm->internalVMFunctions->currentVMThread(vm), label, detail);
 
-			retVal = runDumpFunction( agent, label, context );
+			retVal = runDumpFunction(agent, label, context);
 
 			TRIGGER_J9HOOK_VM_DUMP_END(vm->hookInterface, vm->internalVMFunctions->currentVMThread(vm), label, detail);
 
@@ -2828,7 +2820,7 @@ runDumpAgent(struct J9JavaVM *vm, J9RASdumpAgent * agent, J9RASdumpContext * con
 					writeIntoBuffer(context->dumpList, context->dumpListSize, (IDATA*)&(context->dumpListIndex), "\t");
 				}
 			}
-		} else if (userRequestedExclusive){
+		} else if (userRequestedExclusive) {
 			/*The user is doing a heapdump, asked for exclusive but we couldn't get it*/
 			j9nls_printf(PORTLIB, J9NLS_WARNING | J9NLS_STDERR, J9NLS_DMP_HEAP_DUMP_EXCLUSIVE_FAILED);
 		} else {
@@ -2853,6 +2845,29 @@ runDumpAgent(struct J9JavaVM *vm, J9RASdumpAgent * agent, J9RASdumpContext * con
 	return retVal;
 }
 
+void
+runDumpRequest(J9JavaVM *vm, J9RASDumpRequest *request)
+{
+	omr_error_t result = OMR_ERROR_INTERNAL;
+	RasDumpGlobalStorage *dumpGlobal = (RasDumpGlobalStorage *)vm->j9rasdumpGlobalStorage;
+
+	if (dumpGlobal->noProtect) {
+		result = request->agent->dumpFn(request->agent, request->label, request->context);
+	} else {
+		PORT_ACCESS_FROM_JAVAVM(vm);
+		UDATA rc = 0;
+
+		if (0 != j9sig_protect(
+				protectedDumpFunction, request, signalHandler, NULL,
+				J9PORT_SIG_FLAG_MAY_RETURN | J9PORT_SIG_FLAG_SIGALLSYNC, &rc)
+		) {
+			result = (omr_error_t)rc;
+		}
+	}
+
+	request->result = result;
+}
+
 /*
  * Execute the dump function from agent under signal protection.
  * If a signal occurs OMR_ERROR_INTERNAL is returned.
@@ -2860,32 +2875,50 @@ runDumpAgent(struct J9JavaVM *vm, J9RASdumpAgent * agent, J9RASdumpContext * con
 omr_error_t
 runDumpFunction(J9RASdumpAgent *agent, char *label, J9RASdumpContext *context)
 {
-	UDATA rc;
-	I_32 protectedResult;
-	J9RASprotectedDumpData dumpData;
 	J9JavaVM *vm = context->javaVM;
 	RasDumpGlobalStorage *dumpGlobal = (RasDumpGlobalStorage *)vm->j9rasdumpGlobalStorage;
-	PORT_ACCESS_FROM_JAVAVM(vm);
+	J9RASDumpRequest request;
 
-	if (dumpGlobal->noProtect) {
-		return agent->dumpFn(agent, label, context);
+	request.result = OMR_ERROR_INTERNAL;
+	request.agent = agent;
+	request.label = label;
+	request.context = context;
+
+	if ((NULL != context->onThread)
+		|| (J9RAS_DUMP_DELEGATE_STATE_RUNNING != dumpGlobal->delegateState)
+	) {
+		/* If the context includes an attached VM thread we don't need to rely on a
+		 * delegate thread. If -XX:-AsyncDumpDelegation was specified, or the helper
+		 * thread could not be created and attached to the VM, we can't rely on the
+		 * delegate thread. In all these situations, the request is handled locally.
+		 */
+		runDumpRequest(vm, &request);
 	} else {
-		dumpData.agent = agent;
-		dumpData.label = label;
-		dumpData.context = context;
+		/* Synchronously delegate to the helper thread. */
+		omrthread_monitor_enter(dumpGlobal->delegateMonitor);
 
-		protectedResult = j9sig_protect(
-			protectedDumpFunction, &dumpData,
-			signalHandler, NULL,
-			J9PORT_SIG_FLAG_MAY_RETURN | J9PORT_SIG_FLAG_SIGALLSYNC,
-			&rc);
-
-		if (protectedResult != 0) {
-			return OMR_ERROR_INTERNAL;
-		} else {
-			return (omr_error_t)rc;
+		/* Wait while the helper processes earlier requests. */
+		while (NULL != dumpGlobal->delegateRequest) {
+			omrthread_monitor_wait(dumpGlobal->delegateMonitor);
 		}
+
+		if (J9RAS_DUMP_DELEGATE_STATE_RUNNING != dumpGlobal->delegateState) {
+			/* The helper thread is no longer running: handle this request locally. */
+			runDumpRequest(vm, &request);
+		} else {
+			dumpGlobal->delegateRequest = &request;
+			omrthread_monitor_notify_all(dumpGlobal->delegateMonitor);
+
+			/* The helper thread will clear request.context when done. */
+			while (NULL != request.context) {
+				omrthread_monitor_wait(dumpGlobal->delegateMonitor);
+			}
+		}
+
+		omrthread_monitor_exit(dumpGlobal->delegateMonitor);
 	}
+
+	return request.result;
 }
 
 /*
@@ -2894,16 +2927,16 @@ runDumpFunction(J9RASdumpAgent *agent, char *label, J9RASdumpContext *context)
 static UDATA
 protectedDumpFunction(struct J9PortLibrary *portLibrary, void *userData)
 {
-	J9RASprotectedDumpData* dumpData = userData;
+	J9RASDumpRequest *request = userData;
 
-	return (UDATA)dumpData->agent->dumpFn(dumpData->agent, dumpData->label, dumpData->context);
+	return (UDATA)request->agent->dumpFn(request->agent, request->label, request->context);
 }
 
 /*
  * See runDumpFunction()
  */
 static UDATA
-signalHandler(struct J9PortLibrary* portLibrary, U_32 gpType, void* gpInfo, void* userData)
+signalHandler(struct J9PortLibrary *portLibrary, U_32 gpType, void *gpInfo, void *userData)
 {
 	return J9PORT_SIG_EXCEPTION_RETURN;
 }

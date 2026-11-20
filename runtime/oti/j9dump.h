@@ -26,9 +26,21 @@
 #define J9DMP_TRIGGER(vm, self, eventFlags, userData) \
 	(vm)->j9rasDumpFunctions->triggerDumpAgents(vm, self, eventFlags, userData)
 
-/* Rasdump Global storage block */
+/* Forward declarations. */
+struct J9RASdumpAgent;
+struct J9RASdumpContext;
+
+typedef struct J9RASDumpRequest
+{
+	omr_error_t result;
+	struct J9RASdumpAgent *agent;
+	char *label;
+	struct J9RASdumpContext *context;
+} J9RASDumpRequest;
+
+/* RAS dump global storage block. */
 typedef struct RasDumpGlobalStorage {
-	void* dumpLabelTokens;
+	void *dumpLabelTokens;
 	omrthread_monitor_t dumpLabelTokensMutex;
 
 	UDATA allocationRangeMin;
@@ -38,16 +50,23 @@ typedef struct RasDumpGlobalStorage {
 	U_32 noFailover; /* If set, do not failover to /tmp etc if unable to write dump. */
 
 	U_32 dumpFlags; /* Flags to control java dump behaviour. */
+
+	U_32 delegateState;
+	omrthread_monitor_t delegateMonitor;
+	struct J9RASDumpRequest *delegateRequest;
 } RasDumpGlobalStorage;
+
+/* Values for RasDumpGlobalStorage.delegateState. */
+#define J9RAS_DUMP_DELEGATE_STATE_UNINITIALIZED 0
+#define J9RAS_DUMP_DELEGATE_STATE_RUNNING       1
+#define J9RAS_DUMP_DELEGATE_STATE_DISABLED      2
+#define J9RAS_DUMP_DELEGATE_STATE_FAILED        3
 
 /* Flags on how to handle resolving native stack symbols. */
 #define J9RAS_JAVADUMP_SHOW_NATIVE_STACK_SYMBOLS_BASIC 0x1
 #define J9RAS_JAVADUMP_SHOW_NATIVE_STACK_SYMBOLS_ALL   0x2
 /* Flag to show unmounted Thread stacktrace in java dump. */
 #define J9RAS_JAVADUMP_SHOW_UNMOUNTED_THREAD_STACKS    0x4
-
-struct J9RASdumpAgent; /* Forward struct declaration */
-struct J9RASdumpContext; /* Forward struct declaration */
 
 typedef omr_error_t (*J9RASdumpFn)(struct J9RASdumpAgent *agent, char *label, struct J9RASdumpContext *context);
 
