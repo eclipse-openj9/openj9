@@ -144,7 +144,7 @@ private:
      */
     void process_java_lang_StringCoding_encodeASCII(TR::TreeTop *treetop, TR::Node *node);
     /** \brief
-     *     Transforms java/lang/StringLatin1.compareTo([B[BII)I using arraycmplen
+     *     Transforms java/lang/StringLatin1.compareTo([B[BII)I or java/lang/StringUTF16.compareValues([B[BII)I
      *
      *  \param treetop
      *     The treetop which anchors the call node.
@@ -160,7 +160,7 @@ private:
      *       <dst length>
      *     \endcode
      */
-    void process_java_lang_StringLatin1_compareTo_BBII(TR::TreeTop *treetop, TR::Node *node);
+    void process_java_lang_String_compareTo(TR::TreeTop *treetop, TR::Node *node, bool isLatin1);
     /** \brief
      *     Transforms java/lang/StringLatin1.inflate([BI[BII)V using arraytranslate
      *
