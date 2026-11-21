@@ -229,7 +229,7 @@ private:
     void loadInstance(int32_t);
     void loadInstance(TR::SymbolReference *);
     void loadFlattenableInstance(int32_t);
-    void loadFlattenableInstanceWithHelper(int32_t cpIndex);
+    void loadFlattenableInstanceWithHelper(TR_ResolvedJ9Method *owningMethod, int32_t cpIndex, bool isResolved);
     void loadStatic(int32_t);
     void loadAuto(TR::DataType type, int32_t slot, bool isAdjunct = false);
     TR::Node *loadSymbol(TR::ILOpCodes, TR::SymbolReference *);
@@ -255,7 +255,7 @@ private:
     void storeInstance(int32_t);
     void storeInstance(TR::SymbolReference *);
     void storeFlattenableInstance(int32_t);
-    void storeFlattenableInstanceWithHelper(int32_t);
+    void storeFlattenableInstanceWithHelper(TR_ResolvedJ9Method *owningMethod, int32_t cpIndex, bool isResolved);
     void storeStatic(int32_t);
     TR::Node *narrowIntStoreIfRequired(TR::Node *value, TR::SymbolReference *symRef);
     void storeAuto(TR::DataType type, int32_t slot, bool isAdjunct = false);
