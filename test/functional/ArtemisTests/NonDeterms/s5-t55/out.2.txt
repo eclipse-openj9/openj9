@@ -1,0 +1,100 @@
+i19 i20 i21 = 87,168,3380
+i22 i23 i24 = 97,46008,2
+i25 b3 i26 = -1,1,-8
+dArr sArr = 4680699958232252349,-139381
+Test.instanceCount Test.dFld Test.fFld = 56264,4647144913940615109,-1073741824
+sFld byFld Test.fArrFld = -1,127,4753867304457733974
+lArrFld iArrFld Test.byArrFld = 0,15802,-3789
+iMeth_check_sum: -4553707359728089167
+vMeth1_check_sum: -24028
+vMeth_check_sum: -4583067218206293850
+i19 i20 i21 = 87,168,3380
+i22 i23 i24 = 97,46008,2
+i25 b3 i26 = -1,1,-8
+dArr sArr = 4680699958232252349,-139381
+Test.instanceCount Test.dFld Test.fFld = 56264,4651625601065076706,-1073741824
+sFld byFld Test.fArrFld = -1,127,4820889546902738071
+lArrFld iArrFld Test.byArrFld = 0,15802,-3789
+iMeth_check_sum: -9107414719454379192
+vMeth1_check_sum: 1751086
+vMeth_check_sum: -9110463297939176792
+i19 i20 i21 = 87,168,3380
+i22 i23 i24 = 97,46008,2
+i25 b3 i26 = -1,1,-8
+dArr sArr = 4680699958232252349,-139381
+Test.instanceCount Test.dFld Test.fFld = 56264,4654019876255196145,-1073741824
+sFld byFld Test.fArrFld = -1,127,4927494730163405612
+lArrFld iArrFld Test.byArrFld = 0,15802,-3789
+iMeth_check_sum: 4785621994528881445
+vMeth1_check_sum: 3525246
+vMeth_check_sum: 4808880598438424810
+i19 i20 i21 = 87,168,3380
+i22 i23 i24 = 97,46008,2
+i25 b3 i26 = -1,1,-8
+dArr sArr = 4680699958232252349,-139381
+Test.instanceCount Test.dFld Test.fFld = 56264,4656117744440992753,-1073741824
+sFld byFld Test.fArrFld = -1,127,5033845946916536320
+lArrFld iArrFld Test.byArrFld = 0,15802,-3789
+iMeth_check_sum: 231914634802589512
+vMeth1_check_sum: 5298452
+vMeth_check_sum: 281476323883737780
+i19 i20 i21 = 87,168,3380
+i22 i23 i24 = 97,46008,2
+i25 b3 i26 = -1,1,-8
+dArr sArr = 4680699958232252349,-139381
+Test.instanceCount Test.dFld Test.fFld = 56264,4657468813663941112,-1073741824
+sFld byFld Test.fArrFld = -1,127,5140159449561825280
+lArrFld iArrFld Test.byArrFld = 0,15802,-3789
+iMeth_check_sum: -4321792724923703375
+vMeth1_check_sum: 7070704
+vMeth_check_sum: -4245932048107262834
+i19 i20 i21 = 87,168,3380
+i22 i23 i24 = 97,46008,2
+i25 b3 i26 = -1,1,-8
+dArr sArr = 4680699958232252349,-139381
+Test.instanceCount Test.dFld Test.fFld = 56264,4658517747756839416,-1073741824
+sFld byFld Test.fArrFld = -1,127,9221120237041090560
+lArrFld iArrFld Test.byArrFld = 0,15802,-3789
+iMeth_check_sum: -8875500084649997216
+vMeth1_check_sum: 8842002
+vMeth_check_sum: -8773344517873543304
+i19 i20 i21 = 87,168,3380
+i22 i23 i24 = 97,46008,2
+i25 b3 i26 = -1,1,-8
+dArr sArr = 4680699958232252349,-139381
+Test.instanceCount Test.dFld Test.fFld = 56264,4659566681849737720,-1073741824
+sFld byFld Test.fArrFld = -1,127,9221120237041090560
+lArrFld iArrFld Test.byArrFld = 0,15802,-3789
+iMeth_check_sum: 5017536629333259603
+vMeth1_check_sum: 10612344
+vMeth_check_sum: 5145982988755900602
+i19 i20 i21 = 87,168,3380
+i22 i23 i24 = 97,46008,2
+i25 b3 i26 = -1,1,-8
+dArr sArr = 4680699958232252349,-139381
+Test.instanceCount Test.dFld Test.fFld = 56264,4660615615942636024,-1073741824
+sFld byFld Test.fArrFld = -1,127,9221120237041090560
+lArrFld iArrFld Test.byArrFld = 0,15802,-3789
+iMeth_check_sum: 463829269606963852
+vMeth1_check_sum: 12381732
+vMeth_check_sum: 618562324492405316
+i19 i20 i21 = 87,168,3380
+i22 i23 i24 = 97,46008,2
+i25 b3 i26 = -1,1,-8
+dArr sArr = 4680699958232252349,-139381
+Test.instanceCount Test.dFld Test.fFld = 56264,4661445082181998844,-1073741824
+sFld byFld Test.fArrFld = -1,127,9221120237041090560
+lArrFld iArrFld Test.byArrFld = 0,15802,-3789
+iMeth_check_sum: -4089878090119332853
+vMeth1_check_sum: 14150166
+vMeth_check_sum: -3908862437200656258
+i19 i20 i21 = 87,168,3380
+i22 i23 i24 = 97,46008,2
+i25 b3 i26 = -1,1,-8
+dArr sArr = 4680699958232252349,-139381
+Test.instanceCount Test.dFld Test.fFld = 56264,4661969549228447996,-1073741824
+sFld byFld Test.fArrFld = -1,127,9221120237041090560
+lArrFld iArrFld Test.byArrFld = 0,15802,-3789
+iMeth_check_sum: -8643585449845630512
+vMeth1_check_sum: 15917646
+vMeth_check_sum: -8436291292590294704
