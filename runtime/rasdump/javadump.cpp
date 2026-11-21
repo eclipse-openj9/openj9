@@ -2200,7 +2200,7 @@ JavaCoreDumpWriter::writeThreadSection(void)
 	}
 #endif /* JAVA_SPEC_VERSION >= 21 */
 
-#if !defined(OSX)
+#if !(defined(OSX) && defined(J9AARCH64))
 	/* if thread preempt is enabled, and we have the lock, then collect the native stacks */
 	if (J9_ARE_ANY_BITS_SET(_Agent->requestMask, J9RAS_DUMP_DO_PREEMPT_THREADS) && _PreemptLocked
 #if defined(WIN32)
@@ -2219,7 +2219,7 @@ JavaCoreDumpWriter::writeThreadSection(void)
 				J9PORT_SIG_FLAG_SIGALLSYNC | J9PORT_SIG_FLAG_MAY_RETURN,
 				&sink);
 	}
-#endif /* !defined(OSX) */
+#endif /* !(defined(OSX) && defined(J9AARCH64)) */
 
 	if (!_ThreadsWalkStarted) {
 		struct walkClosure closure;
