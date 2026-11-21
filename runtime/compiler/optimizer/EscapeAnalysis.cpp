@@ -5814,8 +5814,8 @@ void TR_EscapeAnalysis::makeLocalObject(Candidate *candidate)
         int32_t numSlots = 0;
 #if LOCAL_OBJECTS_COLLECTABLE
         if (candidate->isContiguousAllocation())
-            ////numSlots = (candidate->_size - TR::Compiler->om.contiguousArrayHeaderSizeInBytes()) /
-            ///_cg->sizeOfJavaPointer();
+            //numSlots = (candidate->_size - TR::Compiler->om.contiguousArrayHeaderSizeInBytes()) /
+            //_cg->sizeOfJavaPointer();
             numSlots = (candidate->_size - TR::Compiler->om.contiguousArrayHeaderSizeInBytes())
                 / TR::Compiler->om.sizeofReferenceField();
 #endif
@@ -5823,7 +5823,7 @@ void TR_EscapeAnalysis::makeLocalObject(Candidate *candidate)
             symRef->getSymbol()->setNotCollected();
         else {
             referenceSlots = (int32_t *)trMemory()->allocateHeapMemory((numSlots + 1) * 4, TR_Memory::EscapeAnalysis);
-            ////int32_t hdrSlots = TR::Compiler->om.contiguousArrayHeaderSizeInBytes()/_cg->sizeOfJavaPointer();
+            //int32_t hdrSlots = TR::Compiler->om.contiguousArrayHeaderSizeInBytes()/_cg->sizeOfJavaPointer();
             int32_t hdrSlots
                 = TR::Compiler->om.contiguousArrayHeaderSizeInBytes() / TR::Compiler->om.sizeofReferenceField();
             for (i = 0; i < numSlots; i++)
@@ -6189,7 +6189,7 @@ void TR_EscapeAnalysis::makeContiguousLocalAllocation(Candidate *candidate)
                 //
                 if (referenceSlots && !candidate->isInsideALoop()) {
                     for (j = 0; referenceSlots[j]; j++) {
-                        ////if (zeroInitOffset == referenceSlots[j]*_cg->sizeOfJavaPointer())
+                        //if (zeroInitOffset == referenceSlots[j]*_cg->sizeOfJavaPointer())
                         if (zeroInitOffset == referenceSlots[j] * TR::Compiler->om.sizeofReferenceField()) {
                             TR::TransformUtil::removeTree(comp(), initTree);
                             break;
@@ -6310,7 +6310,7 @@ void TR_EscapeAnalysis::makeContiguousLocalAllocation(Candidate *candidate)
         TR::Node *baseNode = NULL;
 
         for (i = 0; referenceSlots[i]; i++) {
-            ////int32_t offset = referenceSlots[i] * _cg->sizeOfJavaPointer();
+            //int32_t offset = referenceSlots[i] * _cg->sizeOfJavaPointer();
             int32_t offset = referenceSlots[i] * TR::Compiler->om.sizeofReferenceField();
 
             // See if the slot can be initialized using a field reference
