@@ -128,8 +128,8 @@ public:
     void addClassToNullClassSignatureCache(const ClassLoaderStringPair &clsp);
     bool classIsInNullClassSignatureCache(const ClassLoaderStringPair &clsp);
 
-    void cacheIsUnresolvedStr(TR_OpaqueClassBlock *ramClass, int32_t cpIndex, const TR_IsUnresolvedString &stringAttrs);
-    bool getCachedIsUnresolvedStr(TR_OpaqueClassBlock *ramClass, int32_t cpIndex, TR_IsUnresolvedString &stringAttrs);
+    void cacheStringConstantData(TR_OpaqueClassBlock *ramClass, int32_t cpIndex, const TR_StringConstantData &data);
+    bool getCachedStringConstantData(TR_OpaqueClassBlock *ramClass, int32_t cpIndex, TR_StringConstantData &data);
 
     void clearPerCompilationCaches();
     void deleteClientSessionData(uint64_t clientId, TR::CompilationInfo *compInfo, J9VMThread *compThread);
@@ -226,7 +226,7 @@ private:
     FieldOrStaticAttrTable_t *_fieldAttributesCache;
     FieldOrStaticAttrTable_t *_staticAttributesCache;
     NullClassSignatureCache_t *_nullClassSignatureCache;
-    UnorderedMap<std::pair<TR_OpaqueClassBlock *, int32_t>, TR_IsUnresolvedString> *_isUnresolvedStrCache;
+    UnorderedMap<std::pair<TR_OpaqueClassBlock *, int32_t>, TR_StringConstantData> *_stringConstantCache;
     int32_t _classUnloadReadMutexDepth;
     bool _aotCacheStore; // True if the result of this compilation will be stored in AOT cache
     uint32_t _methodIndex; // Index of the method being compiled in the array of methods of its defining class
