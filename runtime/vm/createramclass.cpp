@@ -3147,7 +3147,7 @@ fail:
 #if defined(LINUXPPC)
 			allocationRequests[RAM_METHODS_FRAGMENT].segmentKind = SK_SUB4G;
 #else /* defined(LINUXPPC) */
-			allocationRequests[RAM_METHODS_FRAGMENT].segmentKind = SK_ABOVE4G_INFREQUENTLY_ACCESSED;
+			allocationRequests[RAM_METHODS_FRAGMENT].segmentKind = SK_SUB4G;
 #endif /* defined(LINUXPPC) */
 
 			/* superclasses fragment */
@@ -3163,7 +3163,7 @@ fail:
 #if defined(LINUXPPC)
 			allocationRequests[RAM_SUPERCLASSES_FRAGMENT].segmentKind = SK_SUB4G;
 #else /* defined(LINUXPPC) */
-			allocationRequests[RAM_SUPERCLASSES_FRAGMENT].segmentKind = SK_ABOVE4G_INFREQUENTLY_ACCESSED;
+			allocationRequests[RAM_SUPERCLASSES_FRAGMENT].segmentKind = SK_SUB4G;
 #endif /* defined(LINUXPPC) */
 
 			/* instance description fragment */
@@ -3185,7 +3185,7 @@ fail:
 #if defined(LINUXPPC)
 			allocationRequests[RAM_ITABLE_FRAGMENT].segmentKind = SK_SUB4G;
 #else /* defined(LINUXPPC) */
-			allocationRequests[RAM_ITABLE_FRAGMENT].segmentKind = SK_ABOVE4G_INFREQUENTLY_ACCESSED;
+			allocationRequests[RAM_ITABLE_FRAGMENT].segmentKind = SK_SUB4G;
 #endif /* defined(LINUXPPC) */
 
 			/* static slots fragment */
@@ -3214,7 +3214,7 @@ fail:
 #if defined(LINUXPPC)
 			allocationRequests[RAM_CALL_SITES_FRAGMENT].segmentKind = SK_SUB4G;
 #else /* defined(LINUXPPC) */
-			allocationRequests[RAM_CALL_SITES_FRAGMENT].segmentKind = SK_ABOVE4G_INFREQUENTLY_ACCESSED;
+			allocationRequests[RAM_CALL_SITES_FRAGMENT].segmentKind = SK_SUB4G;
 #endif /* defined(LINUXPPC) */
 
 #if defined(J9VM_OPT_OPENJDK_METHODHANDLE)
@@ -3226,7 +3226,7 @@ fail:
 #if defined(LINUXPPC)
 			allocationRequests[RAM_INVOKE_CACHE_FRAGMENT].segmentKind = SK_SUB4G;
 #else /* defined(LINUXPPC) */
-			allocationRequests[RAM_INVOKE_CACHE_FRAGMENT].segmentKind = SK_ABOVE4G_INFREQUENTLY_ACCESSED;
+			allocationRequests[RAM_INVOKE_CACHE_FRAGMENT].segmentKind = SK_SUB4G;
 #endif /* defined(LINUXPPC) */
 #else /* defined(J9VM_OPT_OPENJDK_METHODHANDLE) */
 			/* method types fragment */
@@ -3237,7 +3237,7 @@ fail:
 #if defined(LINUXPPC)
 			allocationRequests[RAM_METHOD_TYPES_FRAGMENT].segmentKind = SK_SUB4G;
 #else /* defined(LINUXPPC) */
-			allocationRequests[RAM_METHOD_TYPES_FRAGMENT].segmentKind = SK_ABOVE4G_INFREQUENTLY_ACCESSED;
+			allocationRequests[RAM_METHOD_TYPES_FRAGMENT].segmentKind = SK_SUB4G;
 #endif /* defined(LINUXPPC) */
 			/* varhandle method types fragment */
 			allocationRequests[RAM_VARHANDLE_METHOD_TYPES_FRAGMENT].prefixSize = 0;
@@ -3247,7 +3247,7 @@ fail:
 #if defined(LINUXPPC)
 			allocationRequests[RAM_VARHANDLE_METHOD_TYPES_FRAGMENT].segmentKind = SK_SUB4G;
 #else /* defined(LINUXPPC) */
-			allocationRequests[RAM_VARHANDLE_METHOD_TYPES_FRAGMENT].segmentKind = SK_ABOVE4G_INFREQUENTLY_ACCESSED;
+			allocationRequests[RAM_VARHANDLE_METHOD_TYPES_FRAGMENT].segmentKind = SK_SUB4G;
 #endif /* defined(LINUXPPC) */
 #endif /* defined(J9VM_OPT_OPENJDK_METHODHANDLE) */
 
@@ -3259,7 +3259,7 @@ fail:
 #if defined(LINUXPPC)
 			allocationRequests[RAM_STATIC_SPLIT_TABLE_FRAGMENT].segmentKind = SK_SUB4G;
 #else /* defined(LINUXPPC) */
-			allocationRequests[RAM_STATIC_SPLIT_TABLE_FRAGMENT].segmentKind = SK_ABOVE4G_INFREQUENTLY_ACCESSED;
+			allocationRequests[RAM_STATIC_SPLIT_TABLE_FRAGMENT].segmentKind = SK_SUB4G;
 #endif /* defined(LINUXPPC) */
 
 			/* special split table fragment */
@@ -3270,7 +3270,7 @@ fail:
 #if defined(LINUXPPC)
 			allocationRequests[RAM_SPECIAL_SPLIT_TABLE_FRAGMENT].segmentKind = SK_SUB4G;
 #else /* defined(LINUXPPC) */
-			allocationRequests[RAM_SPECIAL_SPLIT_TABLE_FRAGMENT].segmentKind = SK_ABOVE4G_INFREQUENTLY_ACCESSED;
+			allocationRequests[RAM_SPECIAL_SPLIT_TABLE_FRAGMENT].segmentKind = SK_SUB4G;
 #endif /* defined(LINUXPPC) */
 
 #if defined(J9VM_OPT_VALHALLA_STRICT_FIELDS)
@@ -3286,7 +3286,7 @@ fail:
 #if defined(LINUXPPC)
 			allocationRequests[RAM_CLASS_FLATTENED_CLASS_CACHE].segmentKind = SK_SUB4G;
 #else /* defined(LINUXPPC) */
-			allocationRequests[RAM_CLASS_FLATTENED_CLASS_CACHE].segmentKind = SK_ABOVE4G_INFREQUENTLY_ACCESSED;
+			allocationRequests[RAM_CLASS_FLATTENED_CLASS_CACHE].segmentKind = SK_SUB4G;
 #endif /* defined(LINUXPPC) */
 #endif /* defined(J9VM_OPT_VALHALLA_STRICT_FIELDS) */
 
