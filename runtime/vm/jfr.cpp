@@ -257,6 +257,9 @@ jfrEventSize(J9JFREvent *jfrEvent)
 	case J9JFR_EVENT_TYPE_CLASS_LOADER_STATISTICS:
 		size = sizeof(J9JFRClassLoaderStatistics);
 		break;
+	case J9JFR_EVENT_TYPE_CLASS_REFERENCE:
+		size = sizeof(J9JFRClassReference);
+		break;
 	case J9JFR_EVENT_TYPE_JVM_INFORMATION:
 	case J9JFR_EVENT_TYPE_CPU_INFORMATION:
 	case J9JFR_EVENT_TYPE_VIRTUALIZATION_INFORMATION:
@@ -624,6 +627,16 @@ reserveBufferWithStackTrace(J9VMThread *currentThread, J9VMThread *sampleThread,
 		// TODO: tracepoint
 	}
 	return jfrEvent;
+}
+
+void
+emitClassReference(J9VMThread *currentThread, J9Class *clazz)
+{
+	J9JFRClassReference *jfrEvent = (J9JFRClassReference *)reserveBuffer(currentThread, currentThread, sizeof(J9JFRClassReference));
+	if (NULL != jfrEvent) {
+		initializeEventFields(currentThread, currentThread, (J9JFREvent *)jfrEvent, J9JFR_EVENT_TYPE_CLASS_REFERENCE);
+		jfrEvent->referencedClass = clazz;
+	}
 }
 
 /**

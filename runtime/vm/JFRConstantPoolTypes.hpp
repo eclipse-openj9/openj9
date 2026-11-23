@@ -1615,6 +1615,9 @@ public:
 			case J9JFR_EVENT_TYPE_OBJECT_ALLOCATION_SAMPLE:
 				addObjectAllocationSampleEntry((J9JFRObjectAllocationSample *)event);
 				break;
+			case J9JFR_EVENT_TYPE_CLASS_REFERENCE:
+				getClassEntry(((J9JFRClassReference *)event)->referencedClass);
+				break;
 			default:
 				Assert_VM_unreachable();
 				break;
@@ -1669,8 +1672,15 @@ public:
 			goto done;
 		}
 
-		hashTableForEachDo(_classTable, findShallowEntries, shallowEntries);
-		pool_do(shallowEntries, fixupShallowEntries, this);
+		/* Fixing up a shallow entry may create new shallow entries, repeat until none are left. */
+		for (;;) {
+			hashTableForEachDo(_classTable, findShallowEntries, shallowEntries);
+			if (0 == pool_numElements(shallowEntries)) {
+				break;
+			}
+			pool_do(shallowEntries, fixupShallowEntries, this);
+			pool_clear(shallowEntries);
+		}
 
 		pool_kill(shallowEntries);
 

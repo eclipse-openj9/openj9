@@ -504,6 +504,7 @@ J9InternalVMFunctions J9InternalFunctions = {
 	setupChunkMonitor,
 	getThreadTID,
 	emitStackTrace,
+	emitClassReference,
 	flushJavaJFRBuffer,
 #endif /* defined(J9VM_OPT_JFR) */
 #if defined(J9VM_OPT_SNAPSHOTS)
