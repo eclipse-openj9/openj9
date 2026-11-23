@@ -107,7 +107,8 @@ inline void reclaimAssumptions(J9JITConfig *jitConfig, J9JITExceptionTable *meta
 inline void markAssumptionsAndDetach(J9JITConfig *jitConfig, J9JITExceptionTable *metaData,
     bool reclaimPrePrologueAssumptions)
 {
-    // mark and detach the runtime assumptions, which will then be deleted from the RAT in the GC end hook
+    // delete the runtime assumptions of this body right away; assumptions already marked as zombies
+    // are left alone and will be freed from the zombie list in the GC end hook
     pointer_cast<TR_PersistentMemory *>(jitConfig->scratchSegment)
         ->getPersistentInfo()
         ->getRuntimeAssumptionTable()

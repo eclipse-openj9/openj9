@@ -73,7 +73,6 @@ char const * const runtimeAssumptionKindNames[LastAssumptionKind] = {
 
 struct TR_RatHT {
     OMR::RuntimeAssumption **_htSpineArray;
-    uint32_t *_markedforDetachCount;
     size_t _spineArraySize;
 };
 
@@ -139,7 +138,12 @@ public:
         return (kind >= 0 && kind < LastAssumptionKind) ? _tables + kind : NULL;
     }
 
-    OMR::RuntimeAssumption **getBucketPtr(TR_RuntimeAssumptionKind kind, uintptr_t hashIndex);
+    OMR::RuntimeAssumption **getBucketPtr(TR_RuntimeAssumptionKind kind, uintptr_t hashIndex)
+    {
+        // Zombie assumptions are unlinked from the buckets, so no node in a bucket is marked for detach
+        TR_RatHT *hashTable = findAssumptionHashTable(kind);
+        return hashTable->_htSpineArray + (hashIndex % hashTable->_spineArraySize);
+    }
 
     OMR::RuntimeAssumption *getBucket(TR_RuntimeAssumptionKind kind, uintptr_t key)
     {
@@ -166,15 +170,25 @@ public:
 
     void incReclaimedAssumptionCount(int32_t tableId) { reclaimedAssumptionCount[tableId]++; }
 
+    /**
+     * Mark the assumption as a zombie, unlink it from its RAT bucket and push it
+     * on the list of zombie assumptions (_zombieHead). The assumption stays in the
+     * circular list of assumptions of its jitted body until it is reclaimed.
+     *
+     * Because the assumption is moved out of the bucket, its next pointer now refers
+     * to the zombie list: callers iterating a bucket must read the next element of
+     * the bucket BEFORE calling this method.
+     * Must be called under the assumptionTableMutex.
+     */
     void markForDetachFromRAT(OMR::RuntimeAssumption *assumption);
 
     void markAssumptionsAndDetach(void *reclaimedMetaData, bool reclaimPrePrologueAssumptions = false);
 
     /**
-     * Walk the table removing entries that have been marked as detached.
+     * Free the assumptions on the zombie list (they are no longer in the RAT buckets).
      *
      * If a clean-up count is specified at most that number of entries will be
-     * removed from the table - this is used to rate limit clean-up activity
+     * removed from the list - this is used to rate limit clean-up activity
      * and amortize the cost over time.
      */
     void reclaimMarkedAssumptionsFromRAT(int32_t cleanupCount = -1);
@@ -188,10 +202,45 @@ private:
     int32_t reclaimAssumptions(void *md, OMR::RuntimeAssumption **hashTable,
         OMR::RuntimeAssumption **possiblyRelevantHashTable);
 
+    /**
+     * @brief Debug check of the doubly linked bucket chain (hlist style).
+     *
+     * Walks the bucket selected by kind and hashIndex and asserts that for every node
+     * n: n->_pprev points to the pointer that points to n (bucket head or the _next
+     * field of the previous node). Must be called under the assumptionTableMutex.
+     * The body is only compiled in when DEBUG or PROD_WITH_ASSUMES is defined.
+     */
+    void verifyBucket(TR_RuntimeAssumptionKind kind, uintptr_t hashIndex);
+
+    /**
+     * @brief Unlink a (non-zombie) assumption from its RAT bucket, reclaim it and free it right away.
+     *
+     * The caller must have already removed the assumption from the circular list of its
+     * jitted body. Must be called under the assumptionTableMutex.
+     */
+    void deleteAssumptionNow(OMR::RuntimeAssumption *assumption);
+
+    /**
+     * @brief Free the sentinel of a circular list of assumptions. The sentinel is not part of the RAT.
+     * Must be called under the assumptionTableMutex.
+     */
+    static void freeSentinelAssumption(OMR::RuntimeAssumption *sentinel);
+
+    /**
+     * @brief Debug check of the doubly linked zombie list.
+     *
+     * Asserts that every node is marked for detach, that its _pprev is consistent and
+     * that the number of nodes matches _marked. Must be called under the assumptionTableMutex.
+     * The body is only compiled in when DEBUG or PROD_WITH_ASSUMES is defined.
+     */
+    void verifyZombieList();
+
     // My table of hash tables; init() allocate memory and populate it
     TR_RatHT _tables[LastAssumptionKind];
-    bool _detachPending[LastAssumptionKind]; // Marks tables that have assumptions waiting to be removed
-    uint32_t _marked; // Counts the number of assumptions waiting to be removed
+    // Head of the doubly linked list of zombie assumptions (marked for detach, already unlinked from the RAT buckets).
+    // The list reuses the _next/_pprev fields of the assumptions, which are not needed once out of the bucket.
+    OMR::RuntimeAssumption *_zombieHead;
+    uint32_t _marked; // Counts the number of assumptions in the zombie list (waiting to be removed)
     int32_t assumptionCount[LastAssumptionKind]; // this never gets decremented
     int32_t reclaimedAssumptionCount[LastAssumptionKind];
 
@@ -209,6 +258,6 @@ private:
      * Initialized in init() during JVM bootstrap.
      */
     static TR::PersistentAllocator *_raPersistentAllocator;
-};
+}; // class TR_RuntimeAssumptionTable
 
 #endif // RUNTIMEASSUMPTIONTABLE_HPP

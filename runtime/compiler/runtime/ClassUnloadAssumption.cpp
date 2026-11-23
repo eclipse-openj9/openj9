@@ -209,16 +209,13 @@ bool TR_RuntimeAssumptionTable::init()
 
         // Use dedicated RuntimeAssumption allocator with TR_Memory::Assumption category.
         _tables[i]._htSpineArray = (OMR::RuntimeAssumption **)allocateRAPersistentMemory(storageSize);
-        _tables[i]._markedforDetachCount
-            = (uint32_t *)allocateRAPersistentMemory(sizeof(uint32_t) * _tables[i]._spineArraySize);
 
-        if (!_tables[i]._htSpineArray || !_tables[i]._markedforDetachCount)
+        if (!_tables[i]._htSpineArray)
             return false;
         memset(_tables[i]._htSpineArray, 0, storageSize);
-        memset(_tables[i]._markedforDetachCount, 0, sizeof(uint32_t) * _tables[i]._spineArraySize);
     }
     _marked = 0;
-    memset(_detachPending, 0, sizeof(bool) * LastAssumptionKind);
+    _zombieHead = NULL;
     return true;
 }
 
@@ -295,6 +292,23 @@ bool OMR::RuntimeAssumption::isAssumingMethod(void *md, bool reclaimPrePrologueA
     return false;
 }
 
+// Sentinel is not a part of RAT so it will not be deleted normally.
+// Need to explicitly free it.
+// must be executed under assumptionTableMutex
+void TR_RuntimeAssumptionTable::freeSentinelAssumption(OMR::RuntimeAssumption *sentinel)
+{
+    if (TR::Options::getCmdLineOptions()->getVerboseOption(TR_VerboseRuntimeAssumptions)) {
+        TR_VerboseLog::CriticalSection vlogLock;
+        TR_VerboseLog::write(TR_Vlog_RA,
+            "Deleting %s assumption sentinel: ", runtimeAssumptionKindNames[sentinel->getAssumptionKind()]);
+        sentinel->dumpInfo();
+        TR_VerboseLog::writeLine("");
+    }
+
+    sentinel->paint();
+    TR_RuntimeAssumptionTable::freeRAPersistentMemory(sentinel);
+}
+
 // Currrent assumption must be taken out from the circular list of assumptions
 // starting in the jittedBodyInfo. We start from the current assumption and go around
 // until we find it again. This way we can find previous entry so we can detach it
@@ -313,18 +327,8 @@ void OMR::RuntimeAssumption::dequeueFromListOfAssumptionsForJittedBody()
 
             // Sentinel is not a part of RAT so it will not be deleted normally.
             // Need to explicitly free it here
-            if (crt->getAssumptionKind() == RuntimeAssumptionSentinel) {
-                if (TR::Options::getCmdLineOptions()->getVerboseOption(TR_VerboseRuntimeAssumptions)) {
-                    TR_VerboseLog::CriticalSection vlogLock;
-                    TR_VerboseLog::write(TR_Vlog_RA,
-                        "Deleting %s assumption sentinel: ", runtimeAssumptionKindNames[crt->getAssumptionKind()]);
-                    crt->dumpInfo();
-                    TR_VerboseLog::writeLine("");
-                }
-
-                crt->paint();
-                TR_RuntimeAssumptionTable::freeRAPersistentMemory(crt);
-            }
+            if (crt->getAssumptionKind() == RuntimeAssumptionSentinel)
+                TR_RuntimeAssumptionTable::freeSentinelAssumption(crt);
 
             crt = next;
         } else {
@@ -355,35 +359,60 @@ bool OMR::RuntimeAssumption::enqueueInListOfAssumptionsForJittedBody(OMR::Runtim
     return true;
 }
 
-OMR::RuntimeAssumption **TR_RuntimeAssumptionTable::getBucketPtr(TR_RuntimeAssumptionKind kind, uintptr_t hashIndex)
+#if defined(DEBUG) || defined(PROD_WITH_ASSUMES)
+void TR_RuntimeAssumptionTable::verifyBucket(TR_RuntimeAssumptionKind kind, uintptr_t hashIndex)
 {
     TR_RatHT *hashTable = findAssumptionHashTable(kind);
-    OMR::RuntimeAssumption **head = hashTable->_htSpineArray + (hashIndex % hashTable->_spineArraySize);
-    while (head && *head && (*head)->isMarkedForDetach())
-        head = &((*head)->_next);
-    return head;
+    OMR::RuntimeAssumption **slot = hashTable->_htSpineArray + (hashIndex % hashTable->_spineArraySize);
+    for (OMR::RuntimeAssumption *n = *slot; n; slot = &n->_next, n = n->_next) {
+        TR_ASSERT_FATAL(n->_pprev == slot, "RAT bucket corrupted: kind=%d node=%p _pprev=%p expected=%p", kind, n,
+            n->_pprev, slot);
+        TR_ASSERT_FATAL(!n->isMarkedForDetach(), "Zombie assumption %p found in RAT bucket: kind=%d", n, kind);
+    }
 }
+
+void TR_RuntimeAssumptionTable::verifyZombieList()
+{
+    uint32_t count = 0;
+    OMR::RuntimeAssumption **slot = &_zombieHead;
+    for (OMR::RuntimeAssumption *n = *slot; n; slot = &n->_next, n = n->_next) {
+        TR_ASSERT_FATAL(n->_pprev == slot, "Zombie list corrupted: node=%p _pprev=%p expected=%p", n, n->_pprev, slot);
+        TR_ASSERT_FATAL(n->isMarkedForDetach(), "Non-zombie assumption %p found in zombie list", n);
+        count++;
+    }
+    TR_ASSERT_FATAL(count == _marked, "Zombie list has %u nodes but _marked=%u", count, _marked);
+}
+
+#define RAT_VERIFY_BUCKET(kind, hashIndex) verifyBucket((kind), (hashIndex))
+#define RAT_VERIFY_ZOMBIES() verifyZombieList()
+#else
+void TR_RuntimeAssumptionTable::verifyBucket(TR_RuntimeAssumptionKind kind, uintptr_t hashIndex) {}
+
+void TR_RuntimeAssumptionTable::verifyZombieList() {}
+
+#define RAT_VERIFY_BUCKET(kind, hashIndex) ((void)0)
+#define RAT_VERIFY_ZOMBIES() ((void)0)
+#endif /* defined(DEBUG) || defined(PROD_WITH_ASSUMES)*/
 
 void TR_RuntimeAssumptionTable::purgeAssumptionListHead(OMR::RuntimeAssumption *&assumptionList, TR_FrontEnd *fe)
 {
-    assumptionList->compensate(fe, 0, 0);
-
-    OMR::RuntimeAssumption *next = assumptionList->getNextEvenIfDead();
+    OMR::RuntimeAssumption *head = assumptionList;
+    head->compensate(fe, 0, 0);
 
     if (TR::Options::getCmdLineOptions()->getVerboseOption(TR_VerboseRuntimeAssumptions)) {
         TR_VerboseLog::CriticalSection vlogLock;
         TR_VerboseLog::write(TR_Vlog_RA,
-            "Deleting %s assumption head: ", runtimeAssumptionKindNames[assumptionList->getAssumptionKind()]);
-        assumptionList->dumpInfo();
+            "Deleting %s assumption head: ", runtimeAssumptionKindNames[head->getAssumptionKind()]);
+        head->dumpInfo();
         TR_VerboseLog::writeLine("");
     }
 
-    assumptionList->dequeueFromListOfAssumptionsForJittedBody();
-    incReclaimedAssumptionCount(assumptionList->getAssumptionKind());
+    head->unlinkFromBucket(); // also updates assumptionList (the bucket slot) to point to the next node
+    RAT_VERIFY_BUCKET(head->getAssumptionKind(), head->hashCode());
+    head->dequeueFromListOfAssumptionsForJittedBody();
+    incReclaimedAssumptionCount(head->getAssumptionKind());
 
-    TR_RuntimeAssumptionTable::freeRAPersistentMemory(assumptionList);
-
-    assumptionList = next;
+    TR_RuntimeAssumptionTable::freeRAPersistentMemory(head);
 }
 
 void TR_RuntimeAssumptionTable::purgeRATArray(TR_FrontEnd *fe, OMR::RuntimeAssumption **array, uint32_t size)
@@ -412,12 +441,10 @@ void TR_RuntimeAssumptionTable::addAssumption(OMR::RuntimeAssumption *a, TR_Runt
     // FIXME: how should we deal with memory allocation failures at runtime?
 
     // TODO: why is the kind needed? Should use a->getAssumptionKind()
-    a->setNext(0); // for sanity's sake.  We don't have assumes() in codert.dev
     assumptionCount[kind]++;
     OMR::RuntimeAssumption **headPtr = getBucketPtr(kind, a->hashCode());
-    if (*headPtr)
-        a->setNext(*headPtr);
-    *headPtr = a;
+    a->linkIntoBucket(headPtr);
+    RAT_VERIFY_BUCKET(kind, a->hashCode());
 
     if (TR::Options::getCmdLineOptions()->getOption(TR_EnableRATPurging)) {
         // If we are invalidating assumptions, check to see if we should purge the table at this point.
@@ -427,29 +454,60 @@ void TR_RuntimeAssumptionTable::addAssumption(OMR::RuntimeAssumption *a, TR_Runt
 }
 
 /**
- * Mark an assumption for future detach and reclaiming from the RAT
- * @param assumption The assumption to be marked for removal
- * Once all assumptions are marked a call to reclaimMarkedFromRAT() will free
- * the marked assumptions. The caller must obtain the assumptionTableMutex lock
- * and must remove the assumption from the metadata linked list right after
- * calling this method because the metadata assumption list next pointer is
- * unusable after this method is executed.
+ * Delete right away an assumption that is not a zombie.
+ * The assumption is unlinked from its RAT bucket, reclaimed and freed.
+ * The caller must have already removed it from the circular list of its jitted body,
+ * and must hold the assumptionTableMutex.
+ * The compensate() method is not called.
+ */
+void TR_RuntimeAssumptionTable::deleteAssumptionNow(OMR::RuntimeAssumption *assumption)
+{
+    TR_ASSERT_FATAL(!assumption->isMarkedForDetach(), "Assumption %p is a zombie", assumption);
+    TR_RuntimeAssumptionKind kind = assumption->getAssumptionKind();
+
+    assumption->unlinkFromBucket();
+    RAT_VERIFY_BUCKET(kind, assumption->hashCode());
+    incReclaimedAssumptionCount(kind);
+
+    if (TR::Options::getCmdLineOptions()->getVerboseOption(TR_VerboseRuntimeAssumptions)) {
+        TR_VerboseLog::CriticalSection vlogLock;
+        TR_VerboseLog::write(TR_Vlog_RA, "Deleting %s assumption: ", runtimeAssumptionKindNames[kind]);
+        assumption->dumpInfo();
+        TR_VerboseLog::writeLine("");
+    }
+
+    assumption->reclaim();
+    assumption->paint(); // RAS
+    TR_RuntimeAssumptionTable::freeRAPersistentMemory(assumption);
+}
+
+/**
+ * Mark an assumption as zombie, unlink it from its RAT bucket and move it to the zombie list.
+ * @param assumption The assumption to be marked for removal. It must currently be linked in a RAT bucket.
+ * Once assumptions are in the zombie list a call to reclaimMarkedAssumptionsFromRAT() will free
+ * them. The caller must obtain the assumptionTableMutex lock. The assumption stays in the
+ * circular list of its jitted body (with the mark bit set) until it is reclaimed.
+ * The assumption's next pointer refers to the zombie list after this method is executed, so
+ * a caller that iterates over a RAT bucket must have read the bucket's next element already.
+ * Note: linkIntoBucket()/unlinkFromBucket() are generic hlist operations; here they are
+ * applied to the zombie list head (_zombieHead) instead of a bucket head.
  */
 void TR_RuntimeAssumptionTable::markForDetachFromRAT(OMR::RuntimeAssumption *assumption)
 {
-    TR_RatHT *hashTable = findAssumptionHashTable(assumption->getAssumptionKind());
-    _detachPending[assumption->getAssumptionKind()] = true;
-    hashTable->_markedforDetachCount[(assumption->hashCode() % hashTable->_spineArraySize)]++;
+    TR_ASSERT_FATAL(!assumption->isMarkedForDetach(), "Assumption %p is already marked for detach", assumption);
+
+    assumption->unlinkFromBucket();
+    RAT_VERIFY_BUCKET(assumption->getAssumptionKind(), assumption->hashCode());
+
     assumption->markForDetach();
+    assumption->linkIntoBucket(&_zombieHead); // push at the head of the zombie list
     _marked++;
 }
 
 /**
- * Traverse the entire RAT detaching and reclaiming all marked assumptions.
- * This assumes that the assumptions have already been detached from the
- * metadata's linked list. Only RAT 'kinds' that have any marked assumptions
- * will be traversed, and only the hashtable linked-lists that have a non-zero
- * marked for detach count will be traversed.
+ * Free the assumptions found in the zombie list.
+ * The zombie assumptions have already been unlinked from the RAT buckets. This routine is called by GC.
+ * @param cleanupCount Maximum number of assumptions to free (-1 means all)
  */
 void TR_RuntimeAssumptionTable::reclaimMarkedAssumptionsFromRAT(int32_t cleanupCount)
 {
@@ -457,67 +515,42 @@ void TR_RuntimeAssumptionTable::reclaimMarkedAssumptionsFromRAT(int32_t cleanupC
         return;
 
     assumptionTableMutex->enter();
-    for (int kind = 0; _marked > 0 && cleanupCount != 0 && kind < LastAssumptionKind; kind++) // for each table
-    {
-        if (_detachPending[kind] == true) // Is there anything to remove from this table?
-        {
-            TR_RatHT *hashTable = _tables + kind;
-            bool fullyCleaned = true;
-            for (size_t i = 0; cleanupCount != 0 && i < hashTable->_spineArraySize; ++i) // for each bucket in the table
-            {
-                OMR::RuntimeAssumption *cursor, *next, *prev;
-                // Look for linked list nodes to remove until all marked nodes have been deleted
-                for (cursor = hashTable->_htSpineArray[i], prev = NULL;
-                     cursor && cleanupCount != 0 && hashTable->_markedforDetachCount[i] > 0; cursor = next) {
-                    next = cursor->getNextEvenIfDead();
-                    if (cursor->isMarkedForDetach()) {
-                        if (prev) {
-                            prev->setNext(next);
-                        } else {
-                            TR_ASSERT_FATAL(hashTable->_htSpineArray[i] == cursor, "RAT spine head is not cursor!");
-                            hashTable->_htSpineArray[i] = next;
-                        }
+    while (_zombieHead && cleanupCount != 0) {
+        OMR::RuntimeAssumption *cursor = _zombieHead;
+        TR_ASSERT_FATAL(cursor->isMarkedForDetach(), "Non-zombie assumption %p found in zombie list", cursor);
+        cursor->unlinkFromBucket(); // pops the head of the zombie list (updates _zombieHead)
 
-                        if (cursor->getNextAssumptionForSameJittedBodyEvenIfDead())
-                            cursor->dequeueFromListOfAssumptionsForJittedBody();
+        if (cursor->getNextAssumptionForSameJittedBodyEvenIfDead())
+            cursor->dequeueFromListOfAssumptionsForJittedBody();
 
-                        // Now release the assumption
-                        hashTable->_markedforDetachCount[i]--;
-                        _marked--;
-                        incReclaimedAssumptionCount(kind);
+        // Now release the assumption
+        _marked--;
+        incReclaimedAssumptionCount(cursor->getAssumptionKind());
 
-                        if (TR::Options::getCmdLineOptions()->getVerboseOption(TR_VerboseRuntimeAssumptions)) {
-                            TR_VerboseLog::CriticalSection vlogLock;
-                            TR_VerboseLog::write(TR_Vlog_RA, "Deleting %s assumption in loop: ",
-                                runtimeAssumptionKindNames[cursor->getAssumptionKind()]);
-                            cursor->dumpInfo();
-                            TR_VerboseLog::writeLine("");
-                        }
-
-                        cursor->reclaim();
-                        cursor->paint(); // RAS
-                        TR_RuntimeAssumptionTable::freeRAPersistentMemory(cursor);
-                        cleanupCount--;
-                    } else {
-                        prev = cursor;
-                    }
-                }
-                if (hashTable->_markedforDetachCount[i] != 0)
-                    fullyCleaned = false;
-            }
-            if (fullyCleaned)
-                _detachPending[kind] = false;
+        if (TR::Options::getCmdLineOptions()->getVerboseOption(TR_VerboseRuntimeAssumptions)) {
+            TR_VerboseLog::CriticalSection vlogLock;
+            TR_VerboseLog::write(TR_Vlog_RA,
+                "Deleting %s assumption in loop: ", runtimeAssumptionKindNames[cursor->getAssumptionKind()]);
+            cursor->dumpInfo();
+            TR_VerboseLog::writeLine("");
         }
+
+        cursor->reclaim();
+        cursor->paint(); // RAS
+        TR_RuntimeAssumptionTable::freeRAPersistentMemory(cursor);
+        cleanupCount--;
     }
+    RAT_VERIFY_ZOMBIES();
     assumptionTableMutex->exit();
 }
 
 /**
- * Mark and detach all of the assumptions in the metadata's circular linked list
- * @param md The metadata for which to mark & detach assumptions from.
+ * Delete all of the assumptions in the metadata's circular linked list that belong to the body being reclaimed
+ * @param md The metadata for which to delete assumptions from.
  * @param reclaimPrePrologueAssumptions Are all assumptions free to be removed (ClassUnloading vs. recompiled)
- * This only detaches from the metadata's linked list, not a detach from the RAT,
- * to remove from the RAT you need to call reclaimMarkedAssumptionsFromRAT()
+ * The assumptions are unlinked from the RAT buckets and from the circular list, and are freed immediately.
+ * Assumptions that are already marked (zombies) are left alone: they have already been
+ * detached from the RAT and will be freed through the zombie list by reclaimMarkedAssumptionsFromRAT().
  */
 void TR_RuntimeAssumptionTable::markAssumptionsAndDetach(void *md, bool reclaimPrePrologueAssumptions)
 {
@@ -529,12 +562,19 @@ void TR_RuntimeAssumptionTable::markAssumptionsAndDetach(void *md, bool reclaimP
     if (sentry) {
         TR_ASSERT(sentry->getAssumptionKind() == RuntimeAssumptionSentinel, "First assumption must be the sentinel\n");
         bool entriesRemain = false;
-        for (cursor = sentry->getNextAssumptionForSameJittedBody(); cursor != sentry; cursor = next) {
-            next = cursor->getNextAssumptionForSameJittedBody();
+        OMR::RuntimeAssumption *prev = sentry; // predecessor of cursor in the circular list
+        for (cursor = sentry->getNextAssumptionForSameJittedBodyEvenIfDead(); cursor != sentry; cursor = next) {
+            next = cursor->getNextAssumptionForSameJittedBodyEvenIfDead();
+            if (cursor->isMarkedForDetach()) {
+                prev = cursor; // Already a zombie: detached from the RAT and waiting in the zombie list
+                continue;
+            }
             if (cursor->isAssumingMethod(metaData, reclaimPrePrologueAssumptions)) {
-                markForDetachFromRAT(cursor);
+                prev->setNextAssumptionForSameJittedBody(next);
+                deleteAssumptionNow(cursor);
             } else // This could be an assumption to the persistentBodyInfo which is not reclaimed
             {
+                prev = cursor;
                 entriesRemain = true;
 #if defined(PROD_WITH_ASSUMES) || defined(DEBUG)
                 TR_RuntimeAssumptionKind kind = cursor->getAssumptionKind();
@@ -548,8 +588,11 @@ void TR_RuntimeAssumptionTable::markAssumptionsAndDetach(void *md, bool reclaimP
         }
 
         if (!entriesRemain) {
-            sentry->markForDetach();
             metaData->runtimeAssumptionList = NULL;
+            if (sentry->getNextAssumptionForSameJittedBodyEvenIfDead() == sentry)
+                freeSentinelAssumption(sentry); // No zombies left in the list, so nobody else will free the sentinel
+            else
+                sentry->markForDetach(); // Will be freed when the last zombie is dequeued from the list
         }
     }
     assumptionTableMutex->exit();
@@ -568,14 +611,20 @@ void TR_RuntimeAssumptionTable::reclaimAssumptions(OMR::RuntimeAssumption **sent
         int32_t numAssumptionsNotReclaimed = 0;
         TR_ASSERT(sentry->getAssumptionKind() == RuntimeAssumptionSentinel, "First assumption must be the sentinel\n");
         OMR::RuntimeAssumption *notReclaimedList = sentry;
-        OMR::RuntimeAssumption *cursor = sentry->getNextAssumptionForSameJittedBody();
+        OMR::RuntimeAssumption *prev = sentry; // predecessor of cursor in the circular list
+        OMR::RuntimeAssumption *cursor = sentry->getNextAssumptionForSameJittedBodyEvenIfDead();
         while (cursor != sentry) {
-            OMR::RuntimeAssumption *next = cursor->getNextAssumptionForSameJittedBody();
-            if (!metaData || cursor->isAssumingMethod(metaData, reclaimPrePrologueAssumptions)) {
-                // Must detach the entry from the RAT
-                markForDetachFromRAT(cursor);
+            OMR::RuntimeAssumption *next = cursor->getNextAssumptionForSameJittedBodyEvenIfDead();
+            if (cursor->isMarkedForDetach()) {
+                // Already a zombie: detached from the RAT and waiting in the zombie list. Leave it alone.
+                prev = cursor;
+            } else if (!metaData || cursor->isAssumingMethod(metaData, reclaimPrePrologueAssumptions)) {
+                // Take it out of the circular list (preserves prev's mark), detach it from the RAT and free it
+                prev->setNextAssumptionForSameJittedBody(next);
+                deleteAssumptionNow(cursor);
             } else // This could be an assumption to the persistentBodyInfo which is not reclaimed
             {
+                prev = cursor;
                 numAssumptionsNotReclaimed++;
             }
             cursor = next;
@@ -597,7 +646,6 @@ void TR_RuntimeAssumptionTable::reclaimAssumptions(OMR::RuntimeAssumption **sent
             }
 #endif
         } else {
-            sentry->markForDetach();
             if (metaData) {
                 reinterpret_cast<J9JITExceptionTable *>(metaData)->runtimeAssumptionList = NULL;
             } else if ((metaData = reinterpret_cast<TR::SentinelRuntimeAssumption *>(sentry)->getOwningMetadata())) {
@@ -605,6 +653,10 @@ void TR_RuntimeAssumptionTable::reclaimAssumptions(OMR::RuntimeAssumption **sent
                 reinterpret_cast<J9JITExceptionTable *>(metaData)->runtimeAssumptionList = NULL;
             }
             *sentinel = NULL;
+            if (sentry->getNextAssumptionForSameJittedBodyEvenIfDead() == sentry)
+                freeSentinelAssumption(sentry); // No zombies left in the list, so nobody else will free the sentinel
+            else
+                sentry->markForDetach(); // Will be freed when the last zombie is dequeued from the list
         }
     }
 }
@@ -692,8 +744,9 @@ void TR_RuntimeAssumptionTable::notifyClassUnloadEvent(TR_FrontEnd *vm, bool isS
 {
     OMR::CriticalSection notifyClassUnloadEvent(assumptionTableMutex);
     OMR::RuntimeAssumption **headPtr = getBucketPtr(RuntimeAssumptionOnClassUnload, hashCode((uintptr_t)assumingClass));
-    for (TR_UnloadedClassPicSite *cursor = (TR_UnloadedClassPicSite *)(*headPtr); cursor;
-         cursor = (TR_UnloadedClassPicSite *)cursor->getNext()) {
+    TR_UnloadedClassPicSite *next;
+    for (TR_UnloadedClassPicSite *cursor = (TR_UnloadedClassPicSite *)(*headPtr); cursor; cursor = next) {
+        next = (TR_UnloadedClassPicSite *)cursor->getNext(); // must be read before cursor may move to the zombie list
         if (cursor->matches((uintptr_t)assumingClass)
             && ((unloadedClass == assumingClass) || (cursor->getPicEntry() == (uintptr_t)unloadedClass))) {
             cursor->compensate(vm, 0, 0);
@@ -843,7 +896,6 @@ void TR_RuntimeAssumptionTable::notifyClassRedefinitionEvent(TR_FrontEnd *vm, bo
         = getBucketPtr(RuntimeAssumptionOnClassRedefinitionPIC, hashCode((uintptr_t)newKey));
 
     TR_RedefinedClassPicSite *pic_cursor = (TR_RedefinedClassPicSite *)(*oldHeadPtr);
-    TR_RedefinedClassPicSite *predecessor = NULL;
 
     OMR::RuntimeAssumption **raArray = findAssumptionHashTable(RuntimeAssumptionOnClassRedefinitionPIC)->_htSpineArray;
 
@@ -870,19 +922,13 @@ void TR_RuntimeAssumptionTable::notifyClassRedefinitionEvent(TR_FrontEnd *vm, bo
 
             // HCR update the assumption
             pic_cursor->setKey((uintptr_t)newKey);
-            if (oldHeadPtr == newHeadPtr) {
-                predecessor = pic_cursor;
-            } else {
+            if (oldHeadPtr != newHeadPtr) {
                 // New key has a new hash code, so move it to the appropriate bucket
-                if (predecessor)
-                    predecessor->setNext(pic_next);
-                else
-                    *oldHeadPtr = pic_next;
-                pic_cursor->setNext(*newHeadPtr);
-                *newHeadPtr = pic_cursor;
+                pic_cursor->unlinkFromBucket();
+                pic_cursor->linkIntoBucket(newHeadPtr);
+                RAT_VERIFY_BUCKET(RuntimeAssumptionOnClassRedefinitionPIC, hashCode((uintptr_t)oldKey));
+                RAT_VERIFY_BUCKET(RuntimeAssumptionOnClassRedefinitionPIC, hashCode((uintptr_t)newKey));
             }
-        } else {
-            predecessor = pic_cursor;
         }
 
         if (reportDetails)
