@@ -104,25 +104,6 @@ inline void reclaimAssumptions(J9JITConfig *jitConfig, J9JITExceptionTable *meta
         ->reclaimAssumptions(metaData, reclaimPrePrologueAssumptions);
 }
 
-inline void markAssumptionsAndDetach(J9JITConfig *jitConfig, J9JITExceptionTable *metaData,
-    bool reclaimPrePrologueAssumptions)
-{
-    // mark and detach the runtime assumptions, which will then be deleted from the RAT in the GC end hook
-    pointer_cast<TR_PersistentMemory *>(jitConfig->scratchSegment)
-        ->getPersistentInfo()
-        ->getRuntimeAssumptionTable()
-        ->markAssumptionsAndDetach(metaData, reclaimPrePrologueAssumptions);
-}
-
-inline void reclaimMarkedAssumptionsFromRAT(int cleanUpCount)
-{
-    // expunge any runtime assumptions in the RAT that have previously been marked
-    pointer_cast<TR_PersistentMemory *>(jitConfig->scratchSegment)
-        ->getPersistentInfo()
-        ->getRuntimeAssumptionTable()
-        ->reclaimMarkedAssumptionsFromRAT(cleanUpCount);
-}
-
 // We need to update the nextMethod and prevMethod pointers of the J9JITExceptionTable that
 // point to the old J9JITExceptionTable to now point to the new (stub) J9JITExceptionTable.
 inline void updateExceptionTableLinkedList(J9VMThread *vmThread, J9JITExceptionTable *oldMetadata,
@@ -295,7 +276,6 @@ void jitRemoveConstRefsFromBody(J9VMThread *vmThread, J9JITExceptionTable *metaD
 void jitReleaseCodeCollectMetaData(J9JITConfig *jitConfig, J9VMThread *vmThread, J9JITExceptionTable *metaData,
     OMR::FaintCacheBlock *faintCacheBlock)
 {
-    static const char *useOldRAReclaim = feGetEnv("TR_useOldRAReclaim");
     TR_TranslationArtifactManager *artifactManager = TR_TranslationArtifactManager::getGlobalArtifactManager();
     bool freeExistingExceptionTable = false;
 
@@ -305,18 +285,12 @@ void jitReleaseCodeCollectMetaData(J9JITConfig *jitConfig, J9VMThread *vmThread,
         cleanUpJitExceptionHandlerCache(vmThread, metaData);
         cleanUpJitArtifactSearchCache(vmThread, metaData);
 
-        if (useOldRAReclaim) {
-            // 3rd parameter to reclaimAssumptions determines whether we reclaim preprologue assumptions.
-            // We should only do that if we are in class unloading and will be reclaiming the entire method body,
-            // which means faintCacheBlock is NULL.
-            reclaimAssumptions(jitConfig, metaData, (NULL == faintCacheBlock));
-        } else {
-            // Mark the runtime assumptions so they can be deleted at the end of the GC cycle.
-            // The 3rd parameter to markAssumptionsAndDetach determines whether we mark preprologue assumptions.
-            // We should only do that if we are in class unloading and will be reclaiming the entire method body,
-            // which means faintCacheBlock is NULL.
-            markAssumptionsAndDetach(jitConfig, metaData, (NULL == faintCacheBlock));
-        }
+        // Delete the runtime assumptions of this body right away (they are unlinked in O(1) from both the RAT
+        // buckets and the list of assumptions of the body).
+        // 3rd parameter to reclaimAssumptions determines whether we reclaim preprologue assumptions.
+        // We should only do that if we are in class unloading and will be reclaiming the entire method body,
+        // which means faintCacheBlock is NULL.
+        reclaimAssumptions(jitConfig, metaData, (NULL == faintCacheBlock));
 
 #if defined(J9VM_OPT_OPENJDK_METHODHANDLE)
         jitRemoveConstRefsFromBody(vmThread, metaData);
@@ -431,29 +405,6 @@ void jitRemoveAllMetaDataForClassLoader(J9VMThread *vmThread, J9ClassLoader *cla
         jitReleaseCodeCollectMetaData(vmThread->javaVM->jitConfig, vmThread, currentMetaData);
     }
     classLoader->jitMetaDataList = NULL;
-}
-
-void jitReclaimMarkedAssumptions(bool isEager)
-{
-    static const char *forceAggressiveRATCleaning = feGetEnv("TR_forceAggressiveRATCleaning");
-    static const char *numRAToClean = feGetEnv("TR_numRAToClean");
-    static const int32_t numRA = (numRAToClean) ? atoi(numRAToClean) : 100;
-
-    bool forceEager = false;
-    bool forceLazy = false;
-    if (numRAToClean) {
-        if (numRA == -1) {
-            forceEager = true;
-        } else {
-            forceLazy = true;
-        }
-    }
-
-    if ((isEager && forceAggressiveRATCleaning) || forceEager) {
-        reclaimMarkedAssumptionsFromRAT(-1);
-    } else if (forceLazy || !isEager) {
-        reclaimMarkedAssumptionsFromRAT(numRA);
-    }
 }
 
 void freeFastWalkCache(J9VMThread *vmThread, J9JITExceptionTable *metaData)

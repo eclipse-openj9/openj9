@@ -46,7 +46,6 @@ void jitRemoveConstRefsFromBody(J9VMThread *vmThread, J9JITExceptionTable *metaD
 void jitReleaseCodeCollectMetaData(J9JITConfig *jitConfig, J9VMThread *vmThread, J9JITExceptionTable *metaData,
     OMR::FaintCacheBlock * = 0);
 void jitRemoveAllMetaDataForClassLoader(J9VMThread *vmThread, J9ClassLoader *classLoader);
-void jitReclaimMarkedAssumptions(bool isEager);
 void vlogReclamation(const char *prefix, J9JITExceptionTable *metaData, size_t bytesToSaveAtStart);
 void freeFastWalkCache(J9VMThread *vmThread, J9JITExceptionTable *metaData);
 
