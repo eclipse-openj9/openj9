@@ -925,9 +925,10 @@ MM_InterRegionRememberedSet::clearFromRegionReferencesForMarkDirect(MM_Environme
 	PORT_ACCESS_FROM_ENVIRONMENT(env);
 	MM_GCExtensions *extensions = MM_GCExtensions::getExtensions(env);
 	MM_CardTable *cardTable = extensions->cardTable;
+	MM_CycleStateVLHGC *cycleState = static_cast<MM_CycleStateVLHGC*>(env->_cycleState);
 	MM_MarkMap *markMap = NULL;
-	if (static_cast<MM_CycleStateVLHGC*>(env->_cycleState)->_schedulingDelegate->isFirstPGCAfterGMP()) {
-		markMap = env->_cycleState->_markMap;
+	if ((NULL != cycleState->_schedulingDelegate) && cycleState->_schedulingDelegate->isFirstPGCAfterGMP()) {
+		markMap = cycleState->_markMap;
 	}
 	U_64 startTime = j9time_hires_clock();
 
@@ -987,9 +988,10 @@ MM_InterRegionRememberedSet::clearFromRegionReferencesForMarkOptimized(MM_Enviro
 	MM_GCExtensions *extensions = MM_GCExtensions::getExtensions(env);
 	MM_CardTable *cardTable = extensions->cardTable;
 	MM_CompressedCardTable *compressedCardTable = extensions->compressedCardTable;
+	MM_CycleStateVLHGC *cycleStateOpt = static_cast<MM_CycleStateVLHGC*>(env->_cycleState);
 	MM_MarkMap *markMap = NULL;
-	if (static_cast<MM_CycleStateVLHGC*>(env->_cycleState)->_schedulingDelegate->isFirstPGCAfterGMP()) {
-		markMap = env->_cycleState->_markMap;
+	if ((NULL != cycleStateOpt->_schedulingDelegate) && cycleStateOpt->_schedulingDelegate->isFirstPGCAfterGMP()) {
+		markMap = cycleStateOpt->_markMap;
 	}
 	U_64 startTime = j9time_hires_clock();
 

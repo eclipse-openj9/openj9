@@ -1290,6 +1290,9 @@ MM_CopyForwardScheme::copyAndForward(MM_EnvironmentVLHGC *env, MM_AllocationCont
 	J9Object *objectPtr = originalObjectPtr;
 	bool success = true;
 
+	/* cleared here, set by copy() only if this call actually copied the object */
+	env->_effectiveCopyScanCache = NULL;
+
 	if (isObjectInEvacuateMemory(objectPtr)) {
 		/* Object needs to be copy and forwarded.  Check if the work has already been done */
 		MM_ForwardedHeader forwardHeader(objectPtr, _extensions->compressObjectReferences());
@@ -2096,6 +2099,9 @@ MM_CopyForwardScheme::copy(MM_EnvironmentVLHGC *env, MM_AllocationContextTarok *
 #endif /* J9VM_GC_LEAF_BITS */
 				/* depth copy the hot fields of an object if scavenger dynamicBreadthFirstScanOrdering is enabled */
 				depthCopyHotFields(env, objectModel->getPreservedClass(forwardedHeader), destinationObjectPtr, reservingContext);
+
+				/* Set last, since copyLeafChildren() and depthCopyHotFields() above copy other objects and would overwrite it */
+				env->_effectiveCopyScanCache = copyCache;
 			}
 			/* return value for updating the slot */
 			result = destinationObjectPtr;
@@ -2168,6 +2174,76 @@ MM_CopyForwardScheme::copyHotField(MM_EnvironmentVLHGC *env, J9Object *destinati
 			env->_hotFieldCopyDepthCount -= 1;
 		}
 	}
+}
+
+uintptr_t
+MM_CopyForwardScheme::getScanListDepth()
+{
+	uintptr_t depth = 0;
+	for (uintptr_t i = 0; i < _scanCacheListSize; i++) {
+		depth += _cacheScanLists[i].getApproximateEntryCount();
+	}
+	return depth;
+}
+
+void
+MM_CopyForwardScheme::deepScanOutline(MM_EnvironmentVLHGC *env, MM_AllocationContextTarok *reservingContext, J9Object *objectPtr, uintptr_t priorityFieldOffset1, uintptr_t priorityFieldOffset2)
+{
+	/*
+	 * Throttle (as in the GenCon Scavenger): the walk stops once the shared scan lists hold
+	 * more than half of the scan cache pool.
+	 */
+	uintptr_t scanListDepthLimit = _cacheFreeList.getTotalCacheCount() / 2;
+
+	/*
+	 * Disable hot field depth copying while deep scan walks the chain: copyAndForward() on each node goes through
+	 * copy(), which would otherwise recurse into the node's hot fields. Re-enabled once the walk is done.
+	 */
+	env->disableHotFieldDepthCopy();
+
+	J9Object *currentDeepObj = objectPtr;
+	uintptr_t priorityField = priorityFieldOffset1;
+
+#if defined(J9MODRON_TGC_PARALLEL_STATISTICS)
+	uintptr_t objDeepScanned = 0;
+	env->_copyForwardStats._totalDeepStructures += 1;
+#endif /* J9MODRON_TGC_PARALLEL_STATISTICS */
+
+	do {
+		GC_SlotObject prioritySlot(_javaVM->omrVM, (fomrobject_t*)(((uintptr_t)currentDeepObj) + priorityField));
+
+		copyAndForward(env, reservingContext, currentDeepObj, &prioritySlot);
+
+		/* Did we encounter a NULL, not evacuated or already forwarded object, or did the copy fail? */
+		if (NULL == env->_effectiveCopyScanCache) {
+			/* A failed copy (no survivor space) raises the abort flag, in which case stop walking.
+			 * Otherwise can't continue any further - attempt to deep scan with the other self referencing field (e.g. prev field) */
+			if (abortFlagRaised() || (priorityField == priorityFieldOffset2) || (0 == priorityFieldOffset2)) {
+				break;
+			}
+			priorityField = priorityFieldOffset2;
+		} else {
+#if defined(J9MODRON_TGC_PARALLEL_STATISTICS)
+			objDeepScanned += 1;
+#endif /* J9MODRON_TGC_PARALLEL_STATISTICS */
+
+			/* Throttle: stop if the shared scan lists are more than half full. */
+			if (getScanListDepth() > scanListDepthLimit) {
+				break;
+			}
+
+			currentDeepObj = prioritySlot.readReferenceFromSlot();
+		}
+	} while (NULL != currentDeepObj);
+
+#if defined(J9MODRON_TGC_PARALLEL_STATISTICS)
+	env->_copyForwardStats._totalObjsDeepScanned += objDeepScanned;
+	if (objDeepScanned > env->_copyForwardStats._depthDeepestStructure) {
+		env->_copyForwardStats._depthDeepestStructure = objDeepScanned;
+	}
+#endif /* J9MODRON_TGC_PARALLEL_STATISTICS */
+
+	env->enableHotFieldDepthCopy();
 }
 
 void
@@ -2979,6 +3055,9 @@ MM_CopyForwardScheme::scanObject(MM_EnvironmentVLHGC *env, MM_AllocationContextT
 	Assert_MM_mustBeClass(clazz);
 	switch (_extensions->objectModel.getScanType(clazz)) {
 	case GC_ObjectModel::SCAN_MIXED_OBJECT_LINKED:
+		deepScan(env, reservingContext, objectPtr, clazz->selfReferencingField1, clazz->selfReferencingField2);
+		scanMixedObjectSlots(env, reservingContext, objectPtr, reason);
+		break;
 	case GC_ObjectModel::SCAN_ATOMIC_MARKABLE_REFERENCE_OBJECT:
 	case GC_ObjectModel::SCAN_MIXED_OBJECT:
 		scanMixedObjectSlots(env, reservingContext, objectPtr, reason);
@@ -3260,8 +3339,14 @@ MM_CopyForwardScheme::incrementalScanCacheBySlot(MM_EnvironmentVLHGC *env)
 			/* Scan the chunk for live objects, incrementally slot by slot */
 			while ((objectPtr = heapChunkIterator.nextObject()) != NULL) {
 				/* retrieve scan state of the scan cache */
-				switch (_extensions->objectModel.getScanType(objectPtr)) {
+				J9Class *clazz = J9GC_J9OBJECT_CLAZZ(objectPtr, env);
+				switch (_extensions->objectModel.getScanType(clazz)) {
 				case GC_ObjectModel::SCAN_MIXED_OBJECT_LINKED:
+					if (!hasPartiallyScannedObject) {
+						deepScan(env, reservingContext, objectPtr, clazz->selfReferencingField1, clazz->selfReferencingField2);
+					}
+					hasPartiallyScannedObject = incrementalScanMixedObjectSlots(env, reservingContext, scanCache, objectPtr, hasPartiallyScannedObject, &nextScanCache);
+					break;
 				case GC_ObjectModel::SCAN_ATOMIC_MARKABLE_REFERENCE_OBJECT:
 				case GC_ObjectModel::SCAN_MIXED_OBJECT:
 				case GC_ObjectModel::SCAN_CONTINUATION_OBJECT:

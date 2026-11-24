@@ -48,6 +48,7 @@
 class MM_GCExtensions;
 class MM_CopyForwardCompactGroup;
 class MM_CopyScanCache;
+class MM_CopyScanCacheVLHGC;
 class MM_RememberedSetCardList;
 
 struct MM_CardBufferControlBlock;
@@ -64,6 +65,7 @@ public:
 	MM_CopyScanCache *_survivorCopyScanCache; /**< the current copy cache for flipping */
 	MM_CopyScanCache *_scanCache; /**< the current scan cache */
 	MM_CopyScanCache *_deferredScanCache; /**< a partially scanned cache, to be scanned later */
+	MM_CopyScanCacheVLHGC *_effectiveCopyScanCache; /**< the cache an object was copied into by the last copyAndForward(), or NULL if that call did not copy anything (not evacuated, already forwarded, or copy failed) */
 
 	MM_CopyForwardCompactGroup *_copyForwardCompactGroups;  /**< List of copy-forward data for each compact group for the given GC thread (only for GC threads during copy forward operations) */
 	

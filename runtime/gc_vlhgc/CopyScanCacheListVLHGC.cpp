@@ -275,6 +275,7 @@ MM_CopyScanCacheListVLHGC::pushCache(MM_EnvironmentVLHGC *env, MM_CopyScanCacheV
 	CopyScanCacheSublist *cacheList = &_sublists[getSublistIndex(env)];
 	cacheList->_cacheLock.acquire();
 	pushCacheInternal(env, cacheEntry, cacheList);
+	cacheList->_entryCount += 1;
 	cacheList->_cacheLock.release();
 }
 
@@ -303,11 +304,25 @@ MM_CopyScanCacheListVLHGC::popCache(MM_EnvironmentVLHGC *env)
 		CopyScanCacheSublist *cacheList = &_sublists[index];
 		if (NULL != cacheList->_cacheHead) {
 			cacheList->_cacheLock.acquire();
-			cache = popCacheInternal(env, cacheList); 
+			cache = popCacheInternal(env, cacheList);
+			if ((NULL != cache) && (0 != cacheList->_entryCount)) {
+				/* entries added by chunk allocation are not counted, so do not go below zero */
+				cacheList->_entryCount -= 1;
+			}
 			cacheList->_cacheLock.release();
 		}
 	}
 	return cache;
+}
+
+uintptr_t
+MM_CopyScanCacheListVLHGC::getApproximateEntryCount()
+{
+	uintptr_t count = 0;
+	for (uintptr_t i = 0; i < _sublistCount; ++i) {
+		count += _sublists[i]._entryCount;
+	}
+	return count;
 }
 
 bool
