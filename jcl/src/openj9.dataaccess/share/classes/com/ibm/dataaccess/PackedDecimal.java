@@ -561,30 +561,39 @@ public final class PackedDecimal {
 				computeDifference(sum, op1, op2, checkOverflow); // op1 has more
 																 // non-zero bytes
 			else {
-				// compare values to find which is larger.
+				// Since both operands have the same number of bytes, compare values to find which is larger.
 				// adjust offsets at same time - difference between equal bytes
 				// is 0
-				findDifference: {
-					for (; op1.offset < op1.signOffset; op1.offset += 1, op2.offset += 1) {
-						op1.byteValue = op1.byteArray[op1.offset];
-						op2.byteValue = op2.byteArray[op2.offset];
-						if (op1.byteValue != op2.byteValue)
-							break findDifference;
-					}
-					op1.byteValue = op1.byteArray[op1.offset]
-							& CommonData.HIGHER_NIBBLE_MASK;
-					op2.byteValue = op2.byteArray[op2.offset]
-							& CommonData.HIGHER_NIBBLE_MASK;
-					if (op1.byteValue == op2.byteValue) {
+				final byte[] op1Array = op1.byteArray;
+				final byte[] op2Array = op2.byteArray;
+				final int op1SignOffset = op1.signOffset;
+				int op1Offset = op1.offset;
+				int op2Offset = op2.offset;
+				int op1ByteValue = 0;
+				int op2ByteValue = 0;
+
+				// Iterate over all bytes till we find a non matching bytes or reach the sign byte.
+				for (; op1Offset < op1SignOffset; op1Offset += 1, op2Offset += 1) {
+					op1ByteValue = op1Array[op1Offset];
+					op2ByteValue = op2Array[op2Offset];
+					if (op1ByteValue != op2ByteValue)
+						break;
+				}
+				op1.offset = op1Offset;
+				op2.offset = op2Offset;
+
+				if (op1.offset == op1.signOffset) {
+					// Compare the upper nibble of the last byte of both operands to see if they are equal.
+					if ((op1ByteValue & CommonData.HIGHER_NIBBLE_MASK) == (op2ByteValue & CommonData.HIGHER_NIBBLE_MASK)) {
 						// values are equal, difference is zero
 						setPackedZero(sum.byteArray, sum.offset, sum.precision);
 						return;
 					}
-				}
-				if ((op1.byteValue & CommonData.INTEGER_MASK) > (op2.byteValue & CommonData.INTEGER_MASK))
+				} else if ((op1ByteValue & CommonData.INTEGER_MASK) > (op2ByteValue & CommonData.INTEGER_MASK)) {
 					computeDifference(sum, op1, op2, checkOverflow);
-				else
+				} else {
 					computeDifference(sum, op2, op1, checkOverflow);
+				}
 			}
 		}
 	}
@@ -1993,7 +2002,6 @@ public final class PackedDecimal {
 		int signByteValue;
 		int sign;
 		int signDigit;
-		int byteValue;
 
 		/**
 		 * Sets up the attributes of a Packed Decimal operand. Truncates leading zeros. Captures the sign value.
