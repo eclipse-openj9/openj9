@@ -2041,4 +2041,27 @@ Java_java_lang_Class_getClassFileAccessFlags(JNIEnv *env, jobject recv)
 }
 #endif /* JAVA_SPEC_VERSION >= 26 */
 
+#if JAVA_SPEC_VERSION >= 28
+jboolean JNICALL
+Java_java_lang_Class_hasBeenRedefined(JNIEnv *env, jobject recv)
+{
+	J9VMThread *currentThread = (J9VMThread *)env;
+	J9InternalVMFunctions *vmFuncs = currentThread->javaVM->internalVMFunctions;
+	jboolean result = JNI_FALSE;
+
+	vmFuncs->internalEnterVMFromJNI(currentThread);
+	J9Class *clazz = J9VM_J9CLASS_FROM_HEAPCLASS(currentThread, J9_JNI_UNWRAP_REFERENCE(recv));
+	do {
+		if (NULL != clazz->replacedClass) {
+			result = JNI_TRUE;
+			break;
+		}
+		clazz = VM_VMHelpers::getSuperclass(clazz);
+	} while (NULL != clazz);
+	vmFuncs->internalExitVMToJNI(currentThread);
+
+	return result;
+}
+#endif /* JAVA_SPEC_VERSION >= 28 */
+
 } /* extern "C" */

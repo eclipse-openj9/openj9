@@ -6310,4 +6310,12 @@ public Class<?>[] getNestMembers()
 	native int getClassFileAccessFlags();
 /*[ENDIF] JAVA_SPEC_VERSION >= 26 */
 
+/*[IF JAVA_SPEC_VERSION >= 28]*/
+	/**
+	 * Answers if this class or any of its superclasses has been redefined or retransformed.
+	 *
+	 * @return true if this class or any of its superclasses has been redefined or retransformed, false otherwise
+	 */
+	native boolean hasBeenRedefined();
+/*[ENDIF] JAVA_SPEC_VERSION >= 28 */
 }

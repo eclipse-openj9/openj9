@@ -930,6 +930,9 @@ jobject JNICALL Java_java_lang_Class_getNestMembersImpl(JNIEnv *env, jobject rec
 #if JAVA_SPEC_VERSION >= 26
 jint JNICALL Java_java_lang_Class_getClassFileAccessFlags(JNIEnv *env, jobject recv);
 #endif /* JAVA_SPEC_VERSION >= 26 */
+#if JAVA_SPEC_VERSION >= 28
+jboolean JNICALL Java_java_lang_Class_hasBeenRedefined(JNIEnv *env, jobject recv);
+#endif /* JAVA_SPEC_VERSION >= 28 */
 
 /* sun_misc_Perf.c */
 void JNICALL Java_sun_misc_Perf_registerNatives(JNIEnv *env, jclass klass);
