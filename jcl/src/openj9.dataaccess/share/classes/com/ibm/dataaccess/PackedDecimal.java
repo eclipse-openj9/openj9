@@ -406,10 +406,13 @@ public final class PackedDecimal {
 		int op1CurrentOffset = op1.currentOffset;
 		int op2CurrentOffset = op2.currentOffset;
 
+		final int op1SignDigit = (op1Array[op1.signOffset] & CommonData.INTEGER_MASK) & CommonData.HIGHER_NIBBLE_MASK;
+		final int op2SignDigit = (op2Array[op2.signOffset] & CommonData.INTEGER_MASK) & CommonData.HIGHER_NIBBLE_MASK;
+
 		boolean carry;// add op2 sign digit to op1 sign digit
-		int sumIndex = ((op1.signDigit + op2.signDigit) << 1) & 0x3FF;
+		int sumIndex = ((op1SignDigit + op2SignDigit) << 1) & 0x3FF;
 		int sumByte = CommonData.getPackedSumValues(sumIndex);
-		carry = sumByte < op1.signDigit;
+		carry = sumByte < op1SignDigit;
 		sumArray[sum.signOffset] = (byte) (sumByte | (op1.sign & CommonData.LOWER_NIBBLE_MASK));
 
 		// add op2 digits to op1 digits
@@ -485,11 +488,13 @@ public final class PackedDecimal {
 		final int op1Offset = op1.offset;
 		final int op2Offset = op2.offset;
 
+		final int op1SignDigit = (op1Array[op1.signOffset] & CommonData.INTEGER_MASK) & CommonData.HIGHER_NIBBLE_MASK;
+		final int op2SignDigit = (op2Array[op2.signOffset] & CommonData.INTEGER_MASK) & CommonData.HIGHER_NIBBLE_MASK;
 		boolean borrow;
 		// compute difference from sign byte
-		borrow = op1.signDigit < op2.signDigit;
+		borrow = op1SignDigit < op2SignDigit;
 
-		int sumByte = Math.abs((op1.signDigit >> 4) - (op2.signDigit >> 4)
+		int sumByte = Math.abs((op1SignDigit >> 4) - (op2SignDigit >> 4)
 				+ 10) % 10;
 		sumArray[sum.signOffset] = (byte) ((sumByte << 4) | (op1.sign & CommonData.LOWER_NIBBLE_MASK));
 
@@ -1999,9 +2004,7 @@ public final class PackedDecimal {
 		int bytes;
 		int signOffset;
 		int currentOffset;
-		int signByteValue;
 		int sign;
-		int signDigit;
 
 		/**
 		 * Sets up the attributes of a Packed Decimal operand. Truncates leading zeros. Captures the sign value.
@@ -2034,10 +2037,7 @@ public final class PackedDecimal {
 			bytes = signOffset - this.offset + 1;
 
 			// capture sign values
-			signByteValue = this.byteArray[signOffset]
-					& CommonData.INTEGER_MASK;
-			signDigit = signByteValue & CommonData.HIGHER_NIBBLE_MASK;
-			sign = CommonData.getSign(signByteValue & CommonData.LOWER_NIBBLE_MASK);
+			sign = CommonData.getSign((this.byteArray[signOffset] & CommonData.INTEGER_MASK) & CommonData.LOWER_NIBBLE_MASK);
 		}
 
 		/**
