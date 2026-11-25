@@ -1058,5 +1058,10 @@ final class Access implements JavaLangAccess {
 	public boolean hasModuleReflectionData() {
 		return Module.hasReflectionData();
 	}
+
+	@Override
+	public boolean hasBeenRedefined(Class<?> clazz) {
+		return clazz.hasBeenRedefined();
+	}
 	/*[ENDIF] JAVA_SPEC_VERSION >= 28 */
 }

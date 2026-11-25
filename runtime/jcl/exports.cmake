@@ -881,10 +881,17 @@ if(NOT JAVA_SPEC_VERSION LESS 25)
 	)
 endif()
 
-# java 26+
+# Java 26+
 if(NOT JAVA_SPEC_VERSION LESS 26)
 	omr_add_exports(jclse
 		Java_com_ibm_java_lang_management_internal_MemoryMXBeanImpl_getTotalGcCpuTimeImpl
 		Java_java_lang_Class_getClassFileAccessFlags
+	)
+endif()
+
+# Java 28+
+if(NOT JAVA_SPEC_VERSION LESS 28)
+	omr_add_exports(jclse
+		Java_java_lang_Class_hasBeenRedefined
 	)
 endif()
