@@ -1939,8 +1939,7 @@ void J9::Node::setUnsafeGetPutCASCallOnNonArray(TR::Compilation *comp)
 
     TR_ASSERT(TR_J9MethodBase::isUnsafeWithObjectArg(
                   self()->getSymbol()->getMethodSymbol()->getMethod()->getRecognizedMethod())
-            || TR_J9MethodBase::isUnsafeCAS(
-                self()->getSymbol()->getMethodSymbol()->getMethod()->getRecognizedMethod()),
+            || TR_J9MethodBase::isUnsafeCAS(self()->getSymbol()->getMethodSymbol()->getMethod()->getRecognizedMethod()),
         "Attempt to check flag on a method that is not JNI Unsafe that needs special care for arraylets\n");
 
     if (performNodeTransformation1(comp, "O^O NODE FLAGS: Setting unsafeGetPutOnNonArray flag on node %p\n", self()))

@@ -134,6 +134,7 @@ public:
     virtual bool isUnsafeWithObjectArg() { return TR_J9MethodBase::isUnsafeWithObjectArg(getRecognizedMethod()); }
 
     virtual bool isUnsafeCAS() { return TR_J9MethodBase::isUnsafeCAS(getRecognizedMethod()); }
+
     virtual uint32_t numberOfExplicitParameters();
     virtual TR::DataType parmType(uint32_t parmNumber); // returns the type of the parmNumber'th parameter (0-based)
 
