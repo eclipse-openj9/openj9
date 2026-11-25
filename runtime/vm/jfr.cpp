@@ -257,6 +257,12 @@ jfrEventSize(J9JFREvent *jfrEvent)
 	case J9JFR_EVENT_TYPE_CLASS_LOADER_STATISTICS:
 		size = sizeof(J9JFRClassLoaderStatistics);
 		break;
+	case J9JFR_EVENT_TYPE_SYSTEM_PROCESS:
+		size = sizeof(J9JFRSystemProcess);
+		break;
+	case J9JFR_EVENT_TYPE_NATIVE_LIBRARY:
+		size = sizeof(J9JFRNativeLibrary);
+		break;
 	case J9JFR_EVENT_TYPE_JVM_INFORMATION:
 	case J9JFR_EVENT_TYPE_CPU_INFORMATION:
 	case J9JFR_EVENT_TYPE_VIRTUALIZATION_INFORMATION:
@@ -265,10 +271,8 @@ jfrEventSize(J9JFREvent *jfrEvent)
 	case J9JFR_EVENT_TYPE_INITIAL_ENVIRONMENT_VARIABLE:
 	case J9JFR_EVENT_TYPE_GC_HEAP_CONFIGURATION:
 	case J9JFR_EVENT_TYPE_YOUNG_GENERATION_CONFIGURATION:
-	case J9JFR_EVENT_TYPE_SYSTEM_PROCESS:
 	case J9JFR_EVENT_TYPE_MODULE_REQUIRE:
 	case J9JFR_EVENT_TYPE_MODULE_EXPORT:
-	case J9JFR_EVENT_TYPE_NATIVE_LIBRARY:
 	case J9JFR_EVENT_TYPE_GC_TLAB_CONFIGURATION:
 	case J9JFR_EVENT_TYPE_GC_CONFIGURATION:
 	case J9JFR_EVENT_TYPE_GC_SURVIVOR_CONFIGURATION:
@@ -3252,6 +3256,31 @@ JfrPeriodicEventSet::requestInitialEnvironmentVariable(J9VMThread *currentThread
 		initializeEventFields(currentThread, currentThread, jfrEvent, J9JFR_EVENT_TYPE_INITIAL_ENVIRONMENT_VARIABLE);
 	}
 }
+static uintptr_t
+recordSystemProcessEvent(uintptr_t pid, const char *commandLine, void *userData)
+{
+	J9VMThread *currentThread = (J9VMThread *)userData;
+	J9JavaVM *vm = currentThread->javaVM;
+	PORT_ACCESS_FROM_JAVAVM(vm);
+	UDATA cmdLength = strlen(commandLine);
+
+	J9JFRSystemProcess *jfrEvent = (J9JFRSystemProcess *)reserveBuffer(currentThread, currentThread, sizeof(J9JFRSystemProcess));
+	if (NULL == jfrEvent) {
+		return ~(uintptr_t)0;
+	}
+	initializeEventFields(currentThread, currentThread, (J9JFREvent *)jfrEvent, J9JFR_EVENT_TYPE_SYSTEM_PROCESS);
+
+	char *commandLineCopy = (char *)j9mem_allocate_memory(cmdLength + 1, J9MEM_CATEGORY_JFR);
+	if (NULL == commandLineCopy) {
+		return ~(uintptr_t)0;
+	}
+	memcpy(commandLineCopy, commandLine, cmdLength + 1);
+
+	jfrEvent->ticks = j9time_nano_time();
+	jfrEvent->pid = pid;
+	jfrEvent->commandLine = commandLineCopy;
+	return 0;
+}
 
 void
 JfrPeriodicEventSet::requestSystemProcess(J9VMThread *currentThread)
@@ -3259,10 +3288,8 @@ JfrPeriodicEventSet::requestSystemProcess(J9VMThread *currentThread)
 	if (!isJFREventEnabled(currentThread->javaVM, JfrSystemProcessEvent)) {
 		return;
 	}
-	J9JFREvent *jfrEvent = (J9JFREvent *)reserveBuffer(currentThread, currentThread, sizeof(J9JFREvent));
-	if (NULL != jfrEvent) {
-		initializeEventFields(currentThread, currentThread, jfrEvent, J9JFR_EVENT_TYPE_SYSTEM_PROCESS);
-	}
+	OMRPORT_ACCESS_FROM_J9VMTHREAD(currentThread);
+	omrsysinfo_get_processes(recordSystemProcessEvent, currentThread);
 }
 
 void
@@ -3443,15 +3470,69 @@ JfrPeriodicEventSet::requestThreadDump(J9VMThread *currentThread)
 	return;
 }
 
+static NativeLibraryEntry *firstNativeLibraryEntry = NULL;
+
+static uintptr_t
+processNativeLibrariesCallback(const char *libraryName, void *lowAddress, void *highAddress, void *userData)
+{
+	J9VMThread *currentThread = (J9VMThread *)userData;
+	J9JavaVM *vm = currentThread->javaVM;
+	PORT_ACCESS_FROM_JAVAVM(vm);
+	NativeLibraryEntry *entry = firstNativeLibraryEntry;
+	for (; NULL != entry; entry = entry->next) {
+		if (0 == strcmp(entry->name, libraryName)) {
+			if (entry->addressLow > (UDATA)lowAddress) {
+				entry->addressLow = (UDATA)lowAddress;
+			}
+			if (entry->addressHigh < (UDATA)highAddress) {
+				entry->addressHigh = (UDATA)highAddress;
+			}
+			return 0;
+		}
+	}
+	size_t libraryNameLength = strlen(libraryName);
+	char *libraryNameCopy = (char *)j9mem_allocate_memory(libraryNameLength + 1, J9MEM_CATEGORY_JFR);
+	if (NULL == libraryNameCopy) {
+		return 1;
+	}
+	NativeLibraryEntry *newEntry = (NativeLibraryEntry *)j9mem_allocate_memory(sizeof(NativeLibraryEntry), J9MEM_CATEGORY_JFR);
+	if (NULL == newEntry) {
+		j9mem_free_memory(libraryNameCopy);
+		return 1;
+	}
+	memcpy(libraryNameCopy, libraryName, libraryNameLength + 1);
+	newEntry->ticks = j9time_nano_time();
+	newEntry->name = libraryNameCopy;
+	newEntry->addressLow = (UDATA)lowAddress;
+	newEntry->addressHigh = (UDATA)highAddress;
+	newEntry->next = firstNativeLibraryEntry;
+	firstNativeLibraryEntry = newEntry;
+	return 0;
+}
+
 void
 JfrPeriodicEventSet::requestNativeLibrary(J9VMThread *currentThread)
 {
 	if (!isJFREventEnabled(currentThread->javaVM, JfrNativeLibraryEvent)) {
 		return;
 	}
-	J9JFREvent *jfrEvent = (J9JFREvent *)reserveBuffer(currentThread, currentThread, sizeof(J9JFREvent));
-	if (NULL != jfrEvent) {
-		initializeEventFields(currentThread, currentThread, jfrEvent, J9JFR_EVENT_TYPE_NATIVE_LIBRARY);
+	firstNativeLibraryEntry = NULL;
+	PORT_ACCESS_FROM_VMC(currentThread);
+	OMRPORT_ACCESS_FROM_J9VMTHREAD(currentThread);
+	omrsl_get_libraries(processNativeLibrariesCallback, currentThread);
+	NativeLibraryEntry *node = firstNativeLibraryEntry;
+
+	while (NULL != node) {
+		J9JFRNativeLibrary *jfrEvent = (J9JFRNativeLibrary *)reserveBuffer(currentThread, currentThread, sizeof(J9JFRNativeLibrary));
+		if (NULL != jfrEvent) {
+			initializeEventFields(currentThread, currentThread, (J9JFREvent *)jfrEvent, J9JFR_EVENT_TYPE_NATIVE_LIBRARY);
+			jfrEvent->name = node->name;
+			jfrEvent->addressHigh = node->addressHigh;
+			jfrEvent->addressLow = node->addressLow;
+		}
+		NativeLibraryEntry *oldNode = node;
+		node = node->next;
+		j9mem_free_memory(oldNode);
 	}
 }
 
