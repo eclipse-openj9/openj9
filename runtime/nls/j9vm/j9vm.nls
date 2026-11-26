@@ -2617,3 +2617,17 @@ J9NLS_VM_CANNOT_STORE_NULL_IN_NULL_RESTRICTED_FIELD.explanation=This exception i
 J9NLS_VM_CANNOT_STORE_NULL_IN_NULL_RESTRICTED_FIELD.system_action=The JVM will throw a NullPointerException.
 J9NLS_VM_CANNOT_STORE_NULL_IN_NULL_RESTRICTED_FIELD.user_response=Correct the application code to avoid assigning null to a null-restricted field.
 # END NON-TRANSLATABLE
+
+J9NLS_VM_FFM_UPCALL_UNCAUGHT_EXCEPTION=Unable to handle an uncaught exception in an FFM upcall
+# START NON-TRANSLATABLE
+J9NLS_VM_FFM_UPCALL_UNCAUGHT_EXCEPTION.explanation=An exception escaped a Java upcall and could not be handled by SharedUtils.handleUncaughtException().
+J9NLS_VM_FFM_UPCALL_UNCAUGHT_EXCEPTION.system_action=The JVM will terminate.
+J9NLS_VM_FFM_UPCALL_UNCAUGHT_EXCEPTION.user_response=Check the FFM upcall for uncaught exceptions. Upcalls must not throw.
+# END NON-TRANSLATABLE
+
+J9NLS_VM_FFM_UPCALL_IN_CRITICAL_DOWNCALL=An FFM upcall is not allowed during a critical downcall
+# START NON-TRANSLATABLE
+J9NLS_VM_FFM_UPCALL_IN_CRITICAL_DOWNCALL.explanation=An FFM upcall was made from within a critical downcall, which is not supported.
+J9NLS_VM_FFM_UPCALL_IN_CRITICAL_DOWNCALL.system_action=The JVM will terminate.
+J9NLS_VM_FFM_UPCALL_IN_CRITICAL_DOWNCALL.user_response=Do not call upcalls from a critical downcall. Remove the upcall or the critical linker option.
+# END NON-TRANSLATABLE
