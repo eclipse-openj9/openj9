@@ -2417,21 +2417,24 @@ done:
 static jvmtiError JNICALL
 jvmtiRemoveAllTags(jvmtiEnv* jvmti_env, ...)
 {
-	J9JVMTIEnv * j9env = (J9JVMTIEnv *) jvmti_env;
+	J9JVMTIEnv *j9env = (J9JVMTIEnv *)jvmti_env;
 	jvmtiError rc = JVMTI_ERROR_NOT_AVAILABLE;
 
 	J9HashTableHashFn hashFn = j9env->objectTagTable->hashFn;
 	J9HashTableEqualFn hashEqualFn = j9env->objectTagTable->hashEqualFn;
-
 
 	Trc_JVMTI_jvmtiRemoveAllTags_Entry(jvmti_env);
 
 	/* Ensure exclusive access to tag table */
 	omrthread_monitor_enter(j9env->mutex);
 
-	if (j9env->objectTagTable != NULL) {
+	if (NULL != j9env->objectTagTable) {
+		J9JavaVM *vm = j9env->vm;
 		hashTableFree(j9env->objectTagTable);
-		j9env->objectTagTable = hashTableNew(OMRPORT_FROM_J9PORT(j9env->vm->portLibrary), J9_GET_CALLSITE(), 0, sizeof(J9JVMTIObjectTag), sizeof(jlong), 0,  J9MEM_CATEGORY_JVMTI, hashFn, hashEqualFn, NULL, NULL);
+		j9env->objectTagTable = hashTableNew(
+				OMRPORT_FROM_J9PORT(vm->portLibrary), J9_GET_CALLSITE(), 0,
+				sizeof(J9JVMTIObjectTag), sizeof(jlong), 0, J9MEM_CATEGORY_JVMTI,
+				hashFn, hashEqualFn, NULL, vm);
 		rc = JVMTI_ERROR_NONE;
 	}
 
