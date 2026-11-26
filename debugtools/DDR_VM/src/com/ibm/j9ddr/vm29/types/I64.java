@@ -149,6 +149,7 @@ public class I64 extends IDATA {
 		return value;
 	}
 
+	@Override
 	public long longValue() {
 		return data;
 	}

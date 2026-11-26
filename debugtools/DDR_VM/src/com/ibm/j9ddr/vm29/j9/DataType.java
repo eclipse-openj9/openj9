@@ -111,7 +111,13 @@ public abstract class DataType {
 
 	// Instance methods
 
-	// Answer the long representation of the receiver.  This value may not have useful meaning in all contexts
+	/**
+	 * Answer the long representation of the receiver.
+	 *
+	 * Some subclasses represent unsigned types with values that may exceed
+	 * Long.MAX_VALUE (i.e. UDATA, U64). Callers are expected to interpret
+	 * negative return values appropriately.
+	 */
 	public abstract long longValue() throws CorruptDataException;
 
 	/**
