@@ -2976,8 +2976,28 @@ void TR_ResolvedJ9Method::construct()
                                     "()Ljdk/internal/reflect/FieldAccessor;") },
         { TR::unknownMethod } };
 
+    static X ByteVectorMethods[] = { { x(TR::jdk_incubator_vector_ByteVector_opKind, "opKind",
+                                          "(Ljdk/incubator/vector/VectorOperators$Operator;I)Z") },
+        { TR::unknownMethod } };
+
+    static X ShortVectorMethods[] = { { x(TR::jdk_incubator_vector_ShortVector_opKind, "opKind",
+                                           "(Ljdk/incubator/vector/VectorOperators$Operator;I)Z") },
+        { TR::unknownMethod } };
+
     static X IntVectorMethods[] = { { x(TR::jdk_incubator_vector_IntVector_opKind, "opKind",
                                         "(Ljdk/incubator/vector/VectorOperators$Operator;I)Z") },
+        { TR::unknownMethod } };
+
+    static X LongVectorMethods[] = { { x(TR::jdk_incubator_vector_LongVector_opKind, "opKind",
+                                          "(Ljdk/incubator/vector/VectorOperators$Operator;I)Z") },
+        { TR::unknownMethod } };
+
+    static X FloatVectorMethods[] = { { x(TR::jdk_incubator_vector_FloatVector_opKind, "opKind",
+                                           "(Ljdk/incubator/vector/VectorOperators$Operator;I)Z") },
+        { TR::unknownMethod } };
+
+    static X DoubleVectorMethods[] = { { x(TR::jdk_incubator_vector_DoubleVector_opKind, "opKind",
+                                            "(Ljdk/incubator/vector/VectorOperators$Operator;I)Z") },
         { TR::unknownMethod } };
 
     static X MethodMethods[] = {
@@ -4102,12 +4122,16 @@ void TR_ResolvedJ9Method::construct()
         { "jdk/internal/util/Preconditions", PreconditionsMethods },
         { "jdk/internal/util/ArraysSupport", ArraysSupportMethods },
         { "java/lang/AbstractStringBuilder", AbstractStringBuilderMethods },
+        { "jdk/incubator/vector/ByteVector", ByteVectorMethods },
+        { "jdk/incubator/vector/LongVector", LongVectorMethods },
         { 0 }
     };
     static Y class32[] = {
         { "java/lang/invoke/MutableCallSite", MutableCallSiteMethods },
         { "java/lang/invoke/PrimitiveHandle", PrimitiveHandleMethods },
         { "com/ibm/dataaccess/PackedDecimal", DataAccessPackedDecimalMethods },
+        { "jdk/incubator/vector/ShortVector", ShortVectorMethods },
+        { "jdk/incubator/vector/FloatVector", FloatVectorMethods },
         { 0 }
     };
 
@@ -4115,6 +4139,7 @@ void TR_ResolvedJ9Method::construct()
         { "java/util/stream/AbstractPipeline", JavaUtilStreamAbstractPipelineMethods },
         { "java/util/stream/IntPipeline$Head", JavaUtilStreamIntPipelineHeadMethods },
         { "java/lang/invoke/MethodHandleImpl", JavaLangInvokeMethodHandleImplMethods },
+        { "jdk/incubator/vector/DoubleVector", DoubleVectorMethods },
         { 0 }
     };
 

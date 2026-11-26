@@ -1572,7 +1572,12 @@ Operand *InterpreterEmulator::getReturnValue(TR_ResolvedMethod *callee)
                 result = new (trStackMemory()) IconstOperand(1);
             break;
         }
-        case TR::jdk_incubator_vector_IntVector_opKind: {
+        case TR::jdk_incubator_vector_ByteVector_opKind:
+        case TR::jdk_incubator_vector_ShortVector_opKind:
+        case TR::jdk_incubator_vector_IntVector_opKind:
+        case TR::jdk_incubator_vector_LongVector_opKind:
+        case TR::jdk_incubator_vector_FloatVector_opKind:
+        case TR::jdk_incubator_vector_DoubleVector_opKind: {
             // opKind(Operator op, int bit) returns (op.opInfo & bit) != 0. opInfo is a final field, so the
             // result can be evaluated when both the operator object and the bit mask are known. This lets
             // branch folding remove the operator-specific paths of the Vector API lanewise templates.
@@ -1580,8 +1585,8 @@ Operand *InterpreterEmulator::getReturnValue(TR_ResolvedMethod *callee)
             TR::KnownObjectTable::Index opIndex = topn(1)->getKnownObjectIndex();
             if (knot && bitOperand != NULL && opIndex != TR::KnownObjectTable::UNKNOWN && !knot->isNull(opIndex)) {
                 int32_t opInfo = comp()->fej9()->getVectorOperatorInfo(comp(), opIndex);
-                debugTrace(tracer(), "IntVector.opKind with known operator obj%d bit 0x%x gives opInfo 0x%x\n", opIndex,
-                    bitOperand->intValue, opInfo);
+                debugTrace(tracer(), "VectorType.opKind with known operator obj%d bit 0x%x gives opInfo 0x%x\n",
+                    opIndex, bitOperand->intValue, opInfo);
                 if (opInfo >= 0)
                     result = new (trStackMemory()) IconstOperand((opInfo & bitOperand->intValue) != 0 ? 1 : 0);
             }
