@@ -507,7 +507,7 @@ static J9MemorySegment * allocateVirtualMemorySegmentInListInternal(J9JavaVM *ja
 			 * If disclaiming is enabled increase the segement size by the page size so the segment
 			 * base can be aligned to a page boundary so that it can be disclaimed with madvise().
 			 */
-			size += (pageSize*2);
+			size = ROUND_UP_TO_POWEROF2(size, pageSize) + (pageSize * 2);
 		}
 
 		segment->size = size;
