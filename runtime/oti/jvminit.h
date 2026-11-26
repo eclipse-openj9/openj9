@@ -461,6 +461,14 @@ enum INIT_STAGE {
 #define VMOPT_XXCOMPATIBILITY_DISABLEG1GC "-XX:-UseG1GC"
 
 /*
+ * By default, dumps requested on threads not attached to the VM are
+ * delegated to a helper thread. These options control whether that
+ * mechanism is enabled or not.
+ */
+#define VMOPT_XXENABLEASYNCDUMPDELEGATION  "-XX:+AsyncDumpDelegation"
+#define VMOPT_XXDISABLEASYNCDUMPDELEGATION "-XX:-AsyncDumpDelegation"
+
+/*
  * Options to control how much effort is expended
  * resolving native symbols in java dumps.
  */
