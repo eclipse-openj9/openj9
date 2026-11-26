@@ -18,6 +18,7 @@
  * [2] https://openjdk.org/legal/assembly-exception.html
  *
  * SPDX-License-Identifier: EPL-2.0 OR Apache-2.0 OR GPL-2.0-only WITH Classpath-exception-2.0 OR GPL-2.0-only WITH OpenJDK-assembly-exception-1.0
+ * Assisted-by: IBM Bob
  *******************************************************************************/
 
 #include "env/j9method.h"
@@ -2977,11 +2978,11 @@ void TR_ResolvedJ9Method::construct()
         { TR::unknownMethod } };
 
     static X ByteVectorMethods[] = { { x(TR::jdk_incubator_vector_ByteVector_opKind, "opKind",
-                                          "(Ljdk/incubator/vector/VectorOperators$Operator;I)Z") },
+                                         "(Ljdk/incubator/vector/VectorOperators$Operator;I)Z") },
         { TR::unknownMethod } };
 
     static X ShortVectorMethods[] = { { x(TR::jdk_incubator_vector_ShortVector_opKind, "opKind",
-                                           "(Ljdk/incubator/vector/VectorOperators$Operator;I)Z") },
+                                          "(Ljdk/incubator/vector/VectorOperators$Operator;I)Z") },
         { TR::unknownMethod } };
 
     static X IntVectorMethods[] = { { x(TR::jdk_incubator_vector_IntVector_opKind, "opKind",
@@ -2989,15 +2990,15 @@ void TR_ResolvedJ9Method::construct()
         { TR::unknownMethod } };
 
     static X LongVectorMethods[] = { { x(TR::jdk_incubator_vector_LongVector_opKind, "opKind",
-                                          "(Ljdk/incubator/vector/VectorOperators$Operator;I)Z") },
+                                         "(Ljdk/incubator/vector/VectorOperators$Operator;I)Z") },
         { TR::unknownMethod } };
 
     static X FloatVectorMethods[] = { { x(TR::jdk_incubator_vector_FloatVector_opKind, "opKind",
-                                           "(Ljdk/incubator/vector/VectorOperators$Operator;I)Z") },
+                                          "(Ljdk/incubator/vector/VectorOperators$Operator;I)Z") },
         { TR::unknownMethod } };
 
     static X DoubleVectorMethods[] = { { x(TR::jdk_incubator_vector_DoubleVector_opKind, "opKind",
-                                            "(Ljdk/incubator/vector/VectorOperators$Operator;I)Z") },
+                                           "(Ljdk/incubator/vector/VectorOperators$Operator;I)Z") },
         { TR::unknownMethod } };
 
     static X MethodMethods[] = {

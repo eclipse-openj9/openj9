@@ -18,6 +18,7 @@
  * [2] https://openjdk.org/legal/assembly-exception.html
  *
  * SPDX-License-Identifier: EPL-2.0 OR Apache-2.0 OR GPL-2.0-only WITH Classpath-exception-2.0 OR GPL-2.0-only WITH OpenJDK-assembly-exception-1.0
+ * Assisted-by: IBM Bob
  *******************************************************************************/
 
 #ifndef VMJ9_h
@@ -686,9 +687,9 @@ public:
 
     /**
      * @brief Get the value of the opInfo field of a jdk/incubator/vector/VectorOperators$OperatorImpl object.
-     * opInfo is final, so when the operator object is known, the result of
-     * jdk/incubator/vector/IntVector.opKind(Operator, int), which tests bits in opInfo, can be evaluated
-     * at compile time.
+     * opInfo is final, so when the operator object is known, the result of the opKind(Operator, int) method of
+     * the jdk/incubator/vector/<Type>Vector classes, which tests bits in opInfo, can be evaluated at compile
+     * time.
      *
      * @param comp the compilation
      * @param opIndex the known object index of the VectorOperators$OperatorImpl object
