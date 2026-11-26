@@ -31,6 +31,7 @@
 
 #include "CardTable.hpp"
 #include "CycleState.hpp"
+#include "CycleStateVLHGC.hpp"
 #include "EnvironmentVLHGC.hpp"
 #include "HeapRegionIteratorVLHGC.hpp"
 #include "HeapRegionManager.hpp"
@@ -97,9 +98,10 @@ MM_CardListFlushTask::run(MM_EnvironmentBase *envBase)
 {
 	MM_EnvironmentVLHGC *env = MM_EnvironmentVLHGC::getEnvironment(envBase);
 	MM_GCExtensions *extensions = MM_GCExtensions::getExtensions(env);
+	MM_CycleStateVLHGC *cycleState = static_cast<MM_CycleStateVLHGC*>(_cycleState);
 	MM_MarkMap *markMap = NULL;
-	if (static_cast<MM_CycleStateVLHGC*>(envBase->_cycleState)->_schedulingDelegate->isFirstPGCAfterGMP()) {
-		markMap = env->_cycleState->_markMap;
+	if ((NULL != cycleState->_schedulingDelegate) && cycleState->_schedulingDelegate->isFirstPGCAfterGMP()) {
+		markMap = cycleState->_markMap;
 	}
 
 	/* this function has knowledge of the collection set, which is only valid during a PGC */

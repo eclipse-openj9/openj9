@@ -51,6 +51,7 @@ private:
 	struct CopyScanCacheSublist {
 		MM_CopyScanCacheVLHGC *_cacheHead;
 		MM_LightweightNonReentrantLock _cacheLock;
+		volatile uintptr_t _entryCount;	/**< number of entries added with pushCache() and not yet removed with popCache(); updated under _cacheLock */
 	} *_sublists;
 	uintptr_t _sublistCount; /**< the number of lists (split for parallelism). Must be at least 1 */
 	MM_CopyScanCacheChunkVLHGC *_chunkHead;
@@ -154,6 +155,14 @@ public:
 	 * @return true if the list is empty, false otherwise
 	 */
 	bool isEmpty();
+
+	/**
+	 * Sum of the per sublist entry counts, read without locking.
+	 * Only meaningful for lists whose entries all go through pushCache()/popCache() (the scan lists),
+	 * not for the free list, which is also fed by chunk allocation.
+	 * @return the approximate number of entries currently in the list
+	 */
+	uintptr_t getApproximateEntryCount();
 	
 	/**
 	 * Determine how many caches are in the receiver's lists.
