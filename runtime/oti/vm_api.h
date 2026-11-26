@@ -6127,6 +6127,15 @@ getThreadTID(J9VMThread *currentThread, J9VMThread *vmThread);
 U_32
 emitStackTrace(J9VMThread *currentThread, I_32 skipCount);
 
+/**
+ * Record that a class is referenced by a Java event so that it is written to the class constant pool.
+ *
+ * @param[in] currentThread the current J9VMThread
+ * @param[in] clazz the referenced class
+ */
+void
+emitClassReference(J9VMThread *currentThread, J9Class *clazz);
+
 void
 flushJavaJFRBuffer(J9VMThread *currentThread, jobject eventWriterRef, I_32 uncommited, I_32 needed);
 #endif /* defined(J9VM_OPT_JFR) */

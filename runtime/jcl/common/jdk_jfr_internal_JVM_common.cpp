@@ -315,9 +315,10 @@ Java_jdk_jfr_internal_JVM_getClassId(JNIEnv *env, jclass clazz, jclass targetCla
 	jlong classID = 0;
 
 	vmFuncs->internalEnterVMFromJNI(currentThread);
-	j9object_t classObject = J9_JNI_UNWRAP_REFERENCE(targetClass);
-	J9Class *targetClazz = J9OBJECT_CLAZZ(currentThread, classObject);
+	J9Class *targetClazz = J9VM_J9CLASS_FROM_JCLASS(currentThread, targetClass);
 	classID = (jlong)targetClazz->classID;
+	/* Ensure the class is added to the class constant pool of the chunk. */
+	vmFuncs->emitClassReference(currentThread, targetClazz);
 	vmFuncs->internalExitVMToJNI(currentThread);
 
 	return classID;

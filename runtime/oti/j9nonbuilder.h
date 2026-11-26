@@ -617,6 +617,12 @@ typedef struct J9JFRObjectAllocationSample {
 
 #define J9JFROBJECTALLOCATIONSAMPLE_STACKTRACE(jfrEvent) ((UDATA *)(((J9JFRObjectAllocationSample *)(jfrEvent)) + 1))
 
+/* Records a class referenced by a Java event so that it is added to the class constant pool. */
+typedef struct J9JFRClassReference {
+	J9JFR_EVENT_COMMON_FIELDS
+	struct J9Class *referencedClass;
+} J9JFRClassReference;
+
 typedef struct J9JFRClassLoaderStatistics {
 	J9JFR_EVENT_COMMON_FIELDS
 	struct J9ClassLoader *classLoader;
@@ -5794,6 +5800,7 @@ typedef struct J9InternalVMFunctions {
 	BOOLEAN (*setupChunkMonitor)(struct J9VMThread *currentThread);
 	I_64 (*getThreadTID)(struct J9VMThread *currentThread, struct J9VMThread *vmThread);
 	U_32 (*emitStackTrace)(struct J9VMThread *currentThread, I_32 skipCount);
+	void (*emitClassReference)(struct J9VMThread *currentThread, struct J9Class *clazz);
 	void (*flushJavaJFRBuffer)(struct J9VMThread *currentThread, jobject eventWriterRef, I_32 uncommited, I_32 needed);
 #endif /* defined(J9VM_OPT_JFR) */
 #if defined(J9VM_OPT_SNAPSHOTS)

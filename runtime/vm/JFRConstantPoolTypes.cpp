@@ -754,10 +754,16 @@ VM_JFRConstantPoolTypes::addClassLoaderEntry(J9ClassLoader *classLoader, bool sh
 		entry = &entryBuffer;
 	}
 
-	if (shallow) {
-		entry->classIndex = getShallowClassEntry(J9OBJECT_CLAZZ(_currentThread, classLoader->classLoaderObject));
-	} else {
-		entry->classIndex = getClassEntry(J9OBJECT_CLAZZ(_currentThread, classLoader->classLoaderObject), false);
+	{
+		J9Class *loaderClass = J9OBJECT_CLAZZ(_currentThread, classLoader->classLoaderObject);
+		/* A loader whose class is defined by itself (the boot loader) must use a shallow
+		 * class entry to avoid infinite recursion; it is completed by fixupShallowEntries().
+		 */
+		if (shallow || (loaderClass->classLoader == classLoader)) {
+			entry->classIndex = getShallowClassEntry(loaderClass);
+		} else {
+			entry->classIndex = getClassEntry(loaderClass, false);
+		}
 	}
 	if (isResultNotOKay()) goto done;
 
