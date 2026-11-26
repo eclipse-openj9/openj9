@@ -4035,16 +4035,18 @@ JVM_RecordLibrary(JNIEnv *env, jobject nativeLibImpl, const char *name)
 	J9JavaVM *javaVM = currentThread->javaVM;
 	J9InternalVMFunctions *vmFuncs = javaVM->internalVMFunctions;
 	j9object_t fromClass = NULL;
-	j9object_t classLoaderObj = NULL;
 	J9ClassLoader *classLoader = NULL;
-	J9NativeLibrary *newNativeLibrary = NULL;
 	PORT_ACCESS_FROM_JAVAVM(javaVM);
 
 	vmFuncs->internalEnterVMFromJNI(currentThread);
 
 	fromClass = J9VMJDKINTERNALLOADERNATIVELIBRARIESNATIVELIBRARYIMPL_FROMCLASS(currentThread, J9_JNI_UNWRAP_REFERENCE(nativeLibImpl));
-	classLoaderObj = J9VMJAVALANGCLASS_CLASSLOADER(currentThread, fromClass);
-	classLoader = J9VMJAVALANGCLASSLOADER_VMREF(currentThread, classLoaderObj);
+	if (NULL == fromClass) {
+		classLoader = javaVM->systemClassLoader;
+	} else {
+		j9object_t classLoaderObj = J9VMJAVALANGCLASS_CLASSLOADER(currentThread, fromClass);
+		classLoader = J9VMJAVALANGCLASSLOADER_VMREF(currentThread, classLoaderObj);
+	}
 
 	vmFuncs->internalExitVMToJNI(currentThread);
 
@@ -4057,15 +4059,15 @@ JVM_RecordLibrary(JNIEnv *env, jobject nativeLibImpl, const char *name)
 	}
 
 	if (NULL != classLoader->sharedLibraries) {
-		newNativeLibrary = pool_newElement(classLoader->sharedLibraries);
-	}
+		J9NativeLibrary *newNativeLibrary = pool_newElement(classLoader->sharedLibraries);
 
-	if (NULL != newNativeLibrary) {
-		newNativeLibrary->name = j9mem_allocate_memory(strlen(name) + 1, J9MEM_CATEGORY_CLASSES);
-		if (NULL == newNativeLibrary->name) {
-			pool_removeElement(classLoader->sharedLibraries, newNativeLibrary);
-		} else {
-			strcpy(newNativeLibrary->name, name);
+		if (NULL != newNativeLibrary) {
+			newNativeLibrary->name = j9mem_allocate_memory(strlen(name) + 1, J9MEM_CATEGORY_CLASSES);
+			if (NULL == newNativeLibrary->name) {
+				pool_removeElement(classLoader->sharedLibraries, newNativeLibrary);
+			} else {
+				strcpy(newNativeLibrary->name, name);
+			}
 		}
 	}
 
