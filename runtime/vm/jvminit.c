@@ -1232,6 +1232,7 @@ initializeJavaVM(void * osMainThread, J9JavaVM ** vmPtr, J9CreateJavaVMParams *c
 	vm->jfrState.chunkGeneration = 0;
 	vm->jfrState.lastGenerationFileCursor = 0;
 	vm->jfrState.lastCheckpointEvent = 0;
+	vm->jfrState.unloadedEventClassCount = 0;
 	memset(&vm->jfrState.checkpointEventTables, 0, sizeof(vm->jfrState.checkpointEventTables));
 #endif /* defined(J9VM_OPT_JFR) */
 	vm->defaultPageSize = j9vmem_supported_page_sizes()[0];
