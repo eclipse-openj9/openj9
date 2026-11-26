@@ -228,20 +228,6 @@ gcParseXXgcArguments(J9JavaVM *vm, char *optArg)
 		}
 #endif /* J9VM_GC_REALTIME */
 
-#if defined(J9VM_INTERP_NATIVE_SUPPORT)
-		/* see if we should be using the hot field optimization for the scavenger (this is the default) */
-		if (try_scan(&scan_start, "scvHotAlignment")) {
-			extensions->scavengerAlignHotFields = true;
-			continue;
-		}
-
-		/* see if we should disable the hot field optimization in the scavenger */
-		if (try_scan(&scan_start, "scvNoHotAlignment")) {
-			extensions->scavengerAlignHotFields = false;
-			continue;
-		}
-#endif /* J9VM_INTERP_NATIVE_SUPPORT */
-
 #if defined (OMR_GC_COMPRESSED_POINTERS)
 		if (extensions->compressObjectReferences()) {
 			/* see if we are to force disable shifting in compressed refs */
