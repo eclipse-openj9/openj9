@@ -107,17 +107,7 @@ public class U64 extends UDATA {
 
 		return (int) value;
 	}
-	
-	public long longValue() {
-		long value = data;
 
-		if (value < 0) {
-			throw new InvalidDataTypeException("U64 contains value larger than Long.MAX_VALUE");
-		}
-
-		return value;
-	}
-	
 	// bitOr
 	
 	public U64 bitOr(int number) {
