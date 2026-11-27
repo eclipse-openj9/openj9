@@ -325,11 +325,7 @@ allocateEnvironment(J9InvocationJavaVM * invocationJavaVM, jint version, void **
 			if (j9env->threadDataPool == NULL) {
 				goto fail;
 			}
-#if defined(J9VM_OPT_VALHALLA_VALUE_TYPES)
 			j9env->objectTagTable = hashTableNew(OMRPORT_FROM_J9PORT(vm->portLibrary), J9_GET_CALLSITE(), 0, sizeof(J9JVMTIObjectTag), sizeof(jlong), 0, J9MEM_CATEGORY_JVMTI, hashObjectTag, hashEqualObjectTag, NULL, vm);
-#else /* defined(J9VM_OPT_VALHALLA_VALUE_TYPES) */
-			j9env->objectTagTable = hashTableNew(OMRPORT_FROM_J9PORT(vm->portLibrary), J9_GET_CALLSITE(), 0, sizeof(J9JVMTIObjectTag), sizeof(jlong), 0, J9MEM_CATEGORY_JVMTI, hashObjectTag, hashEqualObjectTag, NULL, NULL);
-#endif /* defined(J9VM_OPT_VALHALLA_VALUE_TYPES) */
 			if (j9env->objectTagTable == NULL) {
 				goto fail;
 			}
