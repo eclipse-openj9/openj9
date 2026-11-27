@@ -190,18 +190,6 @@ MM_RootScanner::scanMonitorReferencesComplete(MM_EnvironmentBase *env)
  * @todo Provide function documentation
  */
 void
-MM_RootScanner::doMonitorLookupCacheSlot(j9objectmonitor_t *slotPtr)
-{
-	if (0 != *slotPtr) {
-		*slotPtr = 0;
-	}
-}
-
-
-/**
- * @todo Provide function documentation
- */
-void
 MM_RootScanner::doJNIWeakGlobalReference(J9Object **slotPtr)
 {
 	doSlot(slotPtr);
@@ -786,11 +774,7 @@ MM_RootScanner::scanMonitorLookupCaches(MM_EnvironmentBase *env)
 	GC_VMThreadListIterator vmThreadListIterator(_javaVM);
 	while (J9VMThread *walkThread = vmThreadListIterator.nextVMThread()) {
 		if (_singleThread || J9MODRON_HANDLE_NEXT_WORK_UNIT(env)) {
-			j9objectmonitor_t *objectMonitorLookupCache = walkThread->objectMonitorLookupCache;
-			uintptr_t cacheIndex = 0;
-			for (; cacheIndex < J9VMTHREAD_OBJECT_MONITOR_CACHE_SIZE; cacheIndex++) {
-				doMonitorLookupCacheSlot(&objectMonitorLookupCache[cacheIndex]);
-			}
+			memset(walkThread->objectMonitorLookupCache, 0, sizeof(walkThread->objectMonitorLookupCache));
 		}
 	}
 	reportScanningEnded(RootScannerEntity_MonitorLookupCaches);
