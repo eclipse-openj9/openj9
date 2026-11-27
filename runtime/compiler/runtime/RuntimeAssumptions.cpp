@@ -268,7 +268,9 @@ bool TR_PersistentCHTable::classGotExtended(TR_FrontEnd *fe, TR_PersistentMemory
         OMR::CriticalSection classGotExtended(assumptionTableMutex);
         OMR::RuntimeAssumption **headPtr = table->getBucketPtr(RuntimeAssumptionOnClassExtend,
             TR_RuntimeAssumptionTable::hashCode((uintptr_t)superClassId));
-        for (OMR::RuntimeAssumption *cursor = *headPtr; cursor; cursor = cursor->getNext()) {
+        OMR::RuntimeAssumption *next;
+        for (OMR::RuntimeAssumption *cursor = *headPtr; cursor; cursor = next) {
+            next = cursor->getNext(); // must be read before cursor is moved to the zombie list
             if (cursor->matches((uintptr_t)superClassId)) {
                 cursor->compensate(fe, 0, 0);
                 removeAssumptionFromRAT(cursor);
@@ -349,7 +351,9 @@ bool TR_PersistentCHTable::classGotInitialized(TR_FrontEnd *fe, TR_PersistentMem
         OMR::RuntimeAssumption **headPtr = table->getBucketPtr(RuntimeAssumptionOnClassPreInitialize,
             TR_PatchNOPedGuardSiteOnClassPreInitialize::hashCode(sig, sigLen));
 
-        for (OMR::RuntimeAssumption *cursor = *headPtr; cursor; cursor = cursor->getNext()) {
+        OMR::RuntimeAssumption *next;
+        for (OMR::RuntimeAssumption *cursor = *headPtr; cursor; cursor = next) {
+            next = cursor->getNext(); // must be read before cursor is moved to the zombie list
             if (cursor->matches(sig, sigLen)) {
                 cursor->compensate(fej9, 0, 0);
                 removeAssumptionFromRAT(cursor);
@@ -367,7 +371,9 @@ void TR_PersistentCHTable::methodGotOverridden(TR_FrontEnd *fe, TR_PersistentMem
     TR_RuntimeAssumptionTable *table = persistentMemory->getPersistentInfo()->getRuntimeAssumptionTable();
     OMR::RuntimeAssumption **headPtr = table->getBucketPtr(RuntimeAssumptionOnMethodOverride,
         TR_RuntimeAssumptionTable::hashCode((uintptr_t)overriddenMethod));
-    for (OMR::RuntimeAssumption *cursor = *headPtr; cursor; cursor = cursor->getNext()) {
+    OMR::RuntimeAssumption *next;
+    for (OMR::RuntimeAssumption *cursor = *headPtr; cursor; cursor = next) {
+        next = cursor->getNext(); // must be read before cursor is moved to the zombie list
         if (cursor->matches((uintptr_t)overriddenMethod)) {
             cursor->compensate(fe, 0, 0);
             removeAssumptionFromRAT(cursor);
@@ -390,7 +396,9 @@ void TR_PersistentCHTable::classGotRedefined(TR_FrontEnd *fe, TR_OpaqueClassBloc
     TR_RuntimeAssumptionTable *table = _trPersistentMemory->getPersistentInfo()->getRuntimeAssumptionTable();
     OMR::RuntimeAssumption **headPtr = table->getBucketPtr(RuntimeAssumptionOnClassExtend,
         TR_RuntimeAssumptionTable::hashCode((uintptr_t)oldClassId));
-    for (OMR::RuntimeAssumption *cursor = *headPtr; cursor; cursor = cursor->getNext()) {
+    OMR::RuntimeAssumption *next;
+    for (OMR::RuntimeAssumption *cursor = *headPtr; cursor; cursor = next) {
+        next = cursor->getNext(); // must be read before cursor is moved to the zombie list
         if (cursor->matches((uintptr_t)oldClassId)) {
             cursor->compensate(fe, 0, 0);
             removeAssumptionFromRAT(cursor);
