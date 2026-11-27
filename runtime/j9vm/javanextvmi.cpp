@@ -88,6 +88,7 @@ typedef struct GetStackTraceElementUserData {
 	J9ROMClass *romClass;
 	J9ROMMethod *romMethod;
 	UDATA bytecodeOffset;
+	UDATA frameType;
 } GetStackTraceElementUserData;
 
 static UDATA
@@ -107,6 +108,7 @@ getStackTraceElementIterator(J9VMThread *vmThread, void *voidUserData, UDATA byt
 		userData->romClass = romClass;
 		userData->romMethod = romMethod;
 		userData->bytecodeOffset = bytecodeOffset;
+		userData->frameType = frameType;
 	}
 	return result;
 }
@@ -166,6 +168,7 @@ JVM_GetExtendedNPEMessage(JNIEnv *env, jthrowable throwableObj)
 			npeMsgData.vmThread = vmThread;
 			npeMsgData.romClass = userData.romClass;
 			npeMsgData.romMethod = userData.romMethod;
+			npeMsgData.frameType = userData.frameType;
 			npeMsg = vmFuncs->getNPEMessage(&npeMsgData);
 			if (NULL != npeMsg) {
 				j9object_t msgObject = vm->memoryManagerFunctions->j9gc_createJavaLangString(vmThread, (U_8 *)npeMsg, strlen(npeMsg), 0);

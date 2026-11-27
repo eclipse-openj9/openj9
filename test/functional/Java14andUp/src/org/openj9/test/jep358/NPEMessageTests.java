@@ -56,6 +56,7 @@ import java.lang.invoke.MethodHandles;
 import java.lang.invoke.MethodType;
 import java.lang.invoke.WrongMethodTypeException;
 import java.lang.invoke.MethodHandles.Lookup;
+import java.nio.ByteBuffer;
 
 interface E0 {
 	public int throwNPEOne(F fVal);
@@ -121,6 +122,14 @@ public class NPEMessageTests {
 
 	private static void checkMessage(String actualMsg, String expectedMsgWithDebugInfo, String expectedMsgNoDebugInfo) {
 		Assert.assertEquals(actualMsg, hasDebugInfo ? expectedMsgWithDebugInfo : expectedMsgNoDebugInfo);
+	}
+
+	private static void checkBecauseMessage(String actualNPEMsg, String expectedBecauseMsgWithDebugInfo, String expectedBecauseMsgNoDebugInfo) {
+		Assert.assertNotNull(actualNPEMsg, "NPE message should not be null");
+		String expectedBecauseMsg = hasDebugInfo ? expectedBecauseMsgWithDebugInfo : expectedBecauseMsgNoDebugInfo;
+		Assert.assertTrue(
+				actualNPEMsg.endsWith(expectedBecauseMsg),
+				"Expected [" + actualNPEMsg + "] to end with [" + expectedBecauseMsg + "]");
 	}
 
 	public void test_iaload() {
@@ -1604,5 +1613,71 @@ public class NPEMessageTests {
 				new double[31], new double[32], new double[33], new double[34], new double[35], new double[36], new double[37], new double[38], new double[39], new double[40],
 				new double[41], new double[42], new double[43], new double[44], new double[45], new double[46], new double[47], new double[48], new double[49], new double[50],
 				new double[51], new double[52], new double[53], new double[54], new double[55], new double[56], new double[57], new double[58], new double[59], new double[60]);
+	}
+
+	private static final class Holder {
+		private final ByteBuffer buf;
+
+		Holder(ByteBuffer b) {
+			buf = b;
+		}
+
+		// aload_0; getfield buf; invokevirtual
+		boolean viaThis() {
+			return buf.hasRemaining();
+		}
+	}
+
+	private static Holder sh;
+
+	// aload_0(h); getfield buf; invokevirtual
+	private static boolean viaLocal(Holder h) {
+		return h.buf.hasRemaining();
+	}
+
+	// getstatic sh; getfield buf; invokevirtual
+	private static boolean viaStatic() {
+		return sh.buf.hasRemaining();
+	}
+
+	private static interface Probe {
+		boolean run(Holder h);
+	}
+
+	private static final int JIT_WARMUP_ITERATIONS = 2_000_000;
+	private static final int TEST_ITERATIONS = 100_000;
+
+	private static void probe(String label, Probe p, String expectedBecauseMsgWithDebugInfo, String expectedBecauseMsgNoDebugInfo) {
+		Holder good = new Holder(ByteBuffer.allocate(8));
+		sh = good;
+		long sink = 0;
+		for (int i = 0; i < JIT_WARMUP_ITERATIONS; i++) {
+			if (p.run(good)) {
+				sink++;
+			}
+		}
+		Holder bad = new Holder(null);
+		sh = bad;
+		try {
+			for (int i = 0; i < TEST_ITERATIONS; i++) {
+				p.run(bad);
+			}
+			Assert.fail("NullPointerException should have been thrown!");
+		} catch (NullPointerException npe) {
+			checkBecauseMessage(npe.getMessage(), expectedBecauseMsgWithDebugInfo, expectedBecauseMsgNoDebugInfo);
+		}
+	}
+
+	// The testcase is from https://github.com/eclipse-openj9/openj9/issues/25159.
+	public void test_jittedNPEAtJBgetfield() throws Throwable {
+		probe("this  ", h -> h.viaThis(),
+				"because \"this.buf\" is null",
+				"because \"this.buf\" is null");
+		probe("local ", h -> viaLocal(h),
+				"because \"h.buf\" is null",
+				"because \"<parameter1>.buf\" is null");
+		probe("static", h -> viaStatic(),
+				"because \"org.openj9.test.jep358.NPEMessageTests.sh.buf\" is null",
+				"because \"org.openj9.test.jep358.NPEMessageTests.sh.buf\" is null");
 	}
 }
