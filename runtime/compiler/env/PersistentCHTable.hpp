@@ -198,8 +198,6 @@ public:
     bool failedToActivate() { return _status == Status::activationFailed; }
 
 protected:
-    void removeAssumptionFromRAT(OMR::RuntimeAssumption *assumption);
-
     TR_LinkHead<TR_PersistentClassInfo> *getClasses() const { return _classes; }
 
 private:

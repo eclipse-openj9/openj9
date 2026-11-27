@@ -73,7 +73,6 @@ char const * const runtimeAssumptionKindNames[LastAssumptionKind] = {
 
 struct TR_RatHT {
     OMR::RuntimeAssumption **_htSpineArray;
-    uint32_t *_markedforDetachCount;
     size_t _spineArraySize;
 };
 
@@ -139,7 +138,11 @@ public:
         return (kind >= 0 && kind < LastAssumptionKind) ? _tables + kind : NULL;
     }
 
-    OMR::RuntimeAssumption **getBucketPtr(TR_RuntimeAssumptionKind kind, uintptr_t hashIndex);
+    OMR::RuntimeAssumption **getBucketPtr(TR_RuntimeAssumptionKind kind, uintptr_t hashIndex)
+    {
+        TR_RatHT *hashTable = findAssumptionHashTable(kind);
+        return hashTable->_htSpineArray + (hashIndex % hashTable->_spineArraySize);
+    }
 
     OMR::RuntimeAssumption *getBucket(TR_RuntimeAssumptionKind kind, uintptr_t key)
     {
@@ -166,18 +169,16 @@ public:
 
     void incReclaimedAssumptionCount(int32_t tableId) { reclaimedAssumptionCount[tableId]++; }
 
-    void markForDetachFromRAT(OMR::RuntimeAssumption *assumption);
-
-    void markAssumptionsAndDetach(void *reclaimedMetaData, bool reclaimPrePrologueAssumptions = false);
-
     /**
-     * Walk the table removing entries that have been marked as detached.
+     * Delete an assumption right away: unlink it from its RAT bucket and from the circular
+     * list of assumptions of its jitted body (both in O(1)), then reclaim and free it.
+     * The compensate() method is NOT called: event-driven invalidations must call it first.
      *
-     * If a clean-up count is specified at most that number of entries will be
-     * removed from the table - this is used to rate limit clean-up activity
-     * and amortize the cost over time.
+     * Because the assumption leaves its bucket, callers iterating a bucket (or the list of a
+     * jitted body) must read the next element BEFORE calling this method.
+     * Must be called under the assumptionTableMutex.
      */
-    void reclaimMarkedAssumptionsFromRAT(int32_t cleanupCount = -1);
+    void deleteAssumption(OMR::RuntimeAssumption *assumption);
 
     int32_t countRatAssumptions();
 
@@ -188,10 +189,34 @@ private:
     int32_t reclaimAssumptions(void *md, OMR::RuntimeAssumption **hashTable,
         OMR::RuntimeAssumption **possiblyRelevantHashTable);
 
+    /**
+     * @brief Debug check of the doubly linked bucket chain (hlist style).
+     *
+     * Walks the bucket selected by kind and hashIndex and asserts that for every node
+     * n: n->_pprev points to the pointer that points to n (bucket head or the _next
+     * field of the previous node). Must be called under the assumptionTableMutex.
+     * The body is only compiled in when DEBUG or PROD_WITH_ASSUMES is defined.
+     */
+    void verifyBucket(TR_RuntimeAssumptionKind kind, uintptr_t hashIndex);
+
+    /**
+     * @brief Free the sentinel of a circular list of assumptions. The sentinel is not part of the RAT.
+     * Must be called under the assumptionTableMutex.
+     */
+    static void freeSentinelAssumption(OMR::RuntimeAssumption *sentinel);
+
+    /**
+     * @brief Debug check of the circular, doubly linked list of assumptions of a jitted body.
+     *
+     * Starting from the sentinel of the list that contains anchor, asserts that the list is
+     * closed, that every node's previous link is consistent and that there is only one sentinel.
+     * Must be called under the assumptionTableMutex.
+     * The body is only compiled in when DEBUG or PROD_WITH_ASSUMES is defined.
+     */
+    void verifyBodyList(OMR::RuntimeAssumption *anchor);
+
     // My table of hash tables; init() allocate memory and populate it
     TR_RatHT _tables[LastAssumptionKind];
-    bool _detachPending[LastAssumptionKind]; // Marks tables that have assumptions waiting to be removed
-    uint32_t _marked; // Counts the number of assumptions waiting to be removed
     int32_t assumptionCount[LastAssumptionKind]; // this never gets decremented
     int32_t reclaimedAssumptionCount[LastAssumptionKind];
 
@@ -209,6 +234,6 @@ private:
      * Initialized in init() during JVM bootstrap.
      */
     static TR::PersistentAllocator *_raPersistentAllocator;
-};
+}; // class TR_RuntimeAssumptionTable
 
 #endif // RUNTIMEASSUMPTIONTABLE_HPP

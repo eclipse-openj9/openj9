@@ -1556,7 +1556,6 @@ static void jitHookGlobalGCStart(J9HookInterface **hookInterface, UDATA eventNum
 
     if (jitConfig && jitConfig->runtimeFlags & J9JIT_GC_NOTIFY)
         printf("\n{GGC");
-    jitReclaimMarkedAssumptions(false);
 }
 
 static void jitHookLocalGCStart(J9HookInterface **hookInterface, UDATA eventNum, void *eventData, void *userData)
@@ -1579,7 +1578,6 @@ static void jitHookLocalGCStart(J9HookInterface **hookInterface, UDATA eventNum,
         printf("\n<jit: enabling stack tracing at gc %" OMR_PRIuPTR ">", jitConfig->gcCount);
         TR::Options::getCmdLineOptions()->setVerboseOption(TR_VerboseGc);
     }
-    jitReclaimMarkedAssumptions(false);
 }
 
 static void jitHookGlobalGCEnd(J9HookInterface **hookInterface, UDATA eventNum, void *eventData, void *userData)
@@ -5312,10 +5310,6 @@ static void jitStateLogic(J9JITConfig *jitConfig, TR::CompilationInfo *compInfo,
         }
 
         if (newState == IDLE_STATE) {
-            static char *disableIdleRATCleanup = feGetEnv("TR_disableIdleRATCleanup");
-            if (disableIdleRATCleanup == NULL)
-                persistentInfo->getRuntimeAssumptionTable()->reclaimMarkedAssumptionsFromRAT(-1);
-
 #if defined(J9VM_OPT_JITSERVER)
             if (compInfo->getMethodQueueSize() == 0)
                 JITServer::MessageBuffer::tryFreePersistentAllocator();
@@ -7388,7 +7382,6 @@ static void jitHookReleaseCodeGCCycleEnd(J9HookInterface **hook, UDATA eventNum,
         condYield = event->condYieldFromGCFunction;
 
     jitReleaseCodeStackWalk(omrVMThread, condYield);
-    jitReclaimMarkedAssumptions(true);
 }
 
 /// setupHooks is used in ABOUT_TO_BOOTSTRAP stage (13)
