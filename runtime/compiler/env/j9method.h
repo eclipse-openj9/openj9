@@ -123,12 +123,18 @@ public:
     static bool isOpaqueUnsafe(TR::RecognizedMethod rm);
     static TR::DataType unsafeDataTypeForArray(TR::RecognizedMethod rm);
     static TR::DataType unsafeDataTypeForObject(TR::RecognizedMethod rm);
+    static bool isUnsafeWithObjectArg(TR::RecognizedMethod rm);
+    static bool isUnsafeCAS(TR::RecognizedMethod rm);
     static bool isVarHandleOperationMethod(TR::RecognizedMethod rm);
     virtual bool isVarHandleAccessMethod();
     virtual bool isSignaturePolymorphicMethod();
 
-    virtual bool isUnsafeWithObjectArg();
-    virtual bool isUnsafeCAS();
+    // OMR::Method still declares these. They answer from the recognized method,
+    // using getRecognizedMethod() rather than getMandatoryRecognizedMethod().
+    virtual bool isUnsafeWithObjectArg() { return TR_J9MethodBase::isUnsafeWithObjectArg(getRecognizedMethod()); }
+
+    virtual bool isUnsafeCAS() { return TR_J9MethodBase::isUnsafeCAS(getRecognizedMethod()); }
+
     virtual uint32_t numberOfExplicitParameters();
     virtual TR::DataType parmType(uint32_t parmNumber); // returns the type of the parmNumber'th parameter (0-based)
 

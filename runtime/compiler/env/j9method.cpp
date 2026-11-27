@@ -5313,9 +5313,8 @@ bool TR_ResolvedJ9Method::isJNINative()
 
 bool TR_ResolvedJ9Method::isJITInternalNative() { return isNative() && !isJNINative() && !isInterpreted(); }
 
-bool TR_J9MethodBase::isUnsafeCAS()
+bool TR_J9MethodBase::isUnsafeCAS(TR::RecognizedMethod rm)
 {
-    TR::RecognizedMethod rm = getRecognizedMethod();
     switch (rm) {
         case TR::jdk_internal_misc_Unsafe_compareAndExchangeInt:
         case TR::jdk_internal_misc_Unsafe_compareAndExchangeLong:
@@ -5333,9 +5332,8 @@ bool TR_J9MethodBase::isUnsafeCAS()
     return false;
 }
 
-bool TR_J9MethodBase::isUnsafeWithObjectArg()
+bool TR_J9MethodBase::isUnsafeWithObjectArg(TR::RecognizedMethod rm)
 {
-    TR::RecognizedMethod rm = getRecognizedMethod();
     switch (rm) {
         case TR::sun_misc_Unsafe_putByte_jlObjectJB_V:
         case TR::sun_misc_Unsafe_putBoolean_jlObjectJZ_V:
