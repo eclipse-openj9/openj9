@@ -31,14 +31,16 @@ echo "start running script";
 # $5 is the APP ARGS
 
 echo "run: $2 $3 -cp "$1/rcp.jar" $4 $5"
-$2 $3 -cp "$1/rcp.jar" $4 $5 1>testOutput 2>testOutput.error
+$2 $3 -cp "$1/rcp.jar" $4 $5 >testOutput 2>&1
 status=$?
 if [ $status != 0 ]; then
-   cat testOutput.error
+   echo "Test failed: jvm exited with $status"
+   cat testOutput
    exit $status
 fi
 if [ ! -f rcpCache ]; then
-   echo "Exception: rcpCache missing"
+   echo "Test failed: rcpCache missing"
+   cat testOutput
    exit 1
 fi
 cat testOutput
