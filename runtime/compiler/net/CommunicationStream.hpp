@@ -18,6 +18,7 @@
  * [2] https://openjdk.org/legal/assembly-exception.html
  *
  * SPDX-License-Identifier: EPL-2.0 OR Apache-2.0 OR GPL-2.0-only WITH Classpath-exception-2.0 OR GPL-2.0-only WITH OpenJDK-assembly-exception-1.0
+ * Assisted-by: IBM Bob
  *******************************************************************************/
 
 #ifndef COMMUNICATION_STREAM_H
@@ -140,7 +141,7 @@ protected:
     // likely to lose an increment when merging/rebasing/etc.
     //
     static const uint8_t MAJOR_NUMBER = 1;
-    static const uint16_t MINOR_NUMBER = 107; // ID: 2f4bJqk/H5S9ZN56wRaK
+    static const uint16_t MINOR_NUMBER = 108; // ID: NXZlGRTpEGBrz6YLUNLB
     static const uint8_t PATCH_NUMBER = 0;
     static uint32_t CONFIGURATION_FLAGS;
 

@@ -18,6 +18,7 @@
  * [2] https://openjdk.org/legal/assembly-exception.html
  *
  * SPDX-License-Identifier: EPL-2.0 OR Apache-2.0 OR GPL-2.0-only WITH Classpath-exception-2.0 OR GPL-2.0-only WITH OpenJDK-assembly-exception-1.0
+ * Assisted-by: IBM Bob
  *******************************************************************************/
 
 #ifndef VMJ9_h
@@ -683,6 +684,19 @@ public:
      */
     virtual TR::KnownObjectTable::Index getFieldAccessorIndex(TR::Compilation *comp,
         TR::KnownObjectTable::Index fieldIndex);
+
+    /**
+     * @brief Get the value of the opInfo field of a jdk/incubator/vector/VectorOperators$OperatorImpl object.
+     * opInfo is final, so when the operator object is known, the result of the opKind(Operator, int) method of
+     * the jdk/incubator/vector/<Type>Vector classes, which tests bits in opInfo, can be evaluated at compile
+     * time.
+     *
+     * @param comp the compilation
+     * @param opIndex the known object index of the VectorOperators$OperatorImpl object
+     * @return int32_t the value of the opInfo field. -1 if the object is not an OperatorImpl or the field
+     * could not be read.
+     */
+    virtual int32_t getVectorOperatorInfo(TR::Compilation *comp, TR::KnownObjectTable::Index opIndex);
 
     virtual TR::Method *createMethod(TR_Memory *, TR_OpaqueClassBlock *, int32_t);
     virtual TR_ResolvedMethod *createResolvedMethod(TR_Memory *, TR_OpaqueMethodBlock *, TR_ResolvedMethod * = 0,

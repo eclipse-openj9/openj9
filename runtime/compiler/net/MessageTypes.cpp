@@ -18,6 +18,7 @@
  * [2] https://openjdk.org/legal/assembly-exception.html
  *
  * SPDX-License-Identifier: EPL-2.0 OR Apache-2.0 OR GPL-2.0-only WITH Classpath-exception-2.0 OR GPL-2.0-only WITH OpenJDK-assembly-exception-1.0
+ * Assisted-by: IBM Bob
  *******************************************************************************/
 
 #include "net/MessageTypes.hpp"
@@ -193,6 +194,7 @@ const char *messageNames[] = {
     "VM_getLayoutVarHandle",
     "VM_getMethodAccessorIndex",
     "VM_getFieldAccessorIndex",
+    "VM_getVectorOperatorInfo",
     "VM_mutableCallSiteEpoch",
     "VM_numInterfacesImplemented",
     "VM_getObjectClassInfoFromKnotIndex",

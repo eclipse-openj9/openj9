@@ -18,6 +18,7 @@
  * [2] https://openjdk.org/legal/assembly-exception.html
  *
  * SPDX-License-Identifier: EPL-2.0 OR Apache-2.0 OR GPL-2.0-only WITH Classpath-exception-2.0 OR GPL-2.0-only WITH OpenJDK-assembly-exception-1.0
+ * Assisted-by: IBM Bob
  *******************************************************************************/
 
 #ifndef VMJ9SERVER_H
@@ -317,6 +318,7 @@ public:
 #endif
     virtual TR::KnownObjectTable::Index getFieldAccessorIndex(TR::Compilation *comp,
         TR::KnownObjectTable::Index fieldIndex) override;
+    virtual int32_t getVectorOperatorInfo(TR::Compilation *comp, TR::KnownObjectTable::Index opIndex) override;
     virtual LayoutByteOrder getLayoutByteOrder(TR::Compilation *comp, TR::KnownObjectTable::Index layoutIndex) override;
     virtual int64_t getLayoutByteAlignment(TR::Compilation *comp, TR::KnownObjectTable::Index layoutIndex) override;
     virtual TR::KnownObjectTable::Index getMemberNameFieldKnotIndexFromMethodHandleKnotIndex(TR::Compilation *comp,

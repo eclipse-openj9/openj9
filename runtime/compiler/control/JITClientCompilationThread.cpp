@@ -18,6 +18,7 @@
  * [2] https://openjdk.org/legal/assembly-exception.html
  *
  * SPDX-License-Identifier: EPL-2.0 OR Apache-2.0 OR GPL-2.0-only WITH Classpath-exception-2.0 OR GPL-2.0-only WITH OpenJDK-assembly-exception-1.0
+ * Assisted-by: IBM Bob
  *******************************************************************************/
 
 #include "j9cfg.h"
@@ -1122,6 +1123,11 @@ static bool handleResponse(JITServer::MessageType response, JITServer::ClientStr
             if (faIndex != TR::KnownObjectTable::UNKNOWN)
                 faObj = knot->getPointerLocation(faIndex);
             client->write(response, faIndex, faObj);
+        } break;
+        case MessageType::VM_getVectorOperatorInfo: {
+            auto recv = client->getRecvData<TR::KnownObjectTable::Index>();
+            int32_t opInfo = fe->getVectorOperatorInfo(comp, std::get<0>(recv));
+            client->write(response, opInfo);
         } break;
         case MessageType::VM_isStable: {
             auto recv = client->getRecvData<J9Class *, int>();

@@ -18,6 +18,7 @@
  * [2] https://openjdk.org/legal/assembly-exception.html
  *
  * SPDX-License-Identifier: EPL-2.0 OR Apache-2.0 OR GPL-2.0-only WITH Classpath-exception-2.0 OR GPL-2.0-only WITH OpenJDK-assembly-exception-1.0
+ * Assisted-by: IBM Bob
  *******************************************************************************/
 #include "jitprotos.h"
 #include "net/ServerStream.hpp"
@@ -2431,6 +2432,19 @@ TR::KnownObjectTable::Index TR_J9ServerVM::getFieldAccessorIndex(TR::Compilation
     TR::KnownObjectTable::Index faIndex = std::get<0>(recv);
     knot->updateKnownObjectTableAtServer(faIndex, std::get<1>(recv));
     return faIndex;
+}
+
+int32_t TR_J9ServerVM::getVectorOperatorInfo(TR::Compilation *comp, TR::KnownObjectTable::Index opIndex)
+{
+    TR::KnownObjectTable *knot = comp->getKnownObjectTable();
+    if (!knot || opIndex == TR::KnownObjectTable::UNKNOWN || knot->isNull(opIndex))
+        return -1;
+
+    JITServer::ServerStream *stream = _compInfoPT->getMethodBeingCompiled()->_stream;
+    stream->write(JITServer::MessageType::VM_getVectorOperatorInfo, opIndex);
+    auto recv = stream->read<int32_t>();
+
+    return std::get<0>(recv);
 }
 
 TR_J9VMBase::LayoutByteOrder TR_J9ServerVM::getLayoutByteOrder(TR::Compilation *comp,
