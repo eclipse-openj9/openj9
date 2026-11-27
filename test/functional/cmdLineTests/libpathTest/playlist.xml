@@ -74,6 +74,11 @@ SPDX-License-Identifier: EPL-2.0 OR Apache-2.0 OR GPL-2.0-only WITH Classpath-ex
 				<comment>https://github.com/adoptium/aqa-tests/issues/5879</comment>
 				<platform>riscv64_linux</platform>
 			</disable>
+			<disable>
+				<comment>https://github.com/adoptium/aqa-tests/issues/8028</comment>
+				<vendor>eclipse</vendor>
+				<platform>(?:ppc64_aix|ppc64le_linux|s390x_linux)</platform>
+			</disable>
 		</disables>
 		<command>$(JAVA_COMMAND) $(CMDLINETESTER_JVM_OPTIONS) -DJAVA_EXE=$(JAVA_COMMAND) -DEXTRA_OPTIONS=$(Q)$(JVM_OPTIONS)$(Q) -DJAVATEST_ROOT=$(JAVATEST_ROOT) -DJVM_TEST_ROOT=$(JVM_TEST_ROOT) \
 	-DTESTSJARPATH=$(Q)$(TEST_RESROOT)$(D)libpathTest.jar$(Q) \
