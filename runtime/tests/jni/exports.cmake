@@ -18,6 +18,7 @@
 # [2] https://openjdk.org/legal/assembly-exception.html
 #
 # SPDX-License-Identifier: EPL-2.0 OR Apache-2.0 OR GPL-2.0-only WITH Classpath-exception-2.0 OR GPL-2.0-only WITH OpenJDK-assembly-exception-1.0
+# Assisted-by: OpenAI Codex
 ################################################################################
 
 omr_add_exports(j9ben
@@ -175,6 +176,7 @@ omr_add_exports(j9ben
 	Java_j9vm_test_jni_VolatileTest_setVolatileStaticInt
 	Java_j9vm_test_jni_VolatileTest_setVolatileStaticFloat
 	Java_j9vm_test_jni_NullRefTest_test
+	Java_j9vm_test_jnichk_DefineClassLoader_defineClass
 	Java_j9vm_test_jnichk_BufferOverrun_test
 	Java_j9vm_test_jnichk_ModifiedBuffer_test
 	Java_j9vm_test_jnichk_DeleteGlobalRefTwice_test

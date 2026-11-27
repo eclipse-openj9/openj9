@@ -95,7 +95,7 @@
 #define JNIC_WEAKREF 'w'
 #define JNIC_GLOBALREF '*'
 #define JNIC_LOCALREF '?'
-#define JNIC_CLASSLOADER 'k'
+#define JNIC_CLASSLOADER_OR_NULL 'k'
 #define JNIC_CLASSTHROWABLE 'r'
 
 /* Global Ref tracking hash table entry */

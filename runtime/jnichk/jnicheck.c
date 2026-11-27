@@ -920,10 +920,13 @@ jniCheckArgs(const char *function, int exceptionSafe, int criticalSafe, J9JniChe
 			if (trace) jniTraceObject(env, aJobject);
 			break;
 
-		case JNIC_CLASSLOADER:
+		case JNIC_CLASSLOADER_OR_NULL:
 			aJobject = va_arg(va, jobject);
-			jniCheckRef(env, function, argNum, aJobject);
-			jniCheckSubclass(env, function, argNum, aJobject, "java/lang/ClassLoader");
+			/* DefineClass accepts NULL to select the bootstrap class loader. */
+			if (NULL != aJobject) {
+				jniCheckRef(env, function, argNum, aJobject);
+				jniCheckSubclass(env, function, argNum, aJobject, "java/lang/ClassLoader");
+			}
 			if (trace) jniTraceObject(env, aJobject);
 			break;
 

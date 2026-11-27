@@ -20,6 +20,7 @@
    [2] https://openjdk.org/legal/assembly-exception.html
 
    SPDX-License-Identifier: EPL-2.0 OR Apache-2.0 OR GPL-2.0-only WITH Classpath-exception-2.0 OR GPL-2.0-only WITH OpenJDK-assembly-exception-1.0
+   Assisted-by: OpenAI Codex
 -->
 
 <module>
@@ -179,6 +180,7 @@
 	<export name="Java_j9vm_test_jni_VolatileTest_setVolatileStaticInt"/>
 	<export name="Java_j9vm_test_jni_VolatileTest_setVolatileStaticFloat"/>
 	<export name="Java_j9vm_test_jni_NullRefTest_test"/>
+	<export name="Java_j9vm_test_jnichk_DefineClassLoader_defineClass"/>
 	<export name="Java_j9vm_test_jnichk_BufferOverrun_test"/>
 	<export name="Java_j9vm_test_jnichk_ModifiedBuffer_test"/>
 	<export name="Java_j9vm_test_jnichk_DeleteGlobalRefTwice_test"/>
