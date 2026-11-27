@@ -1063,6 +1063,19 @@ deleteAgentBreakpoint(J9VMThread * currentThread, J9JVMTIEnv * j9env, J9JVMTIAge
 void
 disposeEnvironment(J9JVMTIEnv * j9env, UDATA freeData);
 
+#if defined(J9VM_OPT_VALHALLA_VALUE_TYPES)
+/**
+* @brief Check whether a JNI global reference slot is owned by j9env->valueTypeObjectTagTable.
+* Heap walks use this to avoid reporting, following or modifying the table's own references.
+* The caller needs VM access.
+* @param j9env
+* @param slotPtr address of the global reference slot visited by the walker
+* @return TRUE if slotPtr is a reference owned by the table
+*/
+BOOLEAN
+isValueTypeTagGlobalRef(J9JVMTIEnv *j9env, j9object_t *slotPtr, IDATA type);
+#endif /* defined(J9VM_OPT_VALHALLA_VALUE_TYPES) */
+
 
 /**
 * @brief
