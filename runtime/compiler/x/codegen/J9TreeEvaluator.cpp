@@ -13099,6 +13099,15 @@ TR::Register *J9::X86::TreeEvaluator::directCallEvaluator(TR::Node *node, TR::Co
                 return TR::TreeEvaluator::inlineStringLatin1Inflate(node, cg);
             }
             break;
+#if JAVA_SPEC_VERSION < 27
+        case TR::java_lang_StringUTF16_compress_CIBII:
+#else
+        case TR::java_lang_StringUTF16_compress0_CIBII:
+#endif
+            if (cg->getSupportsInlineStringUTF16Compress()) {
+                return TR::TreeEvaluator::inlineStringUTF16Compress(node, cg);
+            }
+            break;
         case TR::java_lang_Math_fma_F:
         case TR::java_lang_Math_fma_D:
         case TR::java_lang_StrictMath_fma_F:
@@ -13330,6 +13339,369 @@ TR::Register *J9::X86::TreeEvaluator::inlineStringLatin1Inflate(TR::Node *node, 
     }
 
     return NULL;
+}
+
+TR::Register *J9::X86::TreeEvaluator::inlineStringUTF16Compress(TR::Node *node, TR::CodeGenerator *cg)
+{
+    TR_ASSERT_FATAL(cg->comp()->target().is64Bit(), "StringUTF16.compress only supported on 64-bit targets");
+    TR_ASSERT_FATAL(cg->getSupportsInlineStringUTF16Compress(),
+        "Attempted to inline StringUTF16.compress when not supported");
+    TR_ASSERT_FATAL(!TR::Compiler->om.canGenerateArraylets(),
+        "StringUTF16.compress intrinsic is not supported with arraylets");
+    TR_ASSERT_FATAL_WITH_NODE(node, node->getNumChildren() == 5,
+        "Wrong number of children in inlineStringUTF16Compress");
+
+    TR::Compilation *comp = cg->comp();
+
+    TR::Register *inputAddressReg = cg->gprClobberEvaluate(node->getChild(0), OP::MOV8RegReg);
+    TR::Register *inputOffsetReg = cg->evaluate(node->getChild(1));
+    TR::Register *outputAddressReg = cg->gprClobberEvaluate(node->getChild(2), OP::MOV8RegReg);
+    TR::Register *outputOffsetReg = cg->gprClobberEvaluate(node->getChild(3), OP::MOV4RegReg);
+    TR::Register *resultReg = cg->gprClobberEvaluate(node->getChild(4), OP::MOV4RegReg);
+
+    TR::Register *remainingReg = cg->allocateRegister(TR_GPR);
+    TR::Register *tempReg = cg->allocateRegister(TR_GPR);
+
+    TR::Register *maskXmmReg = cg->allocateRegister(TR_VRF);
+    TR::Register *temp1XmmReg = cg->allocateRegister(TR_VRF);
+    TR::Register *temp2XmmReg = cg->allocateRegister(TR_VRF);
+
+    TR::LabelSymbol *startLabel = generateLabelSymbol(cg);
+    TR::LabelSymbol *load16ElementLoopLabel = generateLabelSymbol(cg);
+    TR::LabelSymbol *load8ElementLabel = generateLabelSymbol(cg);
+    TR::LabelSymbol *load4ElementLabel = generateLabelSymbol(cg);
+    TR::LabelSymbol *load1ElementLabel = generateLabelSymbol(cg);
+    TR::LabelSymbol *resultLabel = generateLabelSymbol(cg);
+    TR::LabelSymbol *doneLabel = generateLabelSymbol(cg);
+#if JAVA_SPEC_VERSION >= 21
+    TR::LabelSymbol *diffLabel = generateLabelSymbol(cg);
+    TR::LabelSymbol *diffSkip8Label = generateLabelSymbol(cg);
+#endif
+
+    int maxDepCount = 10;
+    TR::RegisterDependencyConditions *deps = RegDeps(0, maxDepCount, cg);
+    deps->addPostCondition(inputAddressReg, TR::RealRegister::NoReg, cg);
+    deps->addPostCondition(inputOffsetReg, TR::RealRegister::NoReg, cg);
+    deps->addPostCondition(outputAddressReg, TR::RealRegister::NoReg, cg);
+    deps->addPostCondition(outputOffsetReg, TR::RealRegister::NoReg, cg);
+    deps->addPostCondition(resultReg, TR::RealRegister::NoReg, cg);
+    deps->addPostCondition(remainingReg, TR::RealRegister::NoReg, cg);
+    deps->addPostCondition(tempReg, TR::RealRegister::NoReg, cg);
+    deps->addPostCondition(maskXmmReg, TR::RealRegister::NoReg, cg);
+    deps->addPostCondition(temp1XmmReg, TR::RealRegister::NoReg, cg);
+    deps->addPostCondition(temp2XmmReg, TR::RealRegister::NoReg, cg);
+
+    intptr_t headerOffsetConst = TR::Compiler->om.contiguousArrayHeaderSizeInBytes();
+
+    cg->generateDebugCounter(
+        TR::DebugCounter::debugCounterName(comp, "inlineIntrinsicCompress/(%s)", comp->signature()));
+
+    Inst_Label(OP::label, node, startLabel, cg);
+    startLabel->setStartInternalControlFlow();
+
+    /*
+     * resultReg currently contains the number elements to process.
+     * If resultReg equals 0, there is no work to be done. Immediately jump to the end.
+     */
+    Inst_RegReg(OP::TEST4RegReg, node, resultReg, resultReg, cg);
+    Inst_Label(OP::JE4, node, doneLabel, cg);
+
+    Inst_RegReg(OP::MOV4RegReg, node, remainingReg, resultReg, cg);
+
+    /*
+     * The input array is an array of chars.
+     * To find the location of the first char to read, 2*inputOffsetReg is added to inputAddressReg.
+     * If inputOffsetReg is a const of 0 then this can be skipped.
+     */
+    TR::Node *inputOffsetNode = node->getChild(1);
+    if (!inputOffsetNode->isConstZeroValue()) {
+        Inst_RegMem(OP::LEA8RegMem, node, inputAddressReg, MRef_BISdisp32(inputAddressReg, inputOffsetReg, 1, 0, cg),
+            cg);
+    }
+
+    /*
+     * The output array is an array of bytes.
+     * To find the location of the first byte to write, outputOffsetReg is added to outputAddressReg.
+     * If outputOffsetReg is a const of 0 then this can be skipped.
+     *
+     * outputOffsetReg is later reused to keep track of how many elements have been processed so it is set to 0 here.
+     * If outputOffsetReg is a const of 0 then this can also be skipped since the register already holds a value of 0.
+     */
+    TR::Node *outputOffsetNode = node->getChild(3);
+    if (!outputOffsetNode->isConstZeroValue()) {
+        Inst_RegReg(OP::ADD8RegReg, node, outputAddressReg, outputOffsetReg, cg);
+        Inst_RegReg(OP::XOR4RegReg, node, outputOffsetReg, outputOffsetReg, cg);
+    }
+
+    /* If 1-3 elements remain, jump to load1ElementLabel to handle them element by element. */
+    Inst_RegImm(OP::CMP4RegImms, node, resultReg, 4, cg);
+    Inst_Label(OP::JL4, node, load1ElementLabel, cg);
+
+    /* Initialize maskXmmReg to 0xFF00FF00FF00FF00FF00FF00FF00FF00. This is needed in the 4 and 8 element cases. */
+    Inst_RegImm(OP::MOV4RegImm4, node, tempReg, 0xFF00FF00, cg);
+    Inst_RegReg(OP::MOVDRegReg4, node, maskXmmReg, tempReg, cg);
+    Inst_RegRegImm(OP::PSHUFDRegRegImm1, node, maskXmmReg, maskXmmReg, 0, cg);
+
+    /* If 4-7 elements remain, jump to load4ElementLabel to handle the first 4 elements. */
+    Inst_RegImm(OP::CMP4RegImms, node, resultReg, 8, cg);
+    Inst_Label(OP::JL4, node, load4ElementLabel, cg);
+
+    /* If 8-15 elements remain, jump to load8ElementLabel to handle the first 8 elements. */
+    Inst_RegImm(OP::CMP4RegImms, node, resultReg, 16, cg);
+    Inst_Label(OP::JL4, node, load8ElementLabel, cg);
+
+    /*
+     * The following instructions loads 8 chars from the input array.
+     * The loaded chars are compared against maskXmmReg to see if any bits in the upper half of a char are set.
+     * An upper byte bit being set means the char is non-Latin1.
+     * If no bits are set, fallthrough to the next step.
+     * If a bit is set, a branch is taken.
+     * For JDK21+, the branch goes to diffLabel to determine the exact index of the non-Latin1 char.
+     * Otherwise, jump to resultLabel. The exact location does not need to be known since 0 will be returned.
+     */
+    Inst_Label(OP::label, node, load16ElementLoopLabel, cg);
+    Inst_RegMem(OP::MOVDQURegMem, node, temp1XmmReg,
+        MRef_BISdisp32(inputAddressReg, outputOffsetReg, 1, headerOffsetConst, cg), cg);
+    Inst_RegReg(OP::PTESTRegReg, node, temp1XmmReg, maskXmmReg, cg);
+#if JAVA_SPEC_VERSION >= 21
+    Inst_Label(OP::JNE4, node, diffLabel, cg);
+#else
+    Inst_Label(OP::JNE4, node, resultLabel, cg);
+#endif
+
+    /*
+     * The next 8 chars from the input array are loaded and the process repeats.
+     * If a non-Latin1 character is found under JDK21+, instead jump to diffSkip8Label.
+     * This label skips checking the first 8 chars for being non-Latin1 (the ones loaded in the previous step).
+     * This works since the previous check already guaranteed that they are Latin1.
+     */
+    Inst_RegMem(OP::MOVDQURegMem, node, temp2XmmReg,
+        MRef_BISdisp32(inputAddressReg, outputOffsetReg, 1, headerOffsetConst + 16, cg), cg);
+    Inst_RegReg(OP::PTESTRegReg, node, temp2XmmReg, maskXmmReg, cg);
+#if JAVA_SPEC_VERSION >= 21
+    Inst_Label(OP::JNE4, node, diffSkip8Label, cg);
+#else
+    Inst_Label(OP::JNE4, node, resultLabel, cg);
+#endif
+
+    /*
+     * All 16 loaded chars are guaranteed to be Latin1 at this point.
+     * The 16 chars are packed into 16 bytes dropping the 0x00 high byte of each char.
+     * The 16 bytes are then stored to the output array.
+     */
+    Inst_RegReg(OP::PACKUSWBRegReg, node, temp1XmmReg, temp2XmmReg, cg);
+    Inst_MemReg(OP::MOVDQUMemReg, node, MRef_BISdisp32(outputAddressReg, outputOffsetReg, 0, headerOffsetConst, cg),
+        temp1XmmReg, cg);
+
+    /* 16 chars were compressed so subtract that from remainingReg and bump up outputOffsetReg. */
+    Inst_RegImm(OP::ADD4RegImms, node, remainingReg, -16, cg);
+    Inst_RegImm(OP::ADD4RegImms, node, outputOffsetReg, 16, cg);
+
+    /* If there are still at least 16 elements left, run the vector loop again. */
+    Inst_RegImm(OP::CMP4RegImms, node, remainingReg, 16, cg);
+    Inst_Label(OP::JGE4, node, load16ElementLoopLabel, cg);
+
+    /* If remainingReg is 0 then all elements have been compressed. Jump to the end. */
+    Inst_RegReg(OP::TEST4RegReg, node, remainingReg, remainingReg, cg);
+    Inst_Label(OP::JE4, node, doneLabel, cg);
+
+    /* If 1-3 elements remain, jump to load1ElementLabel to handle them element by element. */
+    Inst_RegImm(OP::CMP4RegImms, node, remainingReg, 4, cg);
+    Inst_Label(OP::JL4, node, load1ElementLabel, cg);
+
+    /* If 4-7 elements remain, jump to load4ElementLabel to handle the first 4 elements. */
+    Inst_RegImm(OP::CMP4RegImms, node, remainingReg, 8, cg);
+    Inst_Label(OP::JL4, node, load4ElementLabel, cg);
+
+    /*
+     * For JDK21+ there are instructions to locate the index of a char with a non-zero high byte.
+     * As a result, it needs to be branched over here to get to the code that handles loading 8 elements.
+     * This isn't needed before JDK21 so a fallthrough happens instead.
+     */
+#if JAVA_SPEC_VERSION >= 21
+    Inst_Label(OP::JMP4, node, load8ElementLabel, cg);
+
+    /*
+     * A branch to diffSkip8Label occurs during the vector loop.
+     * At this point the first 8 chars loaded were Latin1 but one of the next 8 chars was non-Latin1.
+     * remainingReg and outputOffsetReg were not yet updated to account for this so they are updated here.
+     * This avoids rechecking the first 8 chars since they are known to be Latin1.
+     */
+    Inst_Label(OP::label, node, diffSkip8Label, cg);
+    Inst_RegImm(OP::ADD4RegImms, node, remainingReg, -8, cg);
+    Inst_RegImm(OP::ADD4RegImms, node, outputOffsetReg, 8, cg);
+
+    /*
+     * Under JDK21+, the index of the non-Latin1 character needs to be calculated and returned.
+     * This loop checks char by char and jumps to resultLabel to return the result when the non-Latin1 char is found.
+     */
+    Inst_Label(OP::label, node, diffLabel, cg);
+    Inst_RegMem(OP::L2RegMem, node, tempReg, MRef_BISdisp32(inputAddressReg, outputOffsetReg, 1, headerOffsetConst, cg),
+        cg);
+    Inst_RegImm(OP::TEST2RegImm2, node, tempReg, 0xFF00, cg);
+    Inst_Label(OP::JNE4, node, resultLabel, cg);
+    Inst_Reg(OP::DEC4Reg, node, remainingReg, cg);
+    Inst_Reg(OP::INC4Reg, node, outputOffsetReg, cg);
+    Inst_Label(OP::JMP4, node, diffLabel, cg);
+#endif
+
+    /*
+     * The following instructions loads 8 chars from the input array.
+     * The loaded chars are compared against maskXmmReg to see if any bits in the upper half of a char are set.
+     * An upper byte bit being set means the char is non-Latin1.
+     * If no bits are set, fallthrough to the next step.
+     * If a bit is set, a branch is taken.
+     * For JDK21+, the branch goes to diffLabel to determine the exact index of the non-Latin1 char.
+     * Otherwise, jump to resultLabel. The exact location does not need to be known since 0 will be returned.
+     */
+    Inst_Label(OP::label, node, load8ElementLabel, cg);
+    Inst_RegMem(OP::MOVDQURegMem, node, temp1XmmReg,
+        MRef_BISdisp32(inputAddressReg, outputOffsetReg, 1, headerOffsetConst, cg), cg);
+    Inst_RegReg(OP::PTESTRegReg, node, temp1XmmReg, maskXmmReg, cg);
+#if JAVA_SPEC_VERSION >= 21
+    Inst_Label(OP::JNE4, node, diffLabel, cg);
+#else
+    Inst_Label(OP::JNE4, node, resultLabel, cg);
+#endif
+
+    /*
+     * All 8 loaded chars are guaranteed to be Latin1 at this point.
+     * The 8 chars are packed into 8 bytes dropping the 0x00 high byte of each char.
+     * The 8 bytes are then stored to the output array.
+     */
+    Inst_RegReg(OP::PACKUSWBRegReg, node, temp1XmmReg, maskXmmReg, cg); // Only the lower 8 bytes hold meaningful data
+    Inst_MemReg(OP::MOVQMemReg, node, MRef_BISdisp32(outputAddressReg, outputOffsetReg, 0, headerOffsetConst, cg),
+        temp1XmmReg, cg);
+
+    /*
+     * 8 chars were compressed so subtract that from remainingReg.
+     * If remainingReg is now 0, there is no more work to be done so jump to the end.
+     */
+    Inst_RegImm(OP::ADD4RegImms, node, remainingReg, -8, cg);
+    Inst_Label(OP::JE4, node, doneLabel, cg);
+
+    /* At this point there are still elements to process so outputOffsetReg is updated. */
+    Inst_RegImm(OP::ADD4RegImms, node, outputOffsetReg, 8, cg);
+
+    /* If 1-3 elements remain, jump to load1ElementLabel to handle them element by element. */
+    Inst_RegImm(OP::CMP4RegImms, node, remainingReg, 4, cg);
+    Inst_Label(OP::JL4, node, load1ElementLabel, cg);
+
+    /*
+     * The following instructions loads 4 chars from the input array.
+     * The loaded chars are compared against maskXmmReg to see if any bits in the upper half of a char are set.
+     * An upper byte bit being set means the char is non-Latin1.
+     * If no bits are set, fallthrough to the next step.
+     * If a bit is set, a branch is taken.
+     * For JDK21+, the branch goes to diffLabel to determine the exact index of the non-Latin1 char.
+     * Otherwise, jump to resultLabel. The exact location does not need to be known since 0 will be returned.
+     */
+    Inst_Label(OP::label, node, load4ElementLabel, cg);
+    Inst_RegMem(OP::MOVQRegMem, node, temp1XmmReg,
+        MRef_BISdisp32(inputAddressReg, outputOffsetReg, 1, headerOffsetConst, cg), cg);
+    Inst_RegReg(OP::PTESTRegReg, node, temp1XmmReg, maskXmmReg, cg);
+#if JAVA_SPEC_VERSION >= 21
+    Inst_Label(OP::JNE4, node, diffLabel, cg);
+#else
+    Inst_Label(OP::JNE4, node, resultLabel, cg);
+#endif
+
+    /*
+     * All 4 loaded chars are guaranteed to be Latin1 at this point.
+     * The 4 chars are packed into 4 bytes dropping the 0x00 high byte of each char.
+     * The 4 bytes are then stored to the output array.
+     */
+    Inst_RegReg(OP::PACKUSWBRegReg, node, temp1XmmReg, maskXmmReg, cg); // Only the lower 4 bytes hold meaningful data.
+    Inst_MemReg(OP::MOVDMemReg, node, MRef_BISdisp32(outputAddressReg, outputOffsetReg, 0, headerOffsetConst, cg),
+        temp1XmmReg, cg);
+
+    /*
+     * 4 chars were compressed so subtract that from remainingReg.
+     * If remainingReg is now 0, there is no more work to be done so jump to the end.
+     */
+    Inst_RegImm(OP::ADD4RegImms, node, remainingReg, -4, cg);
+    Inst_Label(OP::JE4, node, doneLabel, cg);
+
+    /* At this point there are still elements to process so outputOffsetReg is updated. */
+    Inst_RegImm(OP::ADD4RegImms, node, outputOffsetReg, 4, cg);
+
+    /*
+     * Unrolled byte by byte section.
+     * 1-3 chars left to be processed at this point.
+     * They are individually loaded, then stored back as a byte.
+     * If the high byte of the loaded char is non-zero, jump to resultLabel to calculcate the return value.
+     */
+    Inst_Label(OP::label, node, load1ElementLabel, cg);
+    Inst_RegMem(OP::L2RegMem, node, tempReg, MRef_BISdisp32(inputAddressReg, outputOffsetReg, 1, headerOffsetConst, cg),
+        cg);
+    Inst_RegImm(OP::TEST2RegImm2, node, tempReg, 0xFF00, cg);
+    Inst_Label(OP::JNE4, node, resultLabel, cg);
+    Inst_MemReg(OP::S1MemReg, node, MRef_BISdisp32(outputAddressReg, outputOffsetReg, 0, headerOffsetConst, cg),
+        tempReg, cg);
+    Inst_Reg(OP::DEC4Reg, node, remainingReg, cg);
+    Inst_Label(OP::JE4, node, doneLabel, cg);
+
+    Inst_RegMem(OP::L2RegMem, node, tempReg,
+        MRef_BISdisp32(inputAddressReg, outputOffsetReg, 1, headerOffsetConst + 2, cg), cg);
+    Inst_RegImm(OP::TEST2RegImm2, node, tempReg, 0xFF00, cg);
+    Inst_Label(OP::JNE4, node, resultLabel, cg);
+    Inst_MemReg(OP::S1MemReg, node, MRef_BISdisp32(outputAddressReg, outputOffsetReg, 0, headerOffsetConst + 1, cg),
+        tempReg, cg);
+    Inst_Reg(OP::DEC4Reg, node, remainingReg, cg);
+    Inst_Label(OP::JE4, node, doneLabel, cg);
+
+    Inst_RegMem(OP::L2RegMem, node, tempReg,
+        MRef_BISdisp32(inputAddressReg, outputOffsetReg, 1, headerOffsetConst + 4, cg), cg);
+    Inst_RegImm(OP::TEST2RegImm2, node, tempReg, 0xFF00, cg);
+    Inst_Label(OP::JNE4, node, resultLabel, cg);
+    Inst_MemReg(OP::S1MemReg, node, MRef_BISdisp32(outputAddressReg, outputOffsetReg, 0, headerOffsetConst + 2, cg),
+        tempReg, cg);
+
+    /*
+     * For JDK21 it is possible to fallthough here without branching.
+     * This is because the correct return value is calculated either way.
+     */
+#if JAVA_SPEC_VERSION >= 21
+    Inst_Reg(OP::DEC4Reg, node, remainingReg, cg);
+#else
+    Inst_Label(OP::JMP4, node, doneLabel, cg);
+#endif
+
+    /*
+     * Cases where a non-Latin1 character was found jump back here.
+     * For JDK21 it will calculate the total number of Latin1 characters processed.
+     * Before JDK21, it will return 0 instead.
+     */
+    Inst_Label(OP::label, node, resultLabel, cg);
+#if JAVA_SPEC_VERSION >= 21
+    Inst_RegReg(OP::SUB4RegReg, node, resultReg, remainingReg, cg);
+#else
+    Inst_RegReg(OP::XOR4RegReg, node, resultReg, resultReg, cg);
+#endif
+
+    /* Everything is done. */
+    deps->stopAddingConditions();
+    Inst_Label(OP::label, node, doneLabel, deps, cg);
+    doneLabel->setEndInternalControlFlow();
+
+    node->setRegister(resultReg);
+
+    cg->stopUsingRegister(inputAddressReg);
+    cg->stopUsingRegister(inputOffsetReg);
+    cg->stopUsingRegister(outputAddressReg);
+    cg->stopUsingRegister(outputOffsetReg);
+    cg->stopUsingRegister(remainingReg);
+    cg->stopUsingRegister(tempReg);
+
+    cg->stopUsingRegister(maskXmmReg);
+    cg->stopUsingRegister(temp1XmmReg);
+    cg->stopUsingRegister(temp2XmmReg);
+
+    for (int32_t i = 0; i < node->getNumChildren(); i++) {
+        cg->decReferenceCount(node->getChild(i));
+    }
+
+    return resultReg;
 }
 
 TR::Register *J9::X86::TreeEvaluator::encodeUTF16Evaluator(TR::Node *node, TR::CodeGenerator *cg)
