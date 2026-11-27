@@ -480,33 +480,33 @@ void J9::Power::PrivateLinkage::mapStack(TR::ResolvedMethodSymbol *method)
     automaticIterator.reset();
     localCursor = automaticIterator.getFirst();
 
+    // Map locals that will be allocated 8 bytes
+    stackIndex -= (stackIndex & 0x4) ? 4 : 0;
     while (localCursor != NULL) {
-        if (comp()->target().is64Bit()) {
-            if (localCursor->getGCMapIndex() < 0 && localCursor->getSize() != 8) {
-                mapSingleAutomatic(localCursor, stackIndex);
-            }
-        } else {
-            if (localCursor->getGCMapIndex() < 0 && localCursor->getDataType() != TR::Double) {
-                mapSingleAutomatic(localCursor, stackIndex);
-            }
-        }
+        if (localCursor->getGCMapIndex() < 0 && localCursor->getSize() <= 8)
+            mapSingleAutomatic(localCursor, stackIndex);
         localCursor = automaticIterator.getNext();
     }
 
     automaticIterator.reset();
     localCursor = automaticIterator.getFirst();
 
+    // Map locals that will be allocated 16 bytes
+    stackIndex -= (stackIndex & 0x8) ? 8 : 0;
     while (localCursor != NULL) {
-        if (comp()->target().is64Bit()) {
-            if (localCursor->getGCMapIndex() < 0 && localCursor->getSize() == 8) {
-                stackIndex -= (stackIndex & 0x4) ? 4 : 0;
-                mapSingleAutomatic(localCursor, stackIndex);
-            }
-        } else {
-            if (localCursor->getGCMapIndex() < 0 && localCursor->getDataType() == TR::Double) {
-                stackIndex -= (stackIndex & 0x4) ? 4 : 0;
-                mapSingleAutomatic(localCursor, stackIndex);
-            }
+        if (localCursor->getGCMapIndex() < 0 && localCursor->getSize() > 8 && localCursor->getSize() <= 16)
+            mapSingleAutomatic(localCursor, stackIndex);
+        localCursor = automaticIterator.getNext();
+    }
+
+    automaticIterator.reset();
+    localCursor = automaticIterator.getFirst();
+
+    // Map locals that will be allocated > 16 bytes
+    while (localCursor != NULL) {
+        if (localCursor->getGCMapIndex() < 0 && localCursor->getSize() > 16) {
+            stackIndex -= (stackIndex & 0x8) ? 8 : 0;
+            mapSingleAutomatic(localCursor, stackIndex);
         }
         localCursor = automaticIterator.getNext();
     }
