@@ -79,6 +79,7 @@ private:
 	/*
 	 * Fixup procedures.
 	 */
+	void countClasses();
 	void fixupClassLoaders();
 	void fixupClasses();
 	void fixupClass(J9Class *clazz);

@@ -100,15 +100,15 @@ VMSnapshotImpl::initBaseClasses()
 	struct J9InternalVMFunctions *vmFuncs = _vm->internalVMFunctions;
 	J9VMThread *vmThread = currentVMThread(_vm);
 
-	vmFuncs->loadWarmClassFromSnapshot(vmThread, _vm->voidReflectClass);
-	vmFuncs->loadWarmClassFromSnapshot(vmThread, _vm->booleanReflectClass);
-	vmFuncs->loadWarmClassFromSnapshot(vmThread, _vm->charReflectClass);
-	vmFuncs->loadWarmClassFromSnapshot(vmThread, _vm->floatReflectClass);
-	vmFuncs->loadWarmClassFromSnapshot(vmThread, _vm->doubleReflectClass);
-	vmFuncs->loadWarmClassFromSnapshot(vmThread, _vm->byteReflectClass);
-	vmFuncs->loadWarmClassFromSnapshot(vmThread, _vm->shortReflectClass);
-	vmFuncs->loadWarmClassFromSnapshot(vmThread, _vm->intReflectClass);
-	vmFuncs->loadWarmClassFromSnapshot(vmThread, _vm->longReflectClass);
+	vmFuncs->loadWarmClassFromSnapshot(vmThread, _vm->voidReflectClass, FALSE);
+	vmFuncs->loadWarmClassFromSnapshot(vmThread, _vm->booleanReflectClass, FALSE);
+	vmFuncs->loadWarmClassFromSnapshot(vmThread, _vm->charReflectClass, FALSE);
+	vmFuncs->loadWarmClassFromSnapshot(vmThread, _vm->floatReflectClass, FALSE);
+	vmFuncs->loadWarmClassFromSnapshot(vmThread, _vm->doubleReflectClass, FALSE);
+	vmFuncs->loadWarmClassFromSnapshot(vmThread, _vm->byteReflectClass, FALSE);
+	vmFuncs->loadWarmClassFromSnapshot(vmThread, _vm->shortReflectClass, FALSE);
+	vmFuncs->loadWarmClassFromSnapshot(vmThread, _vm->intReflectClass, FALSE);
+	vmFuncs->loadWarmClassFromSnapshot(vmThread, _vm->longReflectClass, FALSE);
 }
 
 bool
@@ -568,6 +568,7 @@ VMSnapshotImpl::fixupClassLoaders()
 #endif /* J9VM_NEEDS_JNI_REDIRECTION */
 		currentClassLoader->gcRememberedSet = 0;
 		currentClassLoader->jitMetaDataList = NULL;
+		currentClassLoader->romClassOrphansHashTable = NULL;
 
 		fixupClassPathEntries(currentClassLoader);
 		currentClassLoader = (J9ClassLoader *)pool_nextDo(&classLoaderWalkState);
@@ -624,12 +625,46 @@ VMSnapshotImpl::removeUnpersistedClassLoaders()
 }
 
 void
+VMSnapshotImpl::countClasses()
+{
+	pool_state classLoaderWalkState = {0};
+	J9ClassLoader *classloader = (J9ClassLoader *)pool_startDo(_vm->classLoaderBlocks, &classLoaderWalkState);
+	UDATA classCount = 0;
+	J9VMThread *vmThread = currentVMThread(_vm);
+	while (NULL != classloader) {
+		J9ClassWalkState walkState = {0};
+		UDATA classCountInLoader = 0;
+		J9Class *currentClass = allLiveClassesStartDo(&walkState, _vm, classloader);
+
+		while (NULL != currentClass) {
+			classCount += 1;
+			classCountInLoader += 1;
+			currentClass = allLiveClassesNextDo(&walkState);
+		}
+		allLiveClassesEndDo(&walkState);
+		j9object_t loaderName = J9VMJAVALANGCLASSLOADER_CLASSLOADERNAME(vmThread, classloader->classLoaderObject);
+		if (NULL != loaderName) {
+			J9UTF8 *stringUTF8 = copyStringToJ9UTF8WithMemAlloc(vmThread, loaderName, J9_STR_NONE, "", 0, NULL, 0);
+			printf("Total number of classes in %*.s=%p %lu\n", J9UTF8_LENGTH(stringUTF8), J9UTF8_DATA(stringUTF8), classloader, classCountInLoader);
+		} else {
+			printf("Total number of classes in bootoader=%p %lu\n", classloader, classCountInLoader);
+		}
+
+		classloader = (J9ClassLoader *)pool_nextDo(&classLoaderWalkState);
+	}
+
+	printf("Total number of classes %lu\n", classCount);
+}
+
+void
 VMSnapshotImpl::fixupClasses()
 {
 	pool_state classLoaderWalkState = {0};
 	J9ClassLoader *classloader = (J9ClassLoader *)pool_startDo(_vm->classLoaderBlocks, &classLoaderWalkState);
+	UDATA persistedClassCount = 0;
 	while (NULL != classloader) {
 		J9ClassWalkState walkState = {0};
+		UDATA persistedClassCountInLoader = 0;
 		J9Class *currentClass = allLiveClassesStartDo(&walkState, _vm, classloader);
 
 		while (NULL != currentClass) {
@@ -650,14 +685,19 @@ VMSnapshotImpl::fixupClasses()
 			if (J9ROMCLASS_IS_UNSAFE(romClass)) {
 				J9UTF8 *className = J9ROMCLASS_CLASSNAME(romClass);
 				hashClassTableDelete(classloader, J9UTF8_DATA(className), J9UTF8_LENGTH(className));
+			} else {
+				persistedClassCount += 1;
+				persistedClassCountInLoader += 1;
 			}
 
 			currentClass = allLiveClassesNextDo(&walkState);
 		}
 		allLiveClassesEndDo(&walkState);
-
+		printf("Total number of persisted classes in loader=%p %lu\n", classloader, persistedClassCountInLoader);
 		classloader = (J9ClassLoader *)pool_nextDo(&classLoaderWalkState);
 	}
+
+	printf("Total number of persisted classes %lu\n", persistedClassCount);
 }
 
 void
@@ -1107,6 +1147,7 @@ done:
 void
 VMSnapshotImpl::writeSnapshot()
 {
+	countClasses();
 	removeUnpersistedClassLoaders();
 	/* TODO: Call GC API to snapshot heap. */
 	fixupClassLoaders();

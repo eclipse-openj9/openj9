@@ -5799,7 +5799,7 @@ typedef struct J9InternalVMFunctions {
 #if defined(J9VM_OPT_SNAPSHOTS)
 	void (*initializeSnapshotClassLoaderObject)(struct J9JavaVM *javaVM, struct J9ClassLoader *classLoader, j9object_t classLoaderObject);
 	struct J9Class * (*initializeSnapshotClassObject)(struct J9JavaVM *javaVM, struct J9ClassLoader *classLoader, struct J9Class *clazz);
-	BOOLEAN (*loadWarmClassFromSnapshot)(struct J9VMThread *vmThread, struct J9Class *clazz);
+	BOOLEAN (*loadWarmClassFromSnapshot)(struct J9VMThread *vmThread, struct J9Class *clazz, BOOLEAN loadJCLClass);
 	void (*initializeBaseClasses)(struct J9JavaVM *javaVM);
 #endif /* defined(J9VM_OPT_SNAPSHOTS) */
 #if JAVA_SPEC_VERSION >= 24
@@ -6073,6 +6073,7 @@ typedef struct J9VMThread {
 	UDATA debugEventData7;
 	UDATA debugEventData8;
 	struct J9StackElement* classLoadingStack;
+	struct J9StackElement* rcpLoadingStack;
 #if defined(J9VM_OPT_VALHALLA_FLATTENABLE_VALUE_TYPES)
 	struct J9StackElement* verificationStack;
 #endif /* defined(J9VM_OPT_VALHALLA_FLATTENABLE_VALUE_TYPES) */
@@ -6603,6 +6604,7 @@ typedef struct J9JavaVM {
 	struct J9JITConfig* jitConfig;
 	j9object_t tenureAge;
 	struct J9Pool* classLoadingStackPool;
+	struct J9Pool* rcpLoadingStackPool;
 	omrthread_monitor_t finalizeRunFinalizationMutex;
 	UDATA finalizeRunFinalizationCount;
 	void* vmLocalStorage[256];
@@ -7454,6 +7456,8 @@ typedef struct J9CInterpreterStackFrame {
 #define IS_SNAPSHOT_RUN(javaVM) FALSE
 #define IS_SNAPSHOTTING_ENABLED(javaVM) FALSE
 #endif /* defined(J9VM_OPT_SNAPSHOTS) */
+
+#define J9VM_GET_LEAFCLAZZ(clazz) (J9ROMCLASS_IS_ARRAY((clazz)->romClass) ? ((J9ArrayClass *)(clazz))->leafComponentType : (clazz))
 
 #define PERSISTED_MEMORY_SEGMENT_TYPES MEMORY_TYPE_RAM_CLASS | MEMORY_TYPE_UNDEAD_CLASS | MEMORY_TYPE_ROM_CLASS
 #define IS_SEGMENT_PERSISTED(segment) J9_ARE_ANY_BITS_SET(segment->type, PERSISTED_MEMORY_SEGMENT_TYPES)

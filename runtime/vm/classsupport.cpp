@@ -312,9 +312,11 @@ internalFindClassString(J9VMThread* currentThread, j9object_t moduleName, j9obje
 
 #if defined(J9VM_OPT_SNAPSHOTS)
 	if ((NULL != result) && IS_RESTORE_RUN(vm)) {
-		if (!loadWarmClassFromSnapshot(currentThread, result)) {
+		PUSH_OBJECT_IN_SPECIAL_FRAME(currentThread, moduleName);
+		if (!loadWarmClassFromSnapshot(currentThread, J9VM_GET_LEAFCLAZZ(result), FALSE)) {
 			result = NULL;
 		}
+		moduleName = POP_OBJECT_IN_SPECIAL_FRAME(currentThread);
 	}
 #endif /* defined(J9VM_OPT_SNAPSHOTS) */
 	if (NULL == result) {
@@ -909,7 +911,7 @@ waitForContendedLoadClass(J9VMThread* vmThread, J9ContendedLoadTableEntry *table
 	omrthread_monitor_exit(vm->classTableMutex);
 #if defined(J9VM_OPT_SNAPSHOTS)
 	if ((NULL != foundClass) && IS_RESTORE_RUN(vm)) {
-		if (!loadWarmClassFromSnapshot(vmThread, foundClass)) {
+		if (!loadWarmClassFromSnapshot(vmThread, J9VM_GET_LEAFCLAZZ(foundClass), FALSE)) {
 			foundClass = NULL;
 		}
 	}
@@ -1009,103 +1011,226 @@ arbitratedLoadClass(J9VMThread* vmThread, U_8* className, UDATA classNameLength,
 	return foundClass;
 }
 
+/**
+ * Before putting the clazz on the stack it checks to see if the class is already on the thread
+ * (currentThread->rcpLoadingStack) stack. The stack elements are allocated from vm->rcpLoadingStackPool.
+ * If it is it places class on the stack and returns true. If it is not it put the class on the stack
+ * and returns FALSE;
+ *
+ */
+BOOLEAN
+putAndCheckIsOnRCPLoadingStack(J9VMThread *currentThread, J9Class *clazz)
+{
+	J9JavaVM *vm = currentThread->javaVM;
+	J9StackElement *currentElement = currentThread->rcpLoadingStack;
+	BOOLEAN rc = FALSE;
+
+	/* Check if clazz is already on the stack. */
+	while (NULL != currentElement) {
+		if (currentElement->element == (void *)clazz) {
+			rc = TRUE;
+			break;
+		}
+		currentElement = currentElement->previous;
+	}
+
+	J9StackElement *newTopOfStack = (J9StackElement *)pool_newElement(vm->rcpLoadingStackPool);
+	if (NULL != newTopOfStack) {
+		newTopOfStack->element = (void *)clazz;
+		newTopOfStack->previous = currentThread->rcpLoadingStack;
+		newTopOfStack->classLoader = clazz->classLoader;
+		currentThread->rcpLoadingStack = newTopOfStack;
+	} else {
+		setNativeOutOfMemoryError(currentThread, 0, 0);
+	}
+
+	return rc;
+}
+
+/**
+ * It pops the class from the rcpLoadingStack
+ */
+void
+popFromRCPLoadingStack(J9VMThread *currentThread)
+{
+	popLoadingOrLinkingStack(currentThread, &currentThread->rcpLoadingStack, currentThread->javaVM->rcpLoadingStackPool);
+}
+
 #if defined(J9VM_OPT_SNAPSHOTS)
 BOOLEAN
 loadWarmClassFromSnapshotInternal(J9VMThread *vmThread, J9Class *clazz)
 {
 	BOOLEAN rc = FALSE;
 	BOOLEAN failed = FALSE;
-
-	if (J9_ARE_NO_BITS_SET(clazz->classFlags, J9ClassIsLoadedFromSnapshot)) {
-		J9JavaVM *vm = vmThread->javaVM;
-		J9Class *superClazz = clazz->superclasses[J9CLASS_DEPTH(clazz) - 1];
-		J9ITable *itable = (J9ITable *)clazz->iTable;
-		const char *className = (const char *)J9UTF8_DATA(J9ROMCLASS_CLASSNAME(clazz->romClass));
-
-		clazz->classFlags |= J9ClassIsLoadedFromSnapshot;
-
-		/* Load superclasses and interfaces first. */
-		if (NULL != superClazz) {
-			if (!loadWarmClassFromSnapshot(vmThread, superClazz)) {
-				goto done;
-			}
-		}
-
-		while (NULL != itable) {
-			J9Class *interface = itable->interfaceClass;
-			if (NULL != interface) {
-				if (!loadWarmClassFromSnapshot(vmThread, interface)) {
-					goto done;
-				}
-			}
-			itable = itable->next;
-		}
-
-		initializeSnapshotJ9Class(vm, clazz);
-		TRIGGER_J9HOOK_VM_INTERNAL_CLASS_LOAD(vm->hookInterface, vmThread, clazz, failed);
-		TRIGGER_J9HOOK_VM_CLASS_LOAD(vm->hookInterface, vmThread, clazz);
-
-		if (failed) {
-			/* The class-load hooks above may necessitate reloading className. */
-			className = (const char *)J9UTF8_DATA(J9ROMCLASS_CLASSNAME(clazz->romClass));
-			Trc_VM_snapshot_loadWarmClassFromSnapshot_ClassLoadHookFailed(vmThread, clazz, className);
-			goto done;
-		}
-
-		/* TODO: This is only a temporary fix for arrays.
-		 * Pre-emptively load arrays to ensure that clazz->arrayClass returns a valid class.
-		 */
-		if (NULL != clazz->arrayClass) {
-			if (!loadWarmClassFromSnapshot(vmThread, clazz->arrayClass)) {
-				goto done;
-			}
-		}
-		if (J9_ARE_ANY_BITS_SET(vmThread->javaVM->extendedRuntimeFlags, J9_EXTENDED_RUNTIME_CLASS_OBJECT_ASSIGNED)) {
-			Assert_VM_Null(clazz->classObject);
-			clazz = initializeSnapshotClassObject(vm, clazz->classLoader, clazz);
-			if (NULL == clazz) {
-				goto done;
-			}
-		}
-
+	J9JavaVM *vm = vmThread->javaVM;
+	J9Class *superClazz = clazz->superclasses[J9CLASS_DEPTH(clazz) - 1];
+	J9ITable *itable = (J9ITable *)clazz->iTable;
+	const char *className = (const char *)J9UTF8_DATA(J9ROMCLASS_CLASSNAME(clazz->romClass));
+	J9Class *interface = NULL;
 #if JAVA_SPEC_VERSION > 8
-		/* TODO: Handle/trace error/NULL paths. */
-		j9object_t classObject = clazz->classObject;
-		if (NULL != classObject) {
-			J9Module *module = clazz->module;
-			if (NULL != module) {
-				j9object_t moduleObject = module->moduleObject;
-				if (NULL != moduleObject) {
-					J9VMJAVALANGCLASS_SET_MODULE(vmThread, classObject, moduleObject);
-				}
-			} else {
-				/* Unnamed module. */
-				J9VMJAVALANGCLASS_SET_MODULE(vmThread, classObject, J9VMJAVALANGCLASSLOADER_UNNAMEDMODULE(vmThread, clazz->classLoader->classLoaderObject));
-			}
-		}
+	j9object_t classObject = NULL;
 #endif /* JAVA_SPEC_VERSION > 8 */
 
-		Trc_VM_snapshot_loadWarmClassFromSnapshot_ClassInfo(vmThread, clazz, className);
+	Assert_VM_true(J9_ARE_ANY_BITS_SET(clazz->classFlags, J9ClassIsLoadedFromSnapshot));
+
+	/* Load superclasses and interfaces first. */
+	if (NULL != superClazz) {
+		if (!loadWarmClassFromSnapshot(vmThread, superClazz, FALSE)) {
+			goto fail;
+		}
 	}
+
+	while (NULL != itable) {
+		interface = itable->interfaceClass;
+		if (NULL != interface) {
+			if (!loadWarmClassFromSnapshot(vmThread, interface, FALSE)) {
+				goto fail;
+			}
+		}
+		itable = itable->next;
+	}
+
+	initializeSnapshotJ9Class(vm, clazz);
+	TRIGGER_J9HOOK_VM_INTERNAL_CLASS_LOAD(vm->hookInterface, vmThread, clazz, failed);
+	TRIGGER_J9HOOK_VM_CLASS_LOAD(vm->hookInterface, vmThread, clazz);
+
+	if (failed) {
+		/* The class-load hooks above may necessitate reloading className. */
+		className = (const char *)J9UTF8_DATA(J9ROMCLASS_CLASSNAME(clazz->romClass));
+		Trc_VM_snapshot_loadWarmClassFromSnapshot_ClassLoadHookFailed(vmThread, clazz, className);
+		goto fail;
+	}
+
+	/* TODO: This is only a temporary fix for arrays.
+	 * Pre-emptively load arrays to ensure that clazz->arrayClass returns a valid class.
+	 */
+	if (NULL != clazz->arrayClass) {
+		if (!loadWarmClassFromSnapshot(vmThread, clazz->arrayClass, FALSE)) {
+			goto fail;
+		}
+	}
+	if (J9_ARE_ANY_BITS_SET(vmThread->javaVM->extendedRuntimeFlags, J9_EXTENDED_RUNTIME_CLASS_OBJECT_ASSIGNED)) {
+		Assert_VM_Null(clazz->classObject);
+		J9Class *initClazz = initializeSnapshotClassObject(vm, clazz->classLoader, clazz);
+		if (NULL == initClazz) {
+			goto fail;
+		}
+	}
+
+#if JAVA_SPEC_VERSION > 8
+	/* TODO: Handle/trace error/NULL paths. */
+	classObject = clazz->classObject;
+	if (NULL != classObject) {
+		J9Module *module = clazz->module;
+		if (NULL != module) {
+			j9object_t moduleObject = module->moduleObject;
+			if (NULL != moduleObject) {
+				J9VMJAVALANGCLASS_SET_MODULE(vmThread, classObject, moduleObject);
+			}
+		} else {
+			/* Unnamed module. */
+			J9VMJAVALANGCLASS_SET_MODULE(vmThread, classObject, J9VMJAVALANGCLASSLOADER_UNNAMEDMODULE(vmThread, clazz->classLoader->classLoaderObject));
+		}
+	}
+#endif /* JAVA_SPEC_VERSION > 8 */
+
+	Trc_VM_snapshot_loadWarmClassFromSnapshot_ClassInfo(vmThread, clazz, className);
+	VM_AtomicSupport::writeBarrier();
 	clazz->classFlags &= ~J9ClassIsFrozen;
+
 	rc = TRUE;
 
 done:
+	omrthread_monitor_enter(vm->rcpCacheMutex);
+	omrthread_monitor_notify_all(vm->rcpCacheMutex);
+	omrthread_monitor_exit(vm->rcpCacheMutex);
+	return rc;
+
+fail:
+	clazz->classFlags &= ~J9ClassIsLoadedFromSnapshot;
+	goto done;
+}
+
+BOOLEAN
+loadWarmClassSendLoadClass(J9VMThread *currentThread, J9Class *clazz)
+{
+	BOOLEAN rc = FALSE;
+	J9JavaVM *vm = currentThread->javaVM;
+	J9ClassLoader *classLoader = clazz->classLoader;
+	J9UTF8 *classNameUtf8 = J9ROMCLASS_CLASSNAME(clazz->romClass);
+	U_8 *className = J9UTF8_DATA(classNameUtf8);
+	UDATA classNameLength = J9UTF8_LENGTH(classNameUtf8);
+	j9object_t classNameString = NULL;
+	Assert_VM_mustHaveVMAccess(currentThread);
+
+	classNameString = vm->memoryManagerFunctions->j9gc_createJavaLangString(currentThread, className, classNameLength, J9_STR_XLAT);
+	if (NULL != classNameString) {
+		sendLoadClass(currentThread, classLoader->classLoaderObject, classNameString);
+		if (!VM_VMHelpers::exceptionPending(currentThread)) {
+			rc = TRUE;
+		}
+	}
+
 	return rc;
 }
 
 BOOLEAN
-loadWarmClassFromSnapshot(J9VMThread *currentThread, J9Class *clazz)
+loadWarmClassFromSnapshot(J9VMThread *currentThread, J9Class *clazz, BOOLEAN loadJCLClass)
 {
 	BOOLEAN rc = TRUE;
+	bool shouldWait = true;
+	bool loaded = false;
+	bool callSendLoadClass = false;
 	J9JavaVM *vm = currentThread->javaVM;
 
 	if (J9_ARE_ANY_BITS_SET(clazz->classFlags, J9ClassIsFrozen)) {
 		omrthread_monitor_enter(vm->rcpCacheMutex);
+		bool isBeingLoadedByCurrentThread = putAndCheckIsOnRCPLoadingStack(currentThread, clazz);
 		if (J9_ARE_ANY_BITS_SET(clazz->classFlags, J9ClassIsFrozen)) {
-			rc = loadWarmClassFromSnapshotInternal(currentThread, clazz);
+			if (J9_ARE_ANY_BITS_SET(clazz->classFlags, J9ClassIsLoadedFromSnapshot)) {
+				if (isBeingLoadedByCurrentThread) {
+					shouldWait = false;
+				}
+			} else if (J9_ARE_ANY_BITS_SET(clazz->classFlags, J9ClassIsJCLDefineClass) && !loadJCLClass) {
+				popFromRCPLoadingStack(currentThread);
+				callSendLoadClass = true;
+			} else {
+				clazz->classFlags |=  J9ClassIsLoadedFromSnapshot;
+				shouldWait = false;
+			}
+		} else {
+			loaded = true;
 		}
 		omrthread_monitor_exit(vm->rcpCacheMutex);
+
+		if (callSendLoadClass) {
+			rc = loadWarmClassSendLoadClass(currentThread, clazz);
+		} else {
+			if (!loaded) {
+				if (shouldWait) {
+					while (J9_ARE_ANY_BITS_SET(clazz->classFlags, J9ClassIsFrozen)) {
+						internalReleaseVMAccess(currentThread);
+						omrthread_monitor_enter(vm->rcpCacheMutex);
+						if (J9_ARE_NO_BITS_SET(clazz->classFlags, J9ClassIsFrozen)) {
+							loaded = true;
+						}
+						if (!loaded) {
+							omrthread_monitor_wait(vm->rcpCacheMutex);
+						}
+						omrthread_monitor_exit(vm->rcpCacheMutex);
+						internalAcquireVMAccess(currentThread);
+					}
+				} else {
+					Assert_VM_true(J9_ARE_ANY_BITS_SET(clazz->classFlags, J9ClassIsFrozen));
+					if (!isBeingLoadedByCurrentThread) {
+						rc = loadWarmClassFromSnapshotInternal(currentThread, clazz);
+					}
+				}
+			}
+			omrthread_monitor_enter(vm->rcpCacheMutex);
+			popFromRCPLoadingStack(currentThread);
+			omrthread_monitor_exit(vm->rcpCacheMutex);
+		}
 	}
 
 	return rc;
@@ -1172,7 +1297,7 @@ loadNonArrayClass(J9VMThread* vmThread, J9Module *j9module, U_8* className, UDAT
 		}
 #if defined(J9VM_OPT_SNAPSHOTS)
 		if (IS_RESTORE_RUN(vm)) {
-			if (!loadWarmClassFromSnapshot(vmThread, foundClass)) {
+			if (!loadWarmClassFromSnapshot(vmThread, J9VM_GET_LEAFCLAZZ(foundClass), FALSE)) {
 				foundClass = NULL;
 			}
 		}
@@ -1200,7 +1325,7 @@ loadNonArrayClass(J9VMThread* vmThread, J9Module *j9module, U_8* className, UDAT
 				if (NULL != foundClass) {
 #if defined(J9VM_OPT_SNAPSHOTS)
 					if (IS_RESTORE_RUN(vm)
-						&& !loadWarmClassFromSnapshot(vmThread, foundClass)
+						&& !loadWarmClassFromSnapshot(vmThread, J9VM_GET_LEAFCLAZZ(foundClass), FALSE)
 					) {
 						foundClass = NULL;
 					} else
