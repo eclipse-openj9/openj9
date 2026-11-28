@@ -216,6 +216,16 @@ loadFlattenableArrayElement(J9VMThread *currentThread, j9object_t receiverObject
         return VM_ValueTypeHelpers::loadFlattenableArrayElement(currentThread, objectAccessBarrier, objectAllocate, receiverObject, index, fast != false);
 }
 
+#if defined(J9VM_OPT_VALHALLA_FLATTENABLE_VALUE_TYPES)
+j9object_t
+getFlattenedInstanceFieldAtOffset(J9VMThread *currentThread, J9Class *fieldClass, j9object_t srcObject, UDATA srcOffset, BOOLEAN fast)
+{
+        MM_ObjectAccessBarrierAPI objectAccessBarrier(currentThread);
+        MM_ObjectAllocationAPI objectAllocate(currentThread);
+        return VM_ValueTypeHelpers::getFlattenedFieldAtOffset(currentThread, objectAccessBarrier, objectAllocate, fieldClass, srcObject, srcOffset, fast != FALSE);
+}
+#endif /* defined(J9VM_OPT_VALHALLA_FLATTENABLE_VALUE_TYPES) */
+
 #if defined(J9VM_OPT_VALHALLA_VALUE_TYPES)
 I_32
 copyFlattenableArray(J9VMThread *currentThread, j9object_t srcObject, j9object_t destObject, U_32 srcIndex, U_32 destIndex, U_32 lengthInSlots)
