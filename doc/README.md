@@ -31,6 +31,7 @@ This directory contains the following types of documentation:
 | `build-instructions` | Build instructions for compiling OpenJDK with OpenJ9.                        |
 | `compiler`           | Developer documentation about the compiler technology, codenamed Testarossa. |
 | `diagnostics`        | Developer documentation about the diagnostic component of OpenJ9.            |
+| `features`           | Developer documentation about specific OpenJ9 runtime features.              |
 | `processes`          | Process documentation for the OpenJ9 project.                                |
 | `release-notes`      | OpenJ9 release notes.                                                        |
 
