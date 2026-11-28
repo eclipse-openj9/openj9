@@ -3576,7 +3576,7 @@ public <A extends Annotation> A[] getAnnotationsByType(Class<A> annotationClass)
 {
 	ArrayList<A> annotationsList = internalGetDeclaredAnnotationsByType(annotationClass);
 
-	if (annotationClass.isInheritedAnnotationType()) {
+	if (AnnotationType.getInstance(annotationClass).isInherited()) {
 		Class<?> sc = this;
 		while (0 == annotationsList.size()) {
 			sc = sc.getSuperclass();
@@ -3786,14 +3786,6 @@ private static Annotation[] getAnnotationsArrayFromValue(Annotation container, C
 	}
 }
 
-private boolean isInheritedAnnotationType() {
-	LinkedHashMap<Class<? extends Annotation>, Annotation> map = getAnnotationCache().directAnnotationMap;
-	if (map != null) {
-		return map.get(Inherited.class) != null;
-	}
-	return false;
-}
-
 private LinkedHashMap<Class<? extends Annotation>, Annotation> buildAnnotations(LinkedHashMap<Class<? extends Annotation>, Annotation> directAnnotationsMap) {
 	Class<?> superClass = getSuperclass();
 	if (superClass == null) {
@@ -3805,7 +3797,7 @@ private LinkedHashMap<Class<? extends Annotation>, Annotation> buildAnnotations(
 		for (Map.Entry<Class<? extends Annotation>, Annotation> entry : superAnnotations.entrySet()) {
 			Class<? extends Annotation> annotationType = entry.getKey();
 			// if the annotation is Inherited store the annotation
-			if (annotationType.isInheritedAnnotationType()) {
+			if (AnnotationType.getInstance(annotationType).isInherited()) {
 				if (annotationsMap == null) {
 					annotationsMap = new LinkedHashMap<>((superAnnotations.size() + (directAnnotationsMap != null ? directAnnotationsMap.size() : 0)) * 4 / 3);
 				}
